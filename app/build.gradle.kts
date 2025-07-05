@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.ktor_test_client"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.ktor_test_client"
@@ -53,7 +53,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -74,6 +73,8 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+
+    implementation(libs.material3)
 
     implementation(libs.kotlinx.serialization.json)
 }

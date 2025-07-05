@@ -1,6 +1,5 @@
 package com.example.ktor_test_client
 
-import androidx.lifecycle.ViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -10,15 +9,16 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-class MainPageViewModel(
-    private val hostUrl: String,
-    private val port: Int
-) : ViewModel() {
+class KtorApi(
+    private val hostUrl: String = "http://192.168.1.64",
+    private val port: Int = 8080
+) {
     private val httpClient = HttpClient {
         install(ContentNegotiation) {
             json(
                 Json {
                     prettyPrint = true
+                    ignoreUnknownKeys = true
                 }
             )
         }

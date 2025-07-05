@@ -4,15 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,7 +31,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import com.example.ktor_test_client.controls.ApiCard
+import com.example.ktor_test_client.controls.ApiMethodModel
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import kotlinx.coroutines.launch
 
@@ -37,23 +45,53 @@ class MainActivity : ComponentActivity() {
         setContent {
             KtortestclientTheme {
                 Scaffold { innerPadding ->
-                    MainPage(
-                        modifier = Modifier.padding(innerPadding),
-                        MainPageViewModel(
-                            hostUrl = "http://192.168.1.64",
-                            port = 8080
-                        )
-                    )
+                    MainPage(Modifier.padding(innerPadding))
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MainPage(
-    modifier: Modifier,
-    viewModel: MainPageViewModel
+    modifier: Modifier
+) {
+    LazyColumn(
+        modifier = modifier
+            .padding(20.dp)
+            .clip(MaterialTheme.shapes.largeIncreased)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        val apiMethods = mutableListOf(
+            ApiMethodModel("/user", method = "get", params = mapOf("id" to "Int", "name" to "String")),
+            ApiMethodModel("/user", method = "post"),
+            ApiMethodModel("/user", method = "delete")
+        )
+        itemsIndexed(apiMethods) { index, item ->
+            ApiCard(
+                apiMethodModel = item,
+                onDisable = {
+                    //apiMethods.remove(it)
+                }
+            )
+
+            if (index < apiMethods.count() - 1) {
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier
+                        .padding(start = 30.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FetchUserGet(
+    modifier: Modifier = Modifier,
+    viewModel: FetchUserViewModel
 ) {
     var user: User? by remember {
         mutableStateOf(null)
@@ -67,7 +105,7 @@ fun MainPage(
 
     Box(
         modifier = modifier
-        .fillMaxSize()
+            .fillMaxSize()
     ) {
         Column(
             modifier = Modifier
