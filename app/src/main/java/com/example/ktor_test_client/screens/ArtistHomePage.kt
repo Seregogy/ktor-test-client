@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -115,7 +116,7 @@ fun ArtistHomePage(
                     println(state.firstVisibleItemScrollOffset)
                     alpha = (1120f - state.firstVisibleItemScrollOffset * 2f) / 1120f
 
-                    colorAlpha = (1120f - state.firstVisibleItemScrollOffset) / 100f
+                    colorAlpha = (1120f - state.firstVisibleItemScrollOffset) / 45f
                 }
             }
     }
@@ -131,7 +132,7 @@ fun ArtistHomePage(
                         itemIndex: Int,
                         itemCount: Int,
                     ): Int {
-                        return beforeContentPadding + 100
+                        return beforeContentPadding + 400
                     }
                 }
             SnapLayoutInfoProvider(state, snapPosition)
@@ -171,13 +172,13 @@ fun ArtistHomePage(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(avatarHeight + 100.dp),
+                        .height(avatarHeight + 180.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .height(230.dp)
                             .background(Color.Black)
                     )
 
@@ -195,6 +196,7 @@ fun ArtistHomePage(
                         ArtistHeader(
                             modifier = Modifier
                                 .alpha(alpha)
+                                .padding(bottom = 20.dp)
                                 .align(Alignment.Center),
                             artist = artist
                         )
@@ -207,6 +209,7 @@ fun ArtistHomePage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.Black)
+                        .offset(y = (-80).dp)
                         .zIndex(1f)
                 ) {
                     Text(
@@ -216,8 +219,6 @@ fun ArtistHomePage(
                         modifier = Modifier
                             .padding(start = 25.dp)
                     )
-
-                    Spacer(Modifier.height(15.dp))
                 }
             }
 
@@ -356,11 +357,11 @@ fun ArtistHeaderFadingGradient(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(190.dp)
+                .height(220.dp)
                 .background(
                     brush = Brush.verticalGradient(
                         colorStops = arrayOf(
-                            .5f to targetColor.value,
+                            .4f to targetColor.value,
                             .95f to Color.Transparent
                         )
                     )
