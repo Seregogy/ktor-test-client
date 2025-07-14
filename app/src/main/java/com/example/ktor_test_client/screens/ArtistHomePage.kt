@@ -1,21 +1,30 @@
 package com.example.ktor_test_client.screens
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
@@ -24,23 +33,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.tools.formatNumber
+import kotlinx.coroutines.delay
 
 data class Artist(
     val name: String = "unknown artist",
@@ -65,137 +80,253 @@ val postMalone = Artist(
     )
 )
 
-@Preview(showBackground = true, showSystemUi = true, device = Devices.PIXEL_7_PRO)
-@Composable
-fun ArtistPagePreview() {
-    ArtistHomePage(Modifier.padding(15.dp), postMalone)
-}
-
 @Composable
 fun ArtistHomePage(
-    modifier: Modifier = Modifier,
-    artist: Artist = Artist()
+    artist: Artist
 ) {
-    val pagerState = rememberPagerState(0) { artist.imagesUrl.size }
-    val currentImagePrimaryColor = remember { mutableStateOf(artist.imagesUrl.first().second) }
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
-    val animatedColor = animateColorAsState(
-        targetValue = currentImagePrimaryColor.value,
-        label = "color animation",
-        animationSpec = tween(250)
+    val pagerState = rememberPagerState(0) { artist.imagesUrl.count() }
+
+    val state = rememberLazyListState()
+    val density = LocalDensity.current
+
+    var alpha by remember { mutableFloatStateOf(1f) }
+    var colorAlpha by remember { mutableFloatStateOf(1f) }
+
+    val color = animateColorAsState(
+        targetValue = artist.imagesUrl[pagerState.currentPage].second,
+        label = "color cross fade"
     )
 
-    LaunchedEffect(pagerState.currentPage) {
-        currentImagePrimaryColor.value = artist.imagesUrl[pagerState.currentPage].second
-        println("bombom")
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5000)
+
+            val currentIndex = pagerState.currentPage
+            pagerState.animateScrollToPage((currentIndex + 1) % artist.imagesUrl.count())
+        }
     }
 
+    LaunchedEffect(state) {
+        snapshotFlow { state.layoutInfo }
+            .collect {
+                if (state.firstVisibleItemIndex == 0) {
+                    println(state.firstVisibleItemScrollOffset)
+                    alpha = (1120f - state.firstVisibleItemScrollOffset * 2f) / 1120f
+
+                    colorAlpha = (1120f - state.firstVisibleItemScrollOffset) / 100f
+                }
+            }
+    }
+
+    val snappingLayout = remember(state, density) {
+            val snapPosition =
+                object : SnapPosition {
+                    override fun position(
+                        layoutSize: Int,
+                        itemSize: Int,
+                        beforeContentPadding: Int,
+                        afterContentPadding: Int,
+                        itemIndex: Int,
+                        itemCount: Int,
+                    ): Int {
+                        return beforeContentPadding + 100
+                    }
+                }
+            SnapLayoutInfoProvider(state, snapPosition)
+        }
+
+    val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
+
+    val avatarHeight = screenHeight * .55f
+
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
+            .background(Color.Black)
     ) {
+
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(.6f)
+                .height(avatarHeight)
         ) { page ->
             AsyncImage(
                 model = artist.imagesUrl[page].first,
-                contentDescription = "artist image",
+                contentDescription = "Artist avatar",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
             )
         }
 
-        ArtistHeaderFadingGradient(animatedColor)
-        ArtistHeader(artist)
+        LazyColumn(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            state = state,
+            flingBehavior = flingBehavior,
+        ) {
+            item(0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(avatarHeight + 100.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .background(Color.Black)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    ) {
+                        ArtistHeaderFadingGradient(
+                            modifier = Modifier
+                                .alpha(colorAlpha),
+                            targetColor = color
+                        )
+
+                        ArtistHeader(
+                            modifier = Modifier
+                                .alpha(alpha)
+                                .align(Alignment.Center),
+                            artist = artist
+                        )
+                    }
+                }
+            }
+
+            item(1) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Black)
+                        .zIndex(1f)
+                ) {
+                    Text(
+                        text = "Популярные треки",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.W700,
+                        modifier = Modifier
+                            .padding(start = 25.dp)
+                    )
+
+                    Spacer(Modifier.height(15.dp))
+                }
+            }
+
+
+            items(25) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Black)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 25.dp, vertical = 2.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .height(80.dp)
+                                .padding(5.dp)
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(11.dp))
+                                .background(MaterialTheme.colorScheme.surfaceContainer)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun ArtistHeader(
+    modifier: Modifier = Modifier,
     artist: Artist
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(.65f)
+    Column(
+        modifier = modifier
+            .padding(horizontal = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(10.dp)
-                .align(Alignment.BottomCenter),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+        Text(
+            text = artist.name,
+            fontWeight = FontWeight.W800,
+            fontSize = 42.sp
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = artist.name,
-                fontWeight = FontWeight.W800,
-                fontSize = 42.sp
+            Icon(
+                painter = painterResource(R.drawable.headphones_icon),
+                contentDescription = "headphones icon",
+                modifier = Modifier
+                    .size(16.dp)
             )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            Text(
+                text = "${formatNumber(artist.listeningInMonth)} за месяц",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.W600
+            )
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier
+                .padding(vertical = 20.dp)
+                .fillMaxWidth(.85f)
+        ) {
+            CircleButton(
+                onClick = { },
+                underscoreText = formatNumber(artist.likes),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.headphones_icon),
-                    contentDescription = "headphones icon",
+                    painter = painterResource(R.drawable.heart_icon),
                     modifier = Modifier
-                        .alignByBaseline()
-                        .size(16.dp)
-                )
-
-                Text(
-                    text = "${formatNumber(artist.listeningInMonth)} за месяц",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.W600
+                        .size(40.dp),
+                    contentDescription = ""
                 )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier
-                    .padding(vertical = 20.dp)
-                    .fillMaxWidth(.85f)
+            CircleButton(
+                onClick = { },
+                underscoreText = "Трейлер",
             ) {
-                CircleButton(
-                    onClick = { },
-                    underscoreText = formatNumber(artist.likes),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.heart_icon),
-                        modifier = Modifier
-                            .size(40.dp),
-                        contentDescription = ""
-                    )
-                }
+                Icon(
+                    painter = painterResource(R.drawable.queue_music_icon),
+                    modifier = Modifier
+                        .size(40.dp),
+                    contentDescription = ""
+                )
+            }
 
-                CircleButton(
-                    onClick = { },
-                    underscoreText = "Трейлер",
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.queue_music_icon),
-                        modifier = Modifier
-                            .size(40.dp),
-                        contentDescription = ""
-                    )
-                }
-
-                CircleButton(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    onClick = { },
-                    underscoreText = "Слушать"
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.play_icon),
-                        modifier = Modifier
-                            .size(40.dp),
-                        contentDescription = ""
-                    )
-                }
+            CircleButton(
+                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { },
+                underscoreText = "Слушать"
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.play_icon),
+                    modifier = Modifier
+                        .size(40.dp),
+                    contentDescription = ""
+                )
             }
         }
     }
@@ -203,17 +334,20 @@ fun ArtistHeader(
 
 @Composable
 fun ArtistHeaderFadingGradient(
+    modifier: Modifier,
     targetColor: State<Color>
 ) {
-    Column {
+    Column(
+        modifier = modifier
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(.51f)
+                .height(190.dp)
                 .background(
                     brush = Brush.verticalGradient(
                         colorStops = arrayOf(
-                            .35f to Color.Transparent,
+                            .5f to Color.Transparent,
                             .95f to targetColor.value
                         )
                     )
@@ -222,11 +356,11 @@ fun ArtistHeaderFadingGradient(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(230.dp)
+                .height(190.dp)
                 .background(
                     brush = Brush.verticalGradient(
                         colorStops = arrayOf(
-                            .35f to targetColor.value,
+                            .5f to targetColor.value,
                             .95f to Color.Transparent
                         )
                     )
@@ -249,7 +383,7 @@ fun CircleButton(
         Button(
             modifier = modifier
                 .clip(CircleShape)
-                .size(70.dp),
+                .size(65.dp),
             colors = ButtonColors(
                 containerColor = containerColor,
                 contentColor = MaterialTheme.colorScheme.onSurface,

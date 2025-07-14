@@ -1,18 +1,16 @@
 package com.example.ktor_test_client
 
-import android.graphics.drawable.Icon
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,8 +20,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -37,8 +33,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.ktor_test_client.controls.ApiCard
 import com.example.ktor_test_client.controls.ApiMethodModel
 import com.example.ktor_test_client.screens.ArtistHomePage
@@ -57,9 +55,7 @@ class MainActivity : ComponentActivity() {
             KtortestclientTheme {
                 Scaffold { innerPadding ->
                     Column {
-                        ArtistHomePage(Modifier.padding(innerPadding), postMalone)
-
-//                        MainPage(Modifier.padding(innerPadding))
+                        ArtistHomePage(postMalone)
                     }
                 }
             }
@@ -99,6 +95,30 @@ fun MainPage(
                         .padding(start = 30.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun OverflowTextDemo() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(100.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .graphicsLayer { clip = false } // Отключаем обрезку
+                .size(100.dp)
+                .background(Color.LightGray)
+        ) {
+            Text(
+                text = "Этот текст выходит за границы",
+                modifier = Modifier
+                    .offset(y = (-30).dp),
+                color = Color.Red,
+                fontSize = 18.sp
+            )
         }
     }
 }
