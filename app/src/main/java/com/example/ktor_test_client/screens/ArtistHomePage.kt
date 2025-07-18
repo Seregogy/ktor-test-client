@@ -2,9 +2,11 @@ package com.example.ktor_test_client.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.TargetedFlingBehavior
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,57 +20,47 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
+import com.example.ktor_test_client.compoments.CircleButton
+import com.example.ktor_test_client.models.Artist
+import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.tools.formatNumber
+import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.delay
-
-data class Artist(
-    val name: String = "unknown artist",
-    val about: String = "nothing interesting",
-    val listeningInMonth: Int = 0,
-    val likes: Int = 0,
-    val bestTracks: List<Int> = listOf(),
-    val tracks: List<Int> = listOf(),
-    val albums: List<Int> = listOf(),
-    val socialMedia: Map<String, String> = mapOf(),
-    val imagesUrl: List<Pair<String, Color>> = listOf()
-)
 
 val postMalone = Artist(
     name = "Post Malone",
@@ -80,6 +72,10 @@ val postMalone = Artist(
         "https://cdn-image.zvuk.com/pic?type=artist&id=3289907&size=medium&hash=bbdb7895-d42f-40ca-801c-540fc2bc7f2c" to Color(140, 140, 140)
     )
 )
+object TopAppContentBar {
+    val topPartWeight = .55f
+    val additionalHeight = 60.dp
+}
 
 @Composable
 fun ArtistHomePage(
@@ -89,16 +85,8 @@ fun ArtistHomePage(
 
     val pagerState = rememberPagerState(0) { artist.imagesUrl.count() }
 
-    val state = rememberLazyListState()
+    val lazyListState = rememberLazyListState()
     val density = LocalDensity.current
-
-    var alpha by remember { mutableFloatStateOf(1f) }
-    var colorAlpha by remember { mutableFloatStateOf(1f) }
-
-    val color = animateColorAsState(
-        targetValue = artist.imagesUrl[pagerState.currentPage].second,
-        label = "color cross fade"
-    )
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -109,50 +97,63 @@ fun ArtistHomePage(
         }
     }
 
-    LaunchedEffect(state) {
-        snapshotFlow { state.layoutInfo }
-            .collect {
-                if (state.firstVisibleItemIndex == 0) {
-                    println(state.firstVisibleItemScrollOffset)
-                    alpha = (1120f - state.firstVisibleItemScrollOffset * 2f) / 1120f
-
-                    colorAlpha = (1120f - state.firstVisibleItemScrollOffset) / 45f
-                }
-            }
-    }
-
-    val snappingLayout = remember(state, density) {
-            val snapPosition =
-                object : SnapPosition {
-                    override fun position(
-                        layoutSize: Int,
-                        itemSize: Int,
-                        beforeContentPadding: Int,
-                        afterContentPadding: Int,
-                        itemIndex: Int,
-                        itemCount: Int,
-                    ): Int {
-                        return beforeContentPadding + 400
-                    }
-                }
-            SnapLayoutInfoProvider(state, snapPosition)
-        }
-
+    val snappingLayout = SnapLayoutInfoProvider(lazyListState, SnapPosition.Start)
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
 
-    val avatarHeight = screenHeight * .55f
+    val color = animateColorAsState(
+        targetValue = artist.imagesUrl[pagerState.currentPage].second,
+        label = "color cross fade"
+    )
+
+    val scrollState: State<ScrollState> = remember {
+        derivedStateOf {
+            val isAvatarVisible = lazyListState.firstVisibleItemIndex == 0
+            val scrollState = ScrollState(isAvatarVisible = isAvatarVisible)
+            val totalHeight = screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight
+
+            if (scrollState.isAvatarVisible) {
+                scrollState.currentOffset = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+
+                scrollState.alpha = (totalHeight - scrollState.currentOffset) / totalHeight
+                scrollState.colorAlpha = (totalHeight - scrollState.currentOffset) / 60.dp
+            }
+
+            return@derivedStateOf scrollState
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
+        ArtistAvatarPager(color, pagerState, scrollState, screenHeight, artist)
 
+        Content(lazyListState, flingBehavior, scrollState, color, screenHeight, artist)
+    }
+}
+
+@Composable
+private fun ArtistAvatarPager(
+    color: State<Color>,
+    pagerState: PagerState,
+    scrollState: State<ScrollState>,
+    screenHeight: Dp,
+    artist: Artist
+) {
+    Box(
+        modifier = Modifier
+            .background(color.value)
+            .fillMaxWidth()
+            .height(screenHeight * TopAppContentBar.topPartWeight)
+    ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(avatarHeight)
+                .fillMaxSize()
+                .offset {
+                    return@offset IntOffset(0, (-scrollState.value.currentOffset / 5).roundToPx())
+                }
         ) { page ->
             AsyncImage(
                 model = artist.imagesUrl[page].first,
@@ -162,89 +163,276 @@ fun ArtistHomePage(
                     .fillMaxSize()
             )
         }
+    }
+}
 
-        LazyColumn(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            state = state,
-            flingBehavior = flingBehavior,
-        ) {
-            item(0) {
+@Composable
+private fun Content(
+    lazyListState: LazyListState,
+    flingBehavior: TargetedFlingBehavior,
+    scrollState: State<ScrollState>,
+    color: State<Color>,
+    screenHeight: Dp,
+    artist: Artist
+) {
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        state = lazyListState,
+        flingBehavior = flingBehavior,
+        modifier = Modifier
+            .pointerInteropFilter {
+                return@pointerInteropFilter false
+            }
+    ) {
+        item(0) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight)
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(avatarHeight + 180.dp),
-                    contentAlignment = Alignment.BottomCenter
+                        .height(80.dp)
+                        .background(Color.Black)
+                        .align(Alignment.BottomCenter)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
                 ) {
-                    Box(
+                    ArtistHeaderFadingGradientTop(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(230.dp)
-                            .background(Color.Black)
+                            .alpha(scrollState.value.colorAlpha)
+                            .align(Alignment.BottomCenter),
+                        targetColor = color
                     )
 
-                    Box(
+                    ArtistHeader(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                    ) {
-                        ArtistHeaderFadingGradient(
-                            modifier = Modifier
-                                .alpha(colorAlpha),
-                            targetColor = color
-                        )
-
-                        ArtistHeader(
-                            modifier = Modifier
-                                .alpha(alpha)
-                                .padding(bottom = 20.dp)
-                                .align(Alignment.Center),
-                            artist = artist
-                        )
-                    }
+                            .alpha(scrollState.value.alpha)
+                            .align(Alignment.BottomCenter),
+                        artist = artist
+                    )
                 }
             }
+        }
 
-            item(1) {
+        item(1) {
+            Box(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .background(Color.Black)
+            ) {
+                ArtistHeaderFadingGradientBottom(
+                    modifier = Modifier
+                        .alpha(scrollState.value.colorAlpha),
+                    targetColor = color
+                )
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.Black)
-                        .offset(y = (-80).dp)
-                        .zIndex(1f)
                 ) {
+
                     Text(
                         text = "Популярные треки",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.W700,
                         modifier = Modifier
-                            .padding(start = 25.dp)
+                            .padding(top = 50.dp, start = 25.dp)
                     )
+
+                    Spacer(Modifier.height(15.dp))
+
+                    for (i in 1..5) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 25.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .shimmer()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                                    .height(65.dp)
+                                    .padding(5.dp)
+                                    .aspectRatio(1f)
+                            )
+
+                            Column(
+                                modifier = Modifier
+                                    .height(60.dp)
+                                    .align(Alignment.CenterVertically),
+                                verticalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(170.dp, 20.dp)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(5.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(100.dp, 20.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
+        }
 
-
-            items(25) {
-                Box(
+        item(2) {
+            Box(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .background(Color.Black)
+            ) {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.Black)
                 ) {
+
+                    Text(
+                        text = "Студийные альбомы",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.W700,
+                        modifier = Modifier
+                            .padding(top = 50.dp, start = 25.dp)
+                    )
+
+                    Spacer(Modifier.height(15.dp))
+
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 25.dp, vertical = 2.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.background)
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .height(80.dp)
-                                .padding(5.dp)
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(11.dp))
-                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                        )
+                        for (i in 1..5) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = if (i == 1) 25.dp else 0.dp),
+                                verticalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .height(160.dp)
+                                        .padding(5.dp)
+                                        .aspectRatio(1f)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(120.dp, 20.dp)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(5.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(100.dp, 15.dp)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(5.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(50.dp, 15.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item(3) {
+            Box(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .height(1000.dp)
+                    .background(Color.Black)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+
+                    Text(
+                        text = "Все альбомы",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.W700,
+                        modifier = Modifier
+                            .padding(top = 50.dp, start = 25.dp)
+                    )
+
+                    Spacer(Modifier.height(15.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        for (i in 1..5) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = if (i == 1) 25.dp else 0.dp),
+                                verticalArrangement = Arrangement.spacedBy(5.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .height(160.dp)
+                                        .padding(5.dp)
+                                        .aspectRatio(1f)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(120.dp, 20.dp)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(5.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(100.dp, 15.dp)
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .shimmer()
+                                        .clip(RoundedCornerShape(5.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                                        .size(50.dp, 15.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -290,7 +478,7 @@ fun ArtistHeader(
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier
-                .padding(vertical = 20.dp)
+                .padding(top = 20.dp)
                 .fillMaxWidth(.85f)
         ) {
             CircleButton(
@@ -334,7 +522,7 @@ fun ArtistHeader(
 }
 
 @Composable
-fun ArtistHeaderFadingGradient(
+fun ArtistHeaderFadingGradientTop(
     modifier: Modifier,
     targetColor: State<Color>
 ) {
@@ -344,25 +532,12 @@ fun ArtistHeaderFadingGradient(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(190.dp)
+                .fillMaxHeight()
                 .background(
                     brush = Brush.verticalGradient(
                         colorStops = arrayOf(
-                            .5f to Color.Transparent,
-                            .95f to targetColor.value
-                        )
-                    )
-                )
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            .4f to targetColor.value,
-                            .95f to Color.Transparent
+                            .35f to Color.Transparent,
+                            .8f to targetColor.value
                         )
                     )
                 )
@@ -371,35 +546,25 @@ fun ArtistHeaderFadingGradient(
 }
 
 @Composable
-fun CircleButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = .4f),
-    underscoreText: String = "",
-    content: @Composable () -> Unit = { }
+fun ArtistHeaderFadingGradientBottom(
+    modifier: Modifier,
+    targetColor: State<Color>
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
     ) {
-        Button(
-            modifier = modifier
-                .clip(CircleShape)
-                .size(65.dp),
-            colors = ButtonColors(
-                containerColor = containerColor,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContentColor = MaterialTheme.colorScheme.onSecondary,
-                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer
-            ),
-            onClick = onClick,
-        ) {
-            content()
-        }
-
-        Text(
-            text = underscoreText,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.W700
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(230.dp)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            .1f to targetColor.value,
+                            .9f to Color.Transparent
+                        )
+                    )
+                )
         )
     }
 }

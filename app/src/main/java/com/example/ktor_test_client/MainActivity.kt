@@ -39,8 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ktor_test_client.controls.ApiCard
 import com.example.ktor_test_client.controls.ApiMethodModel
+import com.example.ktor_test_client.screens.AlbumPage
 import com.example.ktor_test_client.screens.ArtistHomePage
 import com.example.ktor_test_client.screens.postMalone
+import com.example.ktor_test_client.screens.stoney
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import kotlinx.coroutines.launch
 
@@ -55,7 +57,12 @@ class MainActivity : ComponentActivity() {
             KtortestclientTheme {
                 Scaffold { innerPadding ->
                     Column {
-                        ArtistHomePage(postMalone)
+                        //val navHost =
+
+                        //ArtistHomePage(postMalone)
+                        AlbumPage(stoney) {
+
+                        }
                     }
                 }
             }

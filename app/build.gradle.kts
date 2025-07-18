@@ -56,10 +56,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.navigation.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
-//    implementation(libs.androidx.foundation)
-
     implementation(libs.foundation)
 
     implementation(libs.androidx.ui.graphics)
@@ -80,6 +79,8 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+
+    implementation(libs.compose.shimmer)
 
     implementation(libs.material3)
 
