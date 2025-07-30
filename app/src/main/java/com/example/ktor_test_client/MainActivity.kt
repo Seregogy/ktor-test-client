@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -52,7 +53,9 @@ import com.example.ktor_test_client.controls.ApiMethodModel
 import com.example.ktor_test_client.pages.PlayerPage
 import com.example.ktor_test_client.screens.AlbumPage
 import com.example.ktor_test_client.screens.ArtistHomePage
+import com.example.ktor_test_client.screens.PaletteTestScreen
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
+import com.example.ktor_test_client.viewmodels.PaletteTestScreenViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -69,7 +72,7 @@ class MainActivity : ComponentActivity() {
 
                         NavHost(
                             navController = navController,
-                            startDestination = "Player/?id=2"
+                            startDestination = "PaletteTest"
                         ) {
                             composable(
                                 route = "AlbumPage/?id={albumId}",
@@ -77,7 +80,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 val albumId = it.arguments?.getInt("albumId")
 
-                                AlbumPage(Library.albums.first { album -> album.id == albumId}) { artistId ->
+                                AlbumPage(Library.albums.first { album -> album.id == albumId }) { artistId ->
                                     navController.navigate("ArtistPage/?id=$artistId")
                                 }
                             }
@@ -156,6 +159,12 @@ class MainActivity : ComponentActivity() {
                                         .size(rectSize)
                                         .background(Color.LightGray)
                                 )
+                            }
+
+                            composable(
+                                route = "PaletteTest"
+                            ) {
+                                PaletteTestScreen(viewModel<PaletteTestScreenViewModel>())
                             }
                         }
                     }
