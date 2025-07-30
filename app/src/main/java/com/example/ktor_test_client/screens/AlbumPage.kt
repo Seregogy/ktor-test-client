@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,44 +40,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.example.ktor_test_client.Library
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.compoments.CircleButton
-import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.models.Album
 import com.example.ktor_test_client.state.ScrollState
-import com.example.ktor_test_client.tools.formatNumber
+import com.example.ktor_test_client.helpers.formatNumber
 import com.valentinilk.shimmer.shimmer
-
-val stoney = Album(
-    id = 0,
-    artistId = postMalone.id,
-    name = "Stoney",
-    likes = 2661,
-    tracksId = listOf(),
-    bestTracks = listOf(),
-    totalListening = 1000000,
-    releaseDate = 1752758049,
-    imageUrl = "https://m.media-amazon.com/images/I/91VAjJ6YxrL._UF1000,1000_QL80_.jpg",
-    primaryColor = Color(209, 130, 88)
-)
-
-@Composable
-@Preview
-fun AlbumPagePreview() {
-    AlbumPage(stoney)
-}
 
 @Composable
 fun AlbumPage(
@@ -114,6 +93,7 @@ fun AlbumPage(
     Box(
         modifier = Modifier
             .background(Color.Black)
+            .fillMaxSize()
     ) {
         Box(
             modifier = Modifier
@@ -345,29 +325,36 @@ fun AlbumHeader(
         modifier = modifier
             .padding(horizontal = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         Text(
             text = album.name,
             fontWeight = FontWeight.W800,
-            fontSize = 36.sp
+            fontSize = 28.sp,
+            lineHeight = 10.sp
         )
 
         Row(
             modifier = Modifier
+                .clip(MaterialTheme.shapes.small)
                 .clickable {
                     onArtistClick()
                 }
-                .padding(5.dp)
-                .clip(MaterialTheme.shapes.small)
+                .padding(5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             AsyncImage(
-                model = postMalone.imagesUrl.first().first,
-                contentDescription = "mini artist avatar"
+                model = Library.artists.first { it.id == album.artistId }.imagesUrl.first().first,
+                contentDescription = "mini artist avatar",
+                modifier = Modifier
+                    .size(25.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
 
             Text(
-                text = postMalone.name,
+                text = Library.artists.first { it.id == album.artistId }.name,
                 fontWeight = FontWeight.W700
             )
         }
@@ -375,7 +362,7 @@ fun AlbumHeader(
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier = Modifier
-                .padding(top = 20.dp)
+                .padding(top = 10.dp)
                 .fillMaxWidth(.85f)
         ) {
             CircleButton(

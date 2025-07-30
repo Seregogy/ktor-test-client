@@ -33,4 +33,10 @@ class FetchUserViewModel(
             null
         }
     }
+
+    suspend fun fetchTestFile() {
+        val response = httpClient.get("$hostUrl:$port/download")
+
+        println(response.status)
+    }
 }

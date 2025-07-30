@@ -12,5 +12,6 @@ data class Album(
     val totalListening: Int = 0,
     val releaseDate: Long = 0,
     val imageUrl: String = "",
+    val label: String = "",
     val primaryColor: Color = Color.Transparent
 )

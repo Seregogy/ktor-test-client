@@ -42,10 +42,12 @@ fun CircleButton(
             content()
         }
 
-        Text(
-            text = underscoreText,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.W700
-        )
+        if (underscoreText.isNotEmpty()) {
+            Text(
+                text = underscoreText,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.W700
+            )
+        }
     }
 }

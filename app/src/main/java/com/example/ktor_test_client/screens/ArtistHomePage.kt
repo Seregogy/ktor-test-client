@@ -58,22 +58,12 @@ import com.example.ktor_test_client.R
 import com.example.ktor_test_client.compoments.CircleButton
 import com.example.ktor_test_client.models.Artist
 import com.example.ktor_test_client.state.ScrollState
-import com.example.ktor_test_client.tools.formatNumber
+import com.example.ktor_test_client.helpers.formatNumber
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.delay
 
-val postMalone = Artist(
-    name = "Post Malone",
-    about = "American raper, producer",
-    listeningInMonth = 1_301_945,
-    likes = 1_052_006,
-    imagesUrl = listOf(
-        "https://www.soyuz.ru/public/uploads/files/2/7390868/2019091211303003a5833f99.jpg" to Color(150, 159, 170),
-        "https://cdn-image.zvuk.com/pic?type=artist&id=3289907&size=medium&hash=bbdb7895-d42f-40ca-801c-540fc2bc7f2c" to Color(140, 140, 140)
-    )
-)
 object TopAppContentBar {
-    val topPartWeight = .55f
+    const val topPartWeight = .55f
     val additionalHeight = 60.dp
 }
 
