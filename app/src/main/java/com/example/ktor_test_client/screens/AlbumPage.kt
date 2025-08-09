@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.Library
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.compoments.CircleButton
+import com.example.ktor_test_client.components.CircleButton
 import com.example.ktor_test_client.models.Album
 import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber

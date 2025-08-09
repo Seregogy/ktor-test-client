@@ -5,18 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
@@ -37,27 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import com.example.ktor_test_client.components.ElementsStackTest
 import com.example.ktor_test_client.controls.ApiCard
 import com.example.ktor_test_client.controls.ApiMethodModel
-import com.example.ktor_test_client.pages.PlayerPage
-import com.example.ktor_test_client.screens.AlbumPage
-import com.example.ktor_test_client.screens.ArtistHomePage
-import com.example.ktor_test_client.screens.PaletteTestScreen
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
-import com.example.ktor_test_client.viewmodels.PaletteTestScreenViewModel
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +50,7 @@ class MainActivity : ComponentActivity() {
                     Column {
                         val navController = rememberNavController()
 
-                        NavHost(
+                        /*NavHost(
                             navController = navController,
                             startDestination = "PaletteTest"
                         ) {
@@ -166,8 +146,10 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 PaletteTestScreen(viewModel<PaletteTestScreenViewModel>())
                             }
-                        }
+                        }*/
                     }
+
+                    ElementsStackTest()
 
                     //FetchUserGet(Modifier.padding(innerPadding), FetchUserViewModel("http://192.168.1.64", 8080))
                 }

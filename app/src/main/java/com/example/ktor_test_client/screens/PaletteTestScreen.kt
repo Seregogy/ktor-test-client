@@ -2,6 +2,8 @@ package com.example.ktor_test_client.screens
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.palette.graphics.Palette
@@ -41,12 +44,20 @@ fun PaletteTestScreen(
     viewModel: PaletteTestScreenViewModel
 ) {
     val bitmap: MutableState<Bitmap?> = remember { mutableStateOf(null) }
-    val palette: MutableState<Palette?> = remember { mutableStateOf(null) }
 
     var imageUrl by remember { mutableStateOf("https://the-flow.ru/uploads/images/catalog/element/665087c3320df.png") }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    val colorScheme = MaterialTheme.colorScheme
+    val currentColor = remember { mutableStateOf(colorScheme.background) }
+
+    val animatedCurrentColor = animateColorAsState(
+        targetValue = currentColor.value,
+        animationSpec = tween(500),
+        label = "color animation"
+    )
 
     LaunchedEffect(Unit) {
         viewModel.fetchImageByUrl(context, imageUrl)
@@ -60,7 +71,9 @@ fun PaletteTestScreen(
 
     LaunchedEffect(Unit) {
         viewModel.palette.collect {
-            palette.value = it
+            if (it?.swatches != null) {
+                currentColor.value = Color(it.vibrantSwatch?.rgb ?: 0xFFFFFF)
+            }
         }
     }
 
@@ -68,7 +81,7 @@ fun PaletteTestScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(palette.value!!.swatches.last()!!.rgb))
+                .background(animatedCurrentColor.value)
         ) {
             Column(
                 modifier = Modifier
@@ -83,7 +96,8 @@ fun PaletteTestScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .clip(MaterialTheme.shapes.medium)
+                        .clip(MaterialTheme.shapes.medium),
+                    contentScale = ContentScale.Crop
                 )
 
                 TextField(
