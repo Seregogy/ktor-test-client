@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.components.CircleButton
+import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.models.Album

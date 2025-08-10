@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.components
+package com.example.ktor_test_client.controls
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size

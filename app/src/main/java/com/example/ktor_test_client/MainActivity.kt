@@ -4,12 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -30,14 +39,35 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.ktor_test_client.components.ElementsStackTest
+import androidx.navigation.navArgument
 import com.example.ktor_test_client.controls.ApiCard
 import com.example.ktor_test_client.controls.ApiMethodModel
+import com.example.ktor_test_client.controls.ArtistCardState
+import com.example.ktor_test_client.controls.artistSwipeableCard
+import com.example.ktor_test_client.controls.SwipeableCardStack
+import com.example.ktor_test_client.pages.PlayerPage
+import com.example.ktor_test_client.screens.AlbumPage
+import com.example.ktor_test_client.screens.ArtistHomePage
+import com.example.ktor_test_client.screens.ArtistsCardSwipeables
+import com.example.ktor_test_client.screens.PaletteTestScreen
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
+import com.example.ktor_test_client.viewmodels.PaletteTestScreenViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,9 +80,9 @@ class MainActivity : ComponentActivity() {
                     Column {
                         val navController = rememberNavController()
 
-                        /*NavHost(
+                        NavHost(
                             navController = navController,
-                            startDestination = "PaletteTest"
+                            startDestination = "ArtistsCardSwipeables"
                         ) {
                             composable(
                                 route = "AlbumPage/?id={albumId}",
@@ -99,59 +129,20 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable(
-                                route = "Test"
-                            ) {
-                                val density = LocalDensity.current
-                                val widthPx = with(density) { (LocalConfiguration.current.screenWidthDp.dp - 50.dp).toPx() }
-
-                                val rectSize = 120.dp
-                                val rectSizePx = with(density) { rectSize.toPx() }
-
-                                val state = remember {
-                                    AnchoredDraggableState(
-                                        initialValue = 0,
-                                        anchors = DraggableAnchors {
-                                            0 at 0f
-                                            1 at widthPx / 2
-                                            2 at widthPx
-                                        },
-                                        //positionalThreshold = { distance: Float -> distance * .5f },
-                                        //velocityThreshold = { with(density) { 100.dp.toPx() } },
-                                        //animationSpec = tween()
-                                    )
-                                }
-
-                                Box(
-                                    Modifier
-                                        .padding(top = innerPadding.calculateTopPadding())
-                                        .offset {
-                                            IntOffset(
-                                                x = state
-                                                    .requireOffset()
-                                                    .roundToInt(),
-                                                y = 0,
-                                            )
-                                        }
-                                        .anchoredDraggable(
-                                            state,
-                                            Orientation.Horizontal,
-                                        )
-                                        .size(rectSize)
-                                        .background(Color.LightGray)
-                                )
-                            }
-
-                            composable(
                                 route = "PaletteTest"
                             ) {
                                 PaletteTestScreen(viewModel<PaletteTestScreenViewModel>())
                             }
-                        }*/
+
+                            composable(
+                                route = "ArtistsCardSwipeables"
+                            ) {
+                                ArtistsCardSwipeables {
+                                    navController.navigate("ArtistPage/?id=${it.id}")
+                                }
+                            }
+                        }
                     }
-
-                    ElementsStackTest()
-
-                    //FetchUserGet(Modifier.padding(innerPadding), FetchUserViewModel("http://192.168.1.64", 8080))
                 }
             }
         }

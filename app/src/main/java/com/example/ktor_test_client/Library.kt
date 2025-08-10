@@ -34,6 +34,62 @@ object Library {
                 "https://www.soyuz.ru/public/uploads/files/2/7390868/2019091211303003a5833f99.jpg" to Color(150, 159, 170),
                 "https://cdn-image.zvuk.com/pic?type=artist&id=3289907&size=medium&hash=bbdb7895-d42f-40ca-801c-540fc2bc7f2c" to Color(140, 140, 140)
             )
+        ),
+        Artist(
+            id = 1,
+            name = "Markul",
+            about = "Markul — российский хип-хоп исполнитель, создающий глубокую, атмосферную музыку с меланхоличными текстами, в которых сочетаются элементы хип-хопа и современной урбан музыки. Его ключевые альбомы, такие как «Great Depression» (2018) и «Sense of Human» (2021), MAKE DEPRESSION GREAT AGAIN (2024), стали отражением его уникального музыкального стиля и мировоззрения.",
+            imagesUrl = listOf(
+                "https://avatars.yandex.net/get-music-content/14662984/9745d47a.p.2938031/600x600" to Color.Transparent
+            )
+        ),
+        Artist(
+            id = 3,
+            name = "FRIENDLY THUG 52 NGG",
+            about = "Российский рэпер, участник объединения «52».",
+            imagesUrl = listOf(
+                "https://avatars.yandex.net/get-music-content/14270105/c4032bdb.p.12666124/600x600" to Color.Transparent
+            )
+        ),
+        Artist(
+            id = 4,
+            name = "SLAVA MARLOW",
+            about = "Российский музыкальный продюсер, автор песен, видеоблогер и стример. Широкую известность начал приобретать в 2019 году после начала сотрудничества с российским рэп-исполнителем Моргенштерном в качестве его саунд-продюсера. К концу 2020 года стал известен также как сольный исполнитель.",
+            imagesUrl = listOf(
+                "https://avatars.yandex.net/get-music-content/15499524/203d2fd3.p.6456325/600x600" to Color.Transparent
+            )
+        ),
+        Artist(
+            id = 5,
+            name = "Элджей",
+            about = "Российский рэпер, поп-исполнитель и актёр дубляжа.",
+            imagesUrl = listOf(
+                "https://avatars.yandex.net/get-music-content/14728505/a8258ec2.p.3185166/600x600" to Color.Transparent
+            )
+        ),
+        Artist(
+            id = 6,
+            name = "kizaru",
+            about = "Российский хип-хоп-исполнитель. Родом из Санкт-Петербурга, проживает в Барселоне. Участник и основатель творческого объединения «Haunted Family».",
+            imagesUrl = listOf(
+                "https://avatars.yandex.net/get-music-content/14369544/c51b91a6.p.3879764/600x600" to Color.Transparent
+            )
+        ),
+        Artist(
+            id = 7,
+            name = "Big Baby Tape",
+            about = "Big Baby Tape - российский рэпер и автор песен. Создатель и лидер объединения Benzo Gang. Выступает также под псевдонимами DJ Tape и альтер эго Tape LaFlare.",
+            imagesUrl = listOf(
+                "https://avatars.yandex.net/get-music-content/14707562/78aa85d3.p.5701276/600x600" to Color.Transparent
+            )
+        ),
+        Artist(
+            id = 8,
+            name = "mgk",
+            about = "Американский рэпер, рок-музыкант, певец, актёр. Свой псевдоним он взял в честь знаменитого гангстера Джорджа «Пулемёт» Келли. Получил известность после выпуска своих первых четырёх микстейпов: Stamp Of Approval, Homecoming, 100 Words and Running и Lace Up. В середине 2011 года он подписал контракт с компанией Young and Reckless Clothing. 14 декабря 2011 года он был назван MTV Hottest Breakthrough MC 2011 года. 18 марта 2012 года он выиграл награду MTVu Breaking Woodie. В 2012 году его фотография появилась на обложке журнала XXL. По состоянию на май 2022 года, выпустил шесть студийных альбомов.",
+            imagesUrl = listOf(
+                "https://avatars.yandex.net/get-music-content/3071110/9a23ff5e.p.675667/600x600" to Color.Transparent
+            )
         )
     )
 

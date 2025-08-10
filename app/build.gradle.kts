@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.ktor_test_client"
-        minSdk = 28
+        minSdk = 31
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -98,6 +98,9 @@ dependencies {
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    implementation(libs.haze)
+    implementation(libs.haze.materials)
 
     implementation(libs.kotlinx.serialization.json)
 }
