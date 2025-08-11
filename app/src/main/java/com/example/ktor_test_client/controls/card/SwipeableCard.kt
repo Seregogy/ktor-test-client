@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,23 +28,27 @@ class SwipeableCard(
     val cardsFactors: SwipeableCardsFactors = SwipeableCardsFactors(),
     val content: @Composable SwipeableCard.() -> Unit = { },
 ) {
+    lateinit var animatedOffset: State<Offset>
+    lateinit var animatedScale: State<Float>
+    lateinit var animatedAlpha: State<Float>
+
     @Composable
     fun DrawCard() {
         val density = LocalDensity.current
 
-        val animatedOffset by animateOffsetAsState(
+        animatedOffset = animateOffsetAsState(
             targetValue = Offset(cardState.value.xOffset.value, cardState.value.yOffset.value),
             animationSpec = if (cardState.value.isDragging.value) tween(0) else cardData.offsetAnimationSpec,
             label = "card offset animation"
         )
 
-        val animatedScale by animateFloatAsState(
+        animatedScale = animateFloatAsState(
             targetValue = cardsFactors.scaleFactor(cardState.value.currentIndex.value, cardState.value, cardData),
             animationSpec = cardData.zIndexAnimationSpec,
             label = "card scale animation"
         )
 
-        val animatedAlpha by animateFloatAsState(
+        animatedAlpha = animateFloatAsState(
             targetValue = if (cardState.value.swiped.value) 0f else 1f,
             animationSpec = tween(200),
             label = "alpha animation"
@@ -52,11 +56,11 @@ class SwipeableCard(
 
         Box(
             modifier = modifier
-                .alpha(animatedAlpha)
+                .alpha(animatedAlpha.value)
                 .offset {
                     IntOffset(
-                        x = animatedOffset.x.roundToInt(),
-                        y = animatedOffset.y.roundToInt()
+                        x = animatedOffset.value.x.roundToInt(),
+                        y = animatedOffset.value.y.roundToInt()
                     ) + cardsFactors.cardOffsetCalculation(
                         cardState.value.currentIndex.value,
                         cardState.value,
@@ -64,7 +68,7 @@ class SwipeableCard(
                         density
                     )
                 }
-                .scale(animatedScale)
+                .scale(animatedScale.value)
                 .zIndex(-cardState.value.currentIndex.value.toFloat())
                 .pointerInput(Unit) {
                     detectDragGestures(
@@ -92,6 +96,8 @@ class SwipeableCard(
 
                         change.consume()
 
+                        cardState.value.onSwiping()
+
                         cardState.value.xOffset.value += dragAmount.x * cardData.horizontalOffsetAcceleration
                         cardState.value.yOffset.value += dragAmount.y * cardData.verticalOffsetAcceleration
                     }
@@ -99,7 +105,7 @@ class SwipeableCard(
                 .graphicsLayer {
                     if (cardState.value.selected.value.not()) return@graphicsLayer
 
-                    rotationZ = cardsFactors.rotationFactor(animatedOffset.x, cardState.value, cardData)
+                    rotationZ = cardsFactors.rotationFactor(animatedOffset.value.x, cardState.value, cardData)
                 }
         ) {
             content()
@@ -111,6 +117,7 @@ class SwipeableCard(
         cardState.value.yOffset.value = 0f
 
         cardState.value.isDragging.value = false
+
+        cardState.value.onSwipeEnd()
     }
 }
-

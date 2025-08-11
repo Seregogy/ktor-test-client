@@ -137,7 +137,10 @@ class MainActivity : ComponentActivity() {
                             composable(
                                 route = "ArtistsCardSwipeables"
                             ) {
-                                ArtistsCardSwipeables {
+                                ArtistsCardSwipeables(
+                                    modifier = Modifier
+                                        .padding(innerPadding)
+                                ) {
                                     navController.navigate("ArtistPage/?id=${it.id}")
                                 }
                             }

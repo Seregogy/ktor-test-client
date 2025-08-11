@@ -12,9 +12,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -27,6 +32,7 @@ import androidx.compose.ui.zIndex
 import com.example.ktor_test_client.controls.card.SwipeDirection
 import com.example.ktor_test_client.controls.card.SwipeableCard
 import com.example.ktor_test_client.controls.card.SwipeableCardData
+import kotlinx.coroutines.launch
 
 @Composable
 fun card(color: Color) : SwipeableCard {
@@ -96,6 +102,9 @@ fun SwipeableCardStack(
 ) {
     val cardsState = remember { mutableStateListOf<SwipeableCard>() }
 
+    var xGlobalOffset by remember { mutableFloatStateOf(0f) }
+    var yGlobalOffset by remember { mutableFloatStateOf(0f) }
+
     LaunchedEffect(cardsState) {
         cards.forEach {
             cardsState.add(it)
@@ -107,9 +116,25 @@ fun SwipeableCardStack(
 
         cardsState.forEach { card ->
             card.cardState.value.onSwipe = { swipeDirection ->
+                xGlobalOffset = 0f
+                yGlobalOffset = 0f
+
                 onSwipe(swipeDirection, card)
 
                 cardsState.removeAt(card.cardState.value.currentIndex.value)
+
+                cardsState.forEach {
+                    it.cardState.value.xOffset.value = 0f
+                    it.cardState.value.yOffset.value = 0f
+                }
+            }
+            card.cardState.value.onSwiping = {
+                xGlobalOffset = card.cardState.value.xOffset.value
+                yGlobalOffset = card.cardState.value.yOffset.value
+            }
+            card.cardState.value.onSwipeEnd = {
+                xGlobalOffset = 0f
+                yGlobalOffset = 0f
             }
         }
     }
@@ -127,13 +152,21 @@ fun SwipeableCardStack(
                 it.cardState.value.currentIndex.value = index
                 it.cardState.value.selected.value = index == 0
 
-                if (it.cardState.value.selected.value)
+                if (it.cardState.value.selected.value) {
                     onCardSelected(it)
+                } else {
+                    it.cardState.value.xOffset.value = xGlobalOffset / (3 * index)
+                    it.cardState.value.yOffset.value = yGlobalOffset / (3 * index)
+                }
 
                 Box(
                     modifier = Modifier
                         .alpha(if (index == maxVisibleSize) 0f else 1f)
-                        .zIndex(-it.cardsFactors.zIndexFactor(index, it.cardState.value, it.cardData).toFloat())
+                        .zIndex(
+                            -it.cardsFactors
+                                .zIndexFactor(index, it.cardState.value, it.cardData)
+                                .toFloat()
+                        )
                 ) {
                     it.DrawCard()
                 }

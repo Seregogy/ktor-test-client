@@ -18,7 +18,7 @@ data class SwipeableCardData(
     val verticalOffsetAcceleration: Float = 1f,
 
     val cardVerticalOffset: Dp = 25.dp,
-    val swipeLimit: Dp = 200.dp,
+    val swipeLimit: Dp = 180.dp,
 
     val scaleDivider: Float = 20f,
     val rotationDivider: Float = 50f,

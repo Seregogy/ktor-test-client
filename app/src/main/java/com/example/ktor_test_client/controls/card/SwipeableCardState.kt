@@ -4,7 +4,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.geometry.Offset
 
 data class SwipeableCardState(
     var selected: MutableState<Boolean> = mutableStateOf(false),
@@ -19,5 +18,7 @@ data class SwipeableCardState(
     var yOffset: MutableState<Float> = mutableFloatStateOf(0f),
     var scale: MutableState<Float> = mutableFloatStateOf(0f),
 
-    var onSwipe: (SwipeDirection) -> Unit = { }
+    var onSwipe: (SwipeDirection) -> Unit = { },
+    var onSwiping: () -> Unit = { },
+    var onSwipeEnd: () -> Unit = { }
 )
