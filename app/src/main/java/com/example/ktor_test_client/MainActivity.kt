@@ -4,21 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.AnchoredDraggableState
-import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -32,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,14 +31,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -54,20 +40,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.ktor_test_client.api.KtorAPI
+import com.example.ktor_test_client.api.TokenHandler
+import com.example.ktor_test_client.api.TokenType
+import com.example.ktor_test_client.api.methods.getRandomTrack
 import com.example.ktor_test_client.controls.ApiCard
 import com.example.ktor_test_client.controls.ApiMethodModel
-import com.example.ktor_test_client.controls.ArtistCardState
-import com.example.ktor_test_client.controls.artistSwipeableCard
-import com.example.ktor_test_client.controls.SwipeableCardStack
-import com.example.ktor_test_client.pages.PlayerPage
 import com.example.ktor_test_client.screens.AlbumPage
 import com.example.ktor_test_client.screens.ArtistHomePage
 import com.example.ktor_test_client.screens.ArtistsCardSwipeables
 import com.example.ktor_test_client.screens.PaletteTestScreen
+import com.example.ktor_test_client.screens.PlayerPage
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
+import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import com.example.ktor_test_client.viewmodels.PaletteTestScreenViewModel
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,7 +69,7 @@ class MainActivity : ComponentActivity() {
 
                         NavHost(
                             navController = navController,
-                            startDestination = "ArtistsCardSwipeables"
+                            startDestination = "Player/?id=1"
                         ) {
                             composable(
                                 route = "AlbumPage/?id={albumId}",
@@ -108,13 +95,34 @@ class MainActivity : ComponentActivity() {
                                 route = "Player/?id={trackId}",
                                 arguments = listOf(navArgument("trackId") { type = NavType.IntType })
                             ) {
+                                val ktorApi = KtorAPI(tokenHandler = object : TokenHandler {
+                                    override fun saveToken(type: TokenType, token: String) { }
+
+                                    override fun loadToken(type: TokenType): String = ""
+
+                                    override fun hasToken(type: TokenType): Boolean = true
+
+                                })
+
+                                val context = LocalContext.current
+
                                 val trackId = it.arguments?.getInt("trackId")
 
                                 val track = Library.tracks.first { track -> track.id == trackId }
                                 val album = Library.albums.first { album -> album.id == track.albumId }
                                 val artist = Library.artists.first { artist -> artist.id == track.artistsId.first() }
 
+                                val viewModel: AudioPlayerViewModel = viewModel()
+
+                                LaunchedEffect(Unit) {
+                                    val randomTrack = ktorApi.getRandomTrack()
+
+                                    viewModel.initializePlayer(context)
+                                    viewModel.playFromUri(android.net.Uri.parse(randomTrack?.track?.audioUrl ?: "http://192.168.1.64:8080/audio/86a08862-6e2e-4aeb-9a1a-c5005edfd90a.mp3"))
+                                }
+
                                 PlayerPage(
+                                    viewModel,
                                     track,
                                     album,
                                     artist,
@@ -147,132 +155,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun MainPage(
-    modifier: Modifier
-) {
-    LazyColumn(
-        modifier = modifier
-            .padding(20.dp)
-            .clip(MaterialTheme.shapes.largeIncreased)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-    ) {
-        val apiMethods = mutableListOf(
-            ApiMethodModel("/user", method = "get", params = mapOf("id" to "Int", "name" to "String")),
-            ApiMethodModel("/user", method = "post"),
-            ApiMethodModel("/user", method = "delete")
-        )
-        itemsIndexed(apiMethods) { index, item ->
-            ApiCard(
-                apiMethodModel = item,
-                onDisable = {
-                    //apiMethods.remove(it)
-                }
-            )
-
-            if (index < apiMethods.count() - 1) {
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier
-                        .padding(start = 30.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun FetchUserGet(
-    modifier: Modifier = Modifier,
-    viewModel: FetchUserViewModel
-) {
-    var user: User? by remember {
-        mutableStateOf(null)
-    }
-
-    var selectedId by remember {
-        mutableStateOf("")
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            if (user != null) {
-                Card(
-                    modifier = Modifier
-                        .padding(20.dp),
-                    elevation = CardDefaults.elevatedCardElevation(
-                        defaultElevation = 15.dp
-                    )
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Text(
-                            text = user!!.name ?: "unknown",
-                            fontSize = MaterialTheme.typography.labelLarge.fontSize,
-                            fontWeight = MaterialTheme.typography.labelLarge.fontWeight
-                        )
-
-                        Row {
-                            Text(
-                                text = user!!.about ?: "none@gmail.com"
-                            )
-
-                            HorizontalDivider()
-
-                            Text(
-                                text = user!!.id.toString(),
-                            )
-                        }
-
-                        Text(
-                            text = user!!.about ?: "none"
-                        )
-                    }
-                }
-            }
-
-
-            Text(
-                text = "Fetch user by id",
-                modifier = Modifier,
-                fontSize = MaterialTheme.typography.labelLarge.fontSize,
-                fontWeight = MaterialTheme.typography.labelLarge.fontWeight
-            )
-
-            TextField(
-                value = selectedId,
-                onValueChange = {
-                    selectedId = it
-                },
-                label = {
-                    Text(text = "Укажите индекс")
-                }
-            )
-
-            Button(onClick = {
-                coroutineScope.launch {
-                    user = viewModel.fetchUser(selectedId.toInt())
-                }
-            }) {
-                Text(text = "Получить пользователя по ID")
             }
         }
     }

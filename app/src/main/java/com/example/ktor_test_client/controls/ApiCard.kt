@@ -42,7 +42,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ktor_test_client.KtorApi
 import com.example.ktor_test_client.R
 
 @Preview(showBackground = true)
@@ -56,7 +55,6 @@ fun ApiCard(
             "name: String" to "впомогательный параметр"
         )
     ),
-    api: KtorApi = KtorApi(),
     onDisable: (ApiMethodModel) -> Unit = { }
 ) {
     var expanded by remember { mutableStateOf(false) }

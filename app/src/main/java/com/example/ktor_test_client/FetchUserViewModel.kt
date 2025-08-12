@@ -24,16 +24,6 @@ class FetchUserViewModel(
         }
     }
 
-    suspend fun fetchUser(id: Int): User? {
-        val response = httpClient.get("$hostUrl:$port/user?id=$id")
-
-        return if (response.status.isSuccess()) {
-            response.body()
-        } else {
-            null
-        }
-    }
-
     suspend fun fetchTestFile() {
         val response = httpClient.get("$hostUrl:$port/download")
 

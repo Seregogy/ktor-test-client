@@ -407,7 +407,7 @@ fun AlbumHeader(
                 underscoreText = "Слушать"
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.play_icon),
+                    painter = painterResource(R.drawable.pause_icon_1),
                     modifier = Modifier
                         .size(40.dp),
                     contentDescription = ""

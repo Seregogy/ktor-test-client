@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.pages
+package com.example.ktor_test_client.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -22,11 +23,16 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.controls.CircleButton
@@ -54,12 +62,51 @@ import com.example.ktor_test_client.models.Artist
 import com.example.ktor_test_client.models.Track
 import com.example.ktor_test_client.screens.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.screens.TopAppContentBar.topPartWeight
+import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+
+/*@Composable
+fun AudioPlayerScreen(viewModel: AudioPlayerViewModel = viewModel()) {
+    val context = LocalContext.current
+    val isPlaying by remember { derivedStateOf { viewModel.exoPlayer?.isPlaying ?: false } }
+    val currentPosition by remember { derivedStateOf { viewModel.exoPlayer?.currentPosition ?: 0L } }
+
+    LaunchedEffect(Unit) {
+        //viewModel.initializePlayer(context)
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.releasePlayer()
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Position: ${currentPosition / 1000}s")
+
+        Button(onClick = { viewModel.playPause() }) {
+            Text(if (isPlaying) "Pause" else "Play")
+        }
+
+        Slider(
+            value = currentPosition.toFloat(),
+            onValueChange = { viewModel.seekTo(it.toLong()) },
+            valueRange = 0f..(viewModel.exoPlayer?.duration?.toFloat() ?: 0f)
+        )
+    }
+}*/
 
 val bottomGap = 110.dp
 
 @Composable
 fun PlayerPage(
+    viewModel: AudioPlayerViewModel,
     track: Track,
     album: Album,
     artist: Artist,
@@ -67,8 +114,33 @@ fun PlayerPage(
     onAlbumClicked: (albumId: Int) -> Unit,
     onArtistClicked: (artistId: Int) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
+    var isPlaying by remember { mutableStateOf(false) }
+
+    val currentPosition = remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            while (true) {
+                //if ((viewModel.exoPlayer?.isPlaying) != true) continue
+
+                delay(500)
+
+                currentPosition.longValue = viewModel.exoPlayer?.currentPosition ?: 0L
+
+                println(currentPosition.longValue)
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.releasePlayer()
+        }
+    }
+
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    var sliderValue by remember { mutableFloatStateOf(0f) }
 
     AsyncImage(
         model = album.imageUrl,
@@ -97,7 +169,7 @@ fun PlayerPage(
                     painter = painterResource(R.drawable.arrow_down_icon),
                     contentDescription = "",
                     modifier = Modifier
-                            .size(30.dp)
+                        .size(30.dp)
                 )
             }
 
@@ -204,9 +276,11 @@ fun PlayerPage(
                         horizontalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
                         Slider(
-                            value = sliderValue,
+                            value = currentPosition.longValue / viewModel.currentDuration.value.toFloat(),
                             onValueChange = {
-                                sliderValue = it
+                                currentPosition.longValue = (it * viewModel.currentDuration.value).toLong()
+
+                                viewModel.exoPlayer?.seekTo(currentPosition.longValue)
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -227,12 +301,21 @@ fun PlayerPage(
 
                         CircleButton(
                             containerColor = album.primaryColor * 2f,
-                            onClick = { },
+                            onClick = {
+                                viewModel.playPause()
+
+                                isPlaying = viewModel.exoPlayer?.isPlaying ?: false
+                            },
                             content = {
                                 Icon(
-                                    painter = painterResource(R.drawable.play_icon),
+                                    painter = if (isPlaying)
+                                            painterResource(R.drawable.play_icon_1)
+                                        else
+                                            painterResource(R.drawable.pause_icon_1),
                                     contentDescription = "play icon",
-                                    tint = Color.Black
+                                    tint = Color.Black,
+                                    modifier = Modifier
+                                        .size(32.dp)
                                 )
                             }
                         )
@@ -246,12 +329,12 @@ fun PlayerPage(
                                     fontSize = 18.sp
                                 )
                             ) {
-                                append(formatMinuteTimer((track.seconds * sliderValue).roundToInt()))
+                                append(formatMinuteTimer((currentPosition.longValue / 1000f).roundToInt()))
                             }
 
                             append("/")
 
-                            append(formatMinuteTimer(track.seconds))
+                            append(formatMinuteTimer((viewModel.currentDuration.value / 1000).toInt()))
                         },
                         textAlign = TextAlign.Center
                     )
