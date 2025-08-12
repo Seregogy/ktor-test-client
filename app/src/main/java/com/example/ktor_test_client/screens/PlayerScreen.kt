@@ -1,5 +1,7 @@
 package com.example.ktor_test_client.screens
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -15,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,10 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +40,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -51,8 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
+import androidx.palette.graphics.Palette
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.helpers.formatMinuteTimer
@@ -114,10 +115,38 @@ fun PlayerPage(
     onAlbumClicked: (albumId: Int) -> Unit,
     onArtistClicked: (artistId: Int) -> Unit
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var isPlaying by remember { mutableStateOf(false) }
+    val bitmap: MutableState<Bitmap?> = remember { mutableStateOf(null) }
+    val palette: MutableState<Palette?> = remember { mutableStateOf(null) }
 
+    val primaryColor: MutableState<Color?> = remember { mutableStateOf(null) }
+    val textColor: MutableState<Color?> = remember { mutableStateOf(null) }
+    val tertiaryColor: MutableState<Color?> = remember { mutableStateOf(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchImageByUrl(context, album.imageUrl)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.bitmap.collect {
+            bitmap.value = it
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.palette.collect {
+            palette.value = it
+
+            primaryColor.value = Color(palette.value?.dominantSwatch?.rgb ?: 0xFFFFFF)
+            textColor.value = Color(palette.value?.mutedSwatch?.rgb ?: 0xFFFFFF)
+            /*secondaryColor.value = Color(palette.value!!.swatches[1].rgb)
+            tertiaryColor.value = Color(palette.value!!.swatches[2].rgb)*/
+        }
+    }
+
+    var isPlaying by remember { mutableStateOf(false) }
     val currentPosition = remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(Unit) {
@@ -142,14 +171,16 @@ fun PlayerPage(
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
-    AsyncImage(
-        model = album.imageUrl,
-        contentDescription = "album image",
-        modifier = Modifier
-            .fillMaxWidth()
-            .height((screenHeight * topPartWeight) + additionalHeight),
-        contentScale = ContentScale.Crop
-    )
+    bitmap.value?.let {
+        Image(
+            bitmap = it.asImageBitmap(),
+            contentDescription = "album image",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height((screenHeight * topPartWeight) + additionalHeight),
+            contentScale = ContentScale.Crop
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -169,13 +200,15 @@ fun PlayerPage(
                     painter = painterResource(R.drawable.arrow_down_icon),
                     contentDescription = "",
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(30.dp),
+                    tint = textColor.value ?: MaterialTheme.colorScheme.onBackground
                 )
             }
 
             Text(
                 text = "Плейлист ${album.name}",
-                fontWeight = FontWeight.W700
+                fontWeight = FontWeight.W700,
+                color = textColor.value ?: MaterialTheme.colorScheme.onBackground
             )
 
             IconButton(
@@ -183,7 +216,8 @@ fun PlayerPage(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.history_icon),
-                    contentDescription = ""
+                    contentDescription = "",
+                    tint = textColor.value ?: MaterialTheme.colorScheme.onBackground
                 )
             }
         }
@@ -191,7 +225,7 @@ fun PlayerPage(
         PlayerPageHeaderFadingGradientTop(
             modifier = Modifier
                 .height(screenHeight * topPartWeight),
-            targetColor = remember { mutableStateOf(album.primaryColor) }
+            targetColor = primaryColor
         )
 
         Box(
@@ -204,7 +238,7 @@ fun PlayerPage(
                 modifier = Modifier
                     .padding(top = bottomGap)
                     .fillMaxSize()
-                    .background(album.primaryColor)
+                    .background(primaryColor.value ?: Color.Transparent)
             )
 
             Column(
@@ -224,7 +258,8 @@ fun PlayerPage(
                                 onAlbumClicked(album.id)
                             }
                             .padding(horizontal = 5.dp)
-                            .basicMarquee()
+                            .basicMarquee(),
+                        color = textColor.value ?: MaterialTheme.colorScheme.onBackground
                     )
 
                     Text(
@@ -238,7 +273,8 @@ fun PlayerPage(
                                 onArtistClicked(album.artistId)
                             }
                             .padding(horizontal = 5.dp)
-                            .basicMarquee()
+                            .basicMarquee(),
+                        color = textColor.value ?: MaterialTheme.colorScheme.onBackground
                     )
 
                     Row(
@@ -250,22 +286,26 @@ fun PlayerPage(
                             contentDescription = "",
                             modifier = Modifier
                                 .size(25.dp)
-                                .alpha(.7f)
+                                .alpha(.7f),
+                            tint = textColor.value ?: MaterialTheme.colorScheme.onBackground
                         )
 
                         Text(
                             text = album.name,
-                            fontWeight = FontWeight.W600
+                            fontWeight = FontWeight.W600,
+                            color = textColor.value ?: MaterialTheme.colorScheme.onBackground
                         )
 
                         Text(
                             text = "●",
-                            fontSize = 8.sp
+                            fontSize = 8.sp,
+                            color = textColor.value ?: MaterialTheme.colorScheme.onBackground
                         )
 
                         Text(
                             text = (1970 + album.releaseDate / (3600 * 24 * 31 * 12)).toString(),
-                            fontWeight = FontWeight.W600
+                            fontWeight = FontWeight.W600,
+                            color = textColor.value ?: MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -286,21 +326,21 @@ fun PlayerPage(
                                 .weight(1f)
                                 .align(Alignment.CenterVertically),
                             colors = SliderColors(
-                                thumbColor = album.primaryColor * 2.5f,
-                                activeTrackColor = album.primaryColor * 2f,
-                                inactiveTrackColor = album.primaryColor * .7f,
-                                activeTickColor = album.primaryColor * 2.5f,
-                                inactiveTickColor = album.primaryColor,
-                                disabledThumbColor = album.primaryColor,
-                                disabledActiveTrackColor = album.primaryColor,
-                                disabledActiveTickColor = album.primaryColor,
-                                disabledInactiveTickColor = album.primaryColor,
-                                disabledInactiveTrackColor = album.primaryColor,
+                                thumbColor = (primaryColor.value ?: Color.Transparent) * 2.5f,
+                                activeTrackColor = (primaryColor.value ?: Color.Transparent) * 2f,
+                                inactiveTrackColor = (primaryColor.value ?: Color.Transparent) * .7f,
+                                activeTickColor = (primaryColor.value ?: Color.Transparent) * 2.5f,
+                                inactiveTickColor = (primaryColor.value ?: Color.Transparent),
+                                disabledThumbColor = (primaryColor.value ?: Color.Transparent),
+                                disabledActiveTrackColor = (primaryColor.value ?: Color.Transparent),
+                                disabledActiveTickColor = (primaryColor.value ?: Color.Transparent),
+                                disabledInactiveTickColor = (primaryColor.value ?: Color.Transparent),
+                                disabledInactiveTrackColor = (primaryColor.value ?: Color.Transparent),
                             )
                         )
 
                         CircleButton(
-                            containerColor = album.primaryColor * 2f,
+                            containerColor = (primaryColor.value ?: Color.Transparent) * 2f,
                             onClick = {
                                 viewModel.playPause()
 
@@ -336,7 +376,8 @@ fun PlayerPage(
 
                             append(formatMinuteTimer((viewModel.currentDuration.value / 1000).toInt()))
                         },
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = textColor.value ?: MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
@@ -347,7 +388,7 @@ fun PlayerPage(
 @Composable
 fun PlayerPageHeaderFadingGradientTop(
     modifier: Modifier,
-    targetColor: State<Color>
+    targetColor: State<Color?>
 ) {
     Column(
         modifier = modifier
@@ -360,7 +401,7 @@ fun PlayerPageHeaderFadingGradientTop(
                     brush = Brush.verticalGradient(
                         colorStops = arrayOf(
                             .35f to Color.Transparent,
-                            .8f to targetColor.value
+                            .8f to (targetColor.value ?: Color.Transparent)
                         )
                     )
                 )

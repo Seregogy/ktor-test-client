@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class PaletteTestScreenViewModel : ViewModel() {
+open class ImagePaletteViewModel : ViewModel() {
     private val innerBitmapState: MutableStateFlow<Bitmap?> = MutableStateFlow(null)
     val bitmap: StateFlow<Bitmap?> = innerBitmapState.asStateFlow()
 

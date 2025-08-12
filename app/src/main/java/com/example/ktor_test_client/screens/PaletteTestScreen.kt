@@ -29,19 +29,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.palette.graphics.Palette
-import com.example.ktor_test_client.viewmodels.PaletteTestScreenViewModel
+import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun PaletteTestScreen(
-    viewModel: PaletteTestScreenViewModel
+    viewModel: ImagePaletteViewModel
 ) {
     val bitmap: MutableState<Bitmap?> = remember { mutableStateOf(null) }
 
