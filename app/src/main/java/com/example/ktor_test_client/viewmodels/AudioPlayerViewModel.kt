@@ -4,32 +4,73 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.media3.common.C
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.ktor_test_client.api.KtorAPI
+import com.example.ktor_test_client.api.methods.RandomTrackResponse
+import com.example.ktor_test_client.api.methods.getRandomTrack
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class AudioPlayerViewModel : ImagePaletteViewModel() {
     var exoPlayer: ExoPlayer? = null
 
-    var currentDuration: MutableState<Long> = mutableLongStateOf(1L)
-    var currentPlaybackState: MutableState<Int> = mutableIntStateOf(Player.STATE_IDLE)
+    var isAutoplay: Boolean = true
+
+    private val _isInit: MutableState<Boolean> = mutableStateOf(false)
+    val isInit: State<Boolean> = _isInit
+
+    private val _currentTrackDuration: MutableState<Long> = mutableLongStateOf(1L)
+    val currentTrackDuration: State<Long> = _currentTrackDuration
+
+    private val _isPlay: MutableState<Boolean> = mutableStateOf(false)
+    val isPlay: State<Boolean> = _isPlay
+
+    private val _currentPlaybackState: MutableStateFlow<Int> = MutableStateFlow(Player.STATE_IDLE)
+    var currentPlaybackState: StateFlow<Int> = _currentPlaybackState.asStateFlow()
+
+    private var _currentTrack: MutableStateFlow<RandomTrackResponse?> = MutableStateFlow(null)
+    val currentTrack: StateFlow<RandomTrackResponse?> = _currentTrack.asStateFlow()
+
+    var onTrackEnd: () -> Unit = { }
+
+    private lateinit var eventListener: Player.Listener
 
     fun initializePlayer(context: Context) {
         exoPlayer = ExoPlayer.Builder(context).build()
-        exoPlayer!!.prepare()
 
-        exoPlayer?.addListener(object : Player.Listener {
+        eventListener = object : Player.Listener {
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) { }
 
             override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY && exoPlayer!!.duration != C.TIME_UNSET) {
-                    currentDuration.value = exoPlayer!!.duration
+                _isInit.value = true
+
+                if (state != currentPlaybackState.value)
+                    _currentPlaybackState.value = state
+
+                when (state) {
+                    Player.STATE_READY -> {
+                        _currentTrackDuration.value = exoPlayer?.duration ?: 1L
+                        exoPlayer?.prepare()
+
+                        if (isAutoplay)
+                            exoPlayer?.play()
+                    }
+
+                    Player.STATE_ENDED -> {
+                        onTrackEnd()
+                    }
+
+                    Player.STATE_BUFFERING -> { }
+                    Player.STATE_IDLE -> { }
                 }
             }
 
@@ -65,43 +106,65 @@ class AudioPlayerViewModel : ImagePaletteViewModel() {
                     exoPlayer!!.playWhenReady = true
                 }
             }
-        })
+
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                _isPlay.value = isPlaying
+            }
+
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                println("playWhenReady changed ($playWhenReady)")
+            }
+        }
+
+        exoPlayer?.addListener(eventListener)
     }
 
-    fun playFromUri(uri: Uri) {
-        exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
-        exoPlayer?.prepare()
-    }
+    //TODO: убрать отсюда апи и вынести получение треков в отдельный сервис
+    fun getRandomTrack(api: KtorAPI, context: Context) {
+        viewModelScope.launch {
+            exoPlayer?.let {
+                _currentTrack.value = api.getRandomTrack()
 
-    fun playPause() {
-        exoPlayer?.let {
-            if (!exoPlayer!!.isPlaying) {
-                play()
-            } else {
-                pause()
+                fetchImageByUrl(context, currentTrack.value?.album?.imageUrl ?: "")
+                setMediaFromUri(currentTrack.value?.track?.audioUrl ?: "")
+
+                it.prepare()
             }
         }
     }
 
-    fun pause() {
-        exoPlayer?.pause()
+    fun setMediaFromUri(uri: String) {
+        exoPlayer?.setMediaItem(MediaItem.fromUri(Uri.parse(uri)))
     }
 
-    fun play() {
-        exoPlayer?.play()
+    fun playPause() {
+        exoPlayer?.let {
+            if (it.isPlaying) {
+                it.pause()
+            } else {
+                it.play()
+            }
+        }
     }
 
     fun seekTo(position: Long) {
         exoPlayer?.seekTo(position)
     }
 
-    fun releasePlayer() {
-        exoPlayer?.release()
-        exoPlayer = null
-    }
-
     override fun onCleared() {
         releasePlayer()
+
         super.onCleared()
+    }
+
+    fun releasePlayer() {
+        exoPlayer?.let {
+            exoPlayer?.removeListener(eventListener)
+
+            exoPlayer?.stop()
+            exoPlayer?.release()
+        }
+
+        exoPlayer = null
     }
 }

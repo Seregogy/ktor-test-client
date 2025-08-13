@@ -15,7 +15,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.ktor_test_client"
-        minSdk = 31
+        minSdk = 28
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"

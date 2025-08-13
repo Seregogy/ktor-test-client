@@ -1,5 +1,7 @@
 package com.example.ktor_test_client.screens
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -27,10 +29,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,29 +43,35 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.example.ktor_test_client.Library
 import com.example.ktor_test_client.R
+import com.example.ktor_test_client.api.methods.AlbumResponse
 import com.example.ktor_test_client.controls.CircleButton
-import com.example.ktor_test_client.models.Album
 import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber
+import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
 import com.valentinilk.shimmer.shimmer
 
 @Composable
 fun AlbumPage(
-    album: Album,
-    onNavigateToArtist: (artistId: Int) -> Unit = { }
+    album: AlbumResponse,
+    viewModel: ImagePaletteViewModel = viewModel(),
+    onNavigateToArtist: (artistId: String) -> Unit = { }
 ) {
+    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val density = LocalDensity.current
 
@@ -90,6 +100,26 @@ fun AlbumPage(
         }
     }
 
+    var imageBitmap: Bitmap? by remember { mutableStateOf(null) }
+    LaunchedEffect(Unit) {
+        album.imageUrl?.let {
+            viewModel.fetchImageByUrl(context, it)
+        }
+
+        viewModel.bitmap.collect {
+            imageBitmap = it
+        }
+    }
+
+    var primaryColor: Color by remember { mutableStateOf(Color.Transparent) }
+    var secondaryColor: Color by remember { mutableStateOf(Color.Transparent) }
+    LaunchedEffect(Unit) {
+        viewModel.palette.collect {
+            primaryColor = Color(it?.dominantSwatch?.rgb ?: Color.Transparent.toArgb())
+            secondaryColor = Color(it?.mutedSwatch?.rgb ?: Color.Transparent.toArgb())
+        }
+    }
+
     Box(
         modifier = Modifier
             .background(Color.Black)
@@ -99,7 +129,7 @@ fun AlbumPage(
             modifier = Modifier
                 .alpha(scrollState.value.colorAlpha)
                 .fillMaxSize()
-                .background(album.primaryColor)
+                .background(primaryColor)
         )
 
         Box(
@@ -111,7 +141,7 @@ fun AlbumPage(
                 modifier = Modifier
                     .alpha(imageAlpha),
                 screenHeight = screenHeight,
-                album = album
+                bitmap = imageBitmap
             )
 
             LazyColumn(
@@ -141,7 +171,7 @@ fun AlbumPage(
                                     .align(Alignment.BottomCenter),
                                 album = album
                             ) {
-                                onNavigateToArtist(album.artistId)
+                                onNavigateToArtist(album.artists.first().id)
                             }
                         }
                     }
@@ -156,7 +186,7 @@ fun AlbumPage(
                         AlbumHeaderFadingGradientBottom(
                             modifier = Modifier
                                 .alpha(scrollState.value.colorAlpha),
-                            targetColor = album.primaryColor
+                            targetColor = primaryColor
                         )
 
                         Column(
@@ -293,7 +323,7 @@ fun AlbumPage(
 private fun BoxScope.AlbumImage(
     modifier: Modifier,
     screenHeight: Dp,
-    album: Album
+    bitmap: Bitmap?
 ) {
     Box(
         modifier = modifier
@@ -301,24 +331,26 @@ private fun BoxScope.AlbumImage(
             .fillMaxWidth()
             .height(screenHeight * TopAppContentBar.topPartWeight)
     ) {
-        AsyncImage(
-            model = album.imageUrl,
-            contentDescription = "",
-            modifier = Modifier
-                .align(Alignment.Center)
-                .aspectRatio(1f)
-                .fillMaxSize()
-                .offset(y = (-20).dp)
-                .padding(75.dp)
-                .clip(MaterialTheme.shapes.large)
-        )
+        bitmap?.let {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = "",
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .aspectRatio(1f)
+                    .fillMaxSize()
+                    .offset(y = (-20).dp)
+                    .padding(75.dp)
+                    .clip(MaterialTheme.shapes.large)
+            )
+        }
     }
 }
 
 @Composable
 fun AlbumHeader(
     modifier: Modifier = Modifier,
-    album: Album,
+    album: AlbumResponse,
     onArtistClick: () -> Unit = { }
 ) {
     Column(
@@ -345,7 +377,7 @@ fun AlbumHeader(
             horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             AsyncImage(
-                model = Library.artists.first { it.id == album.artistId }.imagesUrl.first().first,
+                model = album.artists.first().imageUrl,
                 contentDescription = "mini artist avatar",
                 modifier = Modifier
                     .size(25.dp)
@@ -354,7 +386,7 @@ fun AlbumHeader(
             )
 
             Text(
-                text = Library.artists.first { it.id == album.artistId }.name,
+                text = album.artists.first().name,
                 fontWeight = FontWeight.W700
             )
         }
@@ -372,7 +404,7 @@ fun AlbumHeader(
                 Icon(
                     painter = painterResource(R.drawable.download_icon),
                     modifier = Modifier
-                        .size(40.dp),
+                        .size(30.dp),
                     contentDescription = ""
                 )
             }
@@ -384,7 +416,7 @@ fun AlbumHeader(
                 Icon(
                     painter = painterResource(R.drawable.heart_icon),
                     modifier = Modifier
-                        .size(40.dp),
+                        .size(30.dp),
                     contentDescription = ""
                 )
             }
@@ -396,7 +428,7 @@ fun AlbumHeader(
                 Icon(
                     painter = painterResource(R.drawable.queue_music_icon),
                     modifier = Modifier
-                        .size(40.dp),
+                        .size(30.dp),
                     contentDescription = ""
                 )
             }
@@ -407,9 +439,9 @@ fun AlbumHeader(
                 underscoreText = "Слушать"
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.pause_icon_1),
+                    painter = painterResource(R.drawable.pause_icon),
                     modifier = Modifier
-                        .size(40.dp),
+                        .size(30.dp),
                     contentDescription = ""
                 )
             }

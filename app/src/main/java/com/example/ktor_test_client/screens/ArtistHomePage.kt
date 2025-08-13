@@ -455,7 +455,7 @@ fun ArtistHeader(
                 painter = painterResource(R.drawable.headphones_icon),
                 contentDescription = "headphones icon",
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(30.dp)
             )
 
             Text(
@@ -478,7 +478,7 @@ fun ArtistHeader(
                 Icon(
                     painter = painterResource(R.drawable.heart_icon),
                     modifier = Modifier
-                        .size(40.dp),
+                        .size(30.dp),
                     contentDescription = ""
                 )
             }
@@ -490,7 +490,7 @@ fun ArtistHeader(
                 Icon(
                     painter = painterResource(R.drawable.queue_music_icon),
                     modifier = Modifier
-                        .size(40.dp),
+                        .size(30.dp),
                     contentDescription = ""
                 )
             }
@@ -501,9 +501,9 @@ fun ArtistHeader(
                 underscoreText = "Слушать"
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.pause_icon_1),
+                    painter = painterResource(R.drawable.pause_icon),
                     modifier = Modifier
-                        .size(40.dp),
+                        .size(30.dp),
                     contentDescription = ""
                 )
             }
