@@ -36,7 +36,7 @@ data class Artist(
 data class RandomTrackResponse(
 	val track: Track = Track(),
 	val album: Album = Album(),
-	val artist: List<Artist> = listOf()
+	val artists: List<Artist> = listOf()
 )
 
 suspend fun KtorAPI.getRandomTrack() : RandomTrackResponse? {

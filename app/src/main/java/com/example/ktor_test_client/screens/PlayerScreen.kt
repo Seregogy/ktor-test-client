@@ -2,6 +2,8 @@ package com.example.ktor_test_client.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,10 +12,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,20 +35,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -50,7 +54,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +67,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -73,21 +81,179 @@ import com.example.ktor_test_client.screens.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.screens.TopAppContentBar.topPartWeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
 const val animationsSpeed = 1200
 
 @Composable
+fun BottomSheetPlayerPage(
+    yCurrentOffset: State<Float>,
+    miniPlayerHeight: Dp,
+    innerPadding: PaddingValues,
+    api: KtorAPI,
+    viewModel: AudioPlayerViewModel,
+    modifier: Modifier,
+    onExpandRequest: () -> Unit = { },
+    onCollapseRequest: () -> Unit = { },
+    onAlbumClicked: (albumId: String) -> Unit,
+    onArtistClicked: (artistId: String) -> Unit
+) {
+    val screenHeight = LocalConfiguration.current.screenHeightDp
+    val targetMiniPlayerAlpha by remember {
+        derivedStateOf {
+            yCurrentOffset.value / screenHeight
+        }
+    }
+
+    Box {
+        Box(
+            modifier = Modifier.alpha(1f - targetMiniPlayerAlpha)
+        ) {
+            PlayerPage(api, viewModel, modifier, onCollapseRequest, onAlbumClicked, onArtistClicked)
+        }
+
+        Box(
+            modifier = Modifier
+                .alpha(targetMiniPlayerAlpha)
+                .align(Alignment.TopCenter)
+                .then(
+                    if (targetMiniPlayerAlpha < .8f)
+                        Modifier.pointerInteropFilter { return@pointerInteropFilter false }
+                    else
+                        Modifier
+                )
+        ) {
+            MiniPlayer(viewModel, miniPlayerHeight, innerPadding, onExpandRequest)
+        }
+    }
+}
+
+@Composable
+fun MiniPlayer(
+    viewModel: AudioPlayerViewModel,
+    miniPlayerHeight: Dp,
+    scaffoldInnerPadding: PaddingValues,
+    onExpandRequest: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val colorScheme = MaterialTheme.colorScheme
+
+    val currentTrack by viewModel.currentTrack.collectAsStateWithLifecycle()
+    val bitmap by viewModel.bitmap.collectAsStateWithLifecycle()
+    val palette by viewModel.palette.collectAsStateWithLifecycle()
+
+    val backgroundColor by remember {
+        derivedStateOf {
+            Color(palette?.vibrantSwatch?.rgb ?: colorScheme.background.toArgb())
+        }
+    }
+
+    val foregroundColor by remember {
+        derivedStateOf {
+            Color(palette?.vibrantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
+        }
+    }
+
+    val artistsNames by remember {
+        derivedStateOf {
+            currentTrack?.artists?.joinToString(",") { it.name } ?: "unknown"
+        }
+    }
+
+    val isPlay by remember { viewModel.isPlay }
+
+    Box(
+        modifier = Modifier
+            .background(Color.Transparent)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
+                .height(miniPlayerHeight)
+                .fillMaxWidth()
+                .padding(15.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(backgroundColor)
+                .clickable {
+                    onExpandRequest()
+                },
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AnimatedContent(
+                targetState = bitmap,
+                transitionSpec = { fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(animationsSpeed)) },
+                label = "mini player bitmap crossfade"
+            ) {
+                it?.let {
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .padding(10.dp)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(5.dp)),
+                        contentDescription = "mini player image",
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
+            Column {
+                Text(
+                    text = currentTrack?.track?.name ?: "Unknown",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.W700,
+                    color = foregroundColor,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .basicMarquee()
+                )
+                Text(
+                    text = artistsNames,
+                    fontSize = 13.sp,
+                    color = foregroundColor
+                )
+            }
+        }
+
+        IconButton(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 30.dp),
+            onClick = {
+                viewModel.playPause()
+            },
+            interactionSource = interactionSource
+        ) {
+            Icon(
+                painter = if (isPlay)
+                    painterResource(R.drawable.play_icon)
+                else
+                    painterResource(R.drawable.pause_icon),
+                contentDescription = "play/pause icon",
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(28.dp),
+                tint = foregroundColor
+            )
+        }
+    }
+}
+
+@Composable
 fun PlayerPage(
     api: KtorAPI,
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
+    onCollapseRequest: () -> Unit = { },
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
     val context = LocalContext.current
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     LaunchedEffect(Unit) {
         viewModel.initializePlayer(context)
@@ -154,7 +320,6 @@ fun PlayerPage(
         }
     }
 
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     Box {
         bitmap?.let {
@@ -179,7 +344,11 @@ fun PlayerPage(
                 .fillMaxSize()
                 .then(modifier)
         ) {
-            TopBar(textOnSecondaryColorAnimated, currentTrack)
+            TopBar(
+                textOnSecondaryColorAnimated,
+                currentTrack,
+                onCollapseRequest
+            )
 
             PlayerPageHeaderFadingGradientTop(
                 modifier = Modifier
@@ -207,8 +376,8 @@ fun PlayerPage(
                 ) {
                     TrackInfo(
                         currentTrack,
-                        onAlbumClicked,
                         secondaryColor,
+                        onAlbumClicked,
                         onArtistClicked
                     )
 
@@ -219,7 +388,10 @@ fun PlayerPage(
                         isPlay,
                         isSliding,
                         primaryColorAnimated,
-                        secondaryColorAnimated
+                        secondaryColorAnimated,
+                        onNext = { viewModel.nextTrack(api, context) },
+                        onPrev = { viewModel.prevTrack(context) },
+                        onPlayPause = { viewModel.playPause() }
                     )
                 }
             }
@@ -230,7 +402,8 @@ fun PlayerPage(
 @Composable
 private fun TopBar(
     textOnSecondaryColorAnimated: State<Color>,
-    currentTrack: RandomTrackResponse?
+    currentTrack: RandomTrackResponse?,
+    onCollapseRequest: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -239,7 +412,9 @@ private fun TopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
-            onClick = { }
+            onClick = {
+                onCollapseRequest()
+            }
         ) {
             Icon(
                 painter = painterResource(R.drawable.arrow_down_icon),
@@ -260,7 +435,7 @@ private fun TopBar(
             onClick = { }
         ) {
             Icon(
-                painter = painterResource(R.drawable.history_icon),
+                painter = painterResource(R.drawable.queue_music_icon),
                 contentDescription = "",
                 tint = textOnSecondaryColorAnimated.value
             )
@@ -271,8 +446,8 @@ private fun TopBar(
 @Composable
 private fun TrackInfo(
     currentTrack: RandomTrackResponse?,
-    onAlbumClicked: (albumId: String) -> Unit,
     secondaryColor: MutableState<Color>,
+    onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
     Column {
@@ -292,14 +467,14 @@ private fun TrackInfo(
         )
 
         Text(
-            text = currentTrack?.artist?.first()?.name ?: "",
+            text = currentTrack?.artists?.firstOrNull()?.name ?: "",
             fontSize = 24.sp,
             fontWeight = FontWeight.W800,
             modifier = Modifier
                 .offset(y = (-7).dp)
                 .clip(MaterialTheme.shapes.small)
                 .clickable {
-                    onArtistClicked(currentTrack?.artist?.first()?.id ?: "")
+                    onArtistClicked(currentTrack?.artists?.first()?.id ?: "")
                 }
                 .padding(horizontal = 5.dp)
                 .basicMarquee(),
@@ -350,15 +525,24 @@ private fun PlayerControls(
     isPlay: Boolean,
     isSliding: MutableState<Boolean>,
     primaryColor: State<Color>,
-    secondaryColor: State<Color>
+    secondaryColor: State<Color>,
+    onNext: () -> Unit = { },
+    onPrev: () -> Unit = { },
+    onPlayPause: () -> Unit = { }
 ) {
+    val currentPositionAnimated = animateFloatAsState(
+        targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
+        animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
+        label = "slider animation"
+    )
+
     Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(15.dp)
         ) {
             Slider(
-                value = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
+                value = currentPositionAnimated.value,
                 onValueChange = {
                     if (!isSliding.value) isSliding.value = true
 
@@ -398,7 +582,7 @@ private fun PlayerControls(
             CircleButton(
                 containerColor = primaryColor.value * 2f,
                 onClick = {
-                    viewModel.playPause()
+                    onPlayPause()
                 },
                 content = {
                     Icon(
@@ -406,7 +590,7 @@ private fun PlayerControls(
                             painterResource(R.drawable.play_icon)
                         else
                             painterResource(R.drawable.pause_icon),
-                        contentDescription = "play icon",
+                        contentDescription = "play/pause icon",
                         tint = secondaryColor.value,
                         modifier = Modifier
                             .size(30.dp)
@@ -425,7 +609,7 @@ private fun PlayerControls(
                 ) {
                     append(
                         formatMinuteTimer(
-                            (currentPosition.value / 1000f).roundToInt().coerceIn(0..currentTrackDuration.toInt())
+                            (currentPositionAnimated.value * currentTrackDuration.toFloat() / 1000).roundToInt().coerceIn(0..currentTrackDuration.toInt())
                         )
                     )
                 }
@@ -436,6 +620,45 @@ private fun PlayerControls(
             textAlign = TextAlign.Center,
             color = secondaryColor.value
         )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .align(Alignment.End)
+        ) {
+            CircleButton(
+                containerColor = primaryColor.value * 2f,
+                onClick = {
+                    onPrev()
+                },
+                content = {
+                    Icon(
+                        painter = painterResource(R.drawable.previous_icon),
+                        contentDescription = "prev icon",
+                        tint = secondaryColor.value,
+                        modifier = Modifier
+                            .size(30.dp)
+                    )
+                }
+            )
+
+            CircleButton(
+                containerColor = primaryColor.value * 2f,
+                onClick = {
+                    onNext()
+                },
+                content = {
+                    Icon(
+                        painter = painterResource(R.drawable.next_icon),
+                        contentDescription = "next icon",
+                        tint = secondaryColor.value,
+                        modifier = Modifier
+                            .size(30.dp)
+                    )
+                }
+            )
+        }
     }
 }
 

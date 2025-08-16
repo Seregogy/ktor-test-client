@@ -1,12 +1,12 @@
 package com.example.ktor_test_client.controls
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CircleButton(
     modifier: Modifier = Modifier,
@@ -41,7 +40,7 @@ fun CircleButton(
                 disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer
             ),
             onClick = onClick,
-            contentPadding = ButtonDefaults.contentPaddingFor(0.dp)
+            contentPadding = PaddingValues(0.dp)
         ) {
             content()
         }

@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AudioPlayerViewModel : ImagePaletteViewModel() {
+    private var tracks: MutableList<RandomTrackResponse> = mutableListOf()
+    private var currentTrackIndex = 0
+
     var exoPlayer: ExoPlayer? = null
 
     var isAutoplay: Boolean = true
@@ -122,15 +125,48 @@ class AudioPlayerViewModel : ImagePaletteViewModel() {
     //TODO: убрать отсюда апи и вынести получение треков в отдельный сервис
     fun getRandomTrack(api: KtorAPI, context: Context) {
         viewModelScope.launch {
-            exoPlayer?.let {
-                _currentTrack.value = api.getRandomTrack()
+            _currentTrack.value = api.getRandomTrack()
 
-                fetchImageByUrl(context, currentTrack.value?.album?.imageUrl ?: "")
-                setMediaFromUri(currentTrack.value?.track?.audioUrl ?: "")
+            _currentTrack.value?.let { track ->
+                tracks.add(track)
+                currentTrackIndex = tracks.indices.last
 
-                it.prepare()
+                setTrack(context, track)
             }
         }
+    }
+
+    fun prevTrack(context: Context) {
+        currentTrackIndex = (tracks.lastIndex - 1).coerceIn(0..tracks.indices.last)
+
+        viewModelScope.launch {
+            setTrack(context, tracks[currentTrackIndex])
+        }
+    }
+
+    fun nextTrack(api: KtorAPI, context: Context) {
+        println("currentTrackIndex = $currentTrackIndex, tracks.indices.last = ${tracks.indices.last}")
+        if (currentTrackIndex == tracks.indices.last) {
+            getRandomTrack(api, context)
+        } else {
+            currentTrackIndex++
+
+            viewModelScope.launch {
+                setTrack(context, tracks[currentTrackIndex])
+            }
+        }
+    }
+
+    private suspend fun setTrack(
+        context: Context,
+        track: RandomTrackResponse
+    ) {
+        fetchImageByUrl(context, track.album.imageUrl)
+        setMediaFromUri(track.track.audioUrl)
+
+        _currentTrack.value = track
+
+        exoPlayer?.prepare()
     }
 
     fun setMediaFromUri(uri: String) {
