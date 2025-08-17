@@ -13,15 +13,15 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.ktor_test_client.api.KtorAPI
-import com.example.ktor_test_client.api.methods.RandomTrackResponse
-import com.example.ktor_test_client.api.methods.getRandomTrack
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.example.api.dtos.FullTrack
+import org.example.api.methods.getRandomTrack
 
 class AudioPlayerViewModel : ImagePaletteViewModel() {
-    private var tracks: MutableList<RandomTrackResponse> = mutableListOf()
+    private var tracks: MutableList<FullTrack> = mutableListOf()
     private var currentTrackIndex = 0
 
     var exoPlayer: ExoPlayer? = null
@@ -40,8 +40,8 @@ class AudioPlayerViewModel : ImagePaletteViewModel() {
     private val _currentPlaybackState: MutableStateFlow<Int> = MutableStateFlow(Player.STATE_IDLE)
     var currentPlaybackState: StateFlow<Int> = _currentPlaybackState.asStateFlow()
 
-    private var _currentTrack: MutableStateFlow<RandomTrackResponse?> = MutableStateFlow(null)
-    val currentTrack: StateFlow<RandomTrackResponse?> = _currentTrack.asStateFlow()
+    private var _currentTrack: MutableStateFlow<FullTrack?> = MutableStateFlow(null)
+    val currentTrack: StateFlow<FullTrack?> = _currentTrack.asStateFlow()
 
     var onTrackEnd: () -> Unit = { }
 
@@ -159,10 +159,10 @@ class AudioPlayerViewModel : ImagePaletteViewModel() {
 
     private suspend fun setTrack(
         context: Context,
-        track: RandomTrackResponse
+        track: FullTrack
     ) {
         fetchImageByUrl(context, track.album.imageUrl)
-        setMediaFromUri(track.track.audioUrl)
+        setMediaFromUri(track.audioUrl)
 
         _currentTrack.value = track
 

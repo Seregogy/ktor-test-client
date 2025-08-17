@@ -1,48 +1,19 @@
-package com.example.ktor_test_client.api.methods
+package org.example.api.methods
 
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.http.isSuccess
-import kotlinx.serialization.Serializable
 import com.example.ktor_test_client.api.KtorAPI
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import org.example.api.dtos.FullTrack
 
-@Serializable
-data class Track(
-	val id: String = "",
-	val name: String = "unknown",
-	val durationSeconds: Int = 0,
-	val lyrics: String? = "",
-	val indexInAlbum: Int = 0,
-	val listening: Int? = 0,
-	val isExplicit: Boolean? = false,
-	val audioUrl: String = ""
-)
-
-@Serializable
-data class Album(
-	val id: String = "",
-	val name: String = "",
-	val imageUrl: String = "",
-)
-
-@Serializable
-data class Artist(
-	val id: String = "",
-	val name: String = "unknown artist",
-	val imageUrl: String? = ""
-)
-
-@Serializable
-data class RandomTrackResponse(
-	val track: Track = Track(),
-	val album: Album = Album(),
-	val artists: List<Artist> = listOf()
-)
-
-suspend fun KtorAPI.getRandomTrack() : RandomTrackResponse? {
+suspend fun KtorAPI.getRandomTrack(): FullTrack? {
 	val response = httpClient.get {
 		url { host("/api/v1/tracks/random") }
 	}
+
+	println(response.status)
+	println(response.bodyAsText())
 
 	return if (response.status.isSuccess()) {
 		response.body()

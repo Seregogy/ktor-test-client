@@ -12,8 +12,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.InteractionSource
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +27,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,7 +48,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,9 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -73,7 +75,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.KtorAPI
-import com.example.ktor_test_client.api.methods.RandomTrackResponse
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
@@ -81,6 +82,7 @@ import com.example.ktor_test_client.screens.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.screens.TopAppContentBar.topPartWeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
+import org.example.api.dtos.FullTrack
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
@@ -136,8 +138,6 @@ fun MiniPlayer(
     scaffoldInnerPadding: PaddingValues,
     onExpandRequest: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-
     val colorScheme = MaterialTheme.colorScheme
 
     val currentTrack by viewModel.currentTrack.collectAsStateWithLifecycle()
@@ -203,42 +203,61 @@ fun MiniPlayer(
 
             Column {
                 Text(
-                    text = currentTrack?.track?.name ?: "Unknown",
+                    text = currentTrack?.name ?: "Unknown",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.W700,
                     color = foregroundColor,
                     maxLines = 1,
                     modifier = Modifier
-                        .basicMarquee()
+                        .basicMarquee(),
+                    lineHeight = 18.sp
                 )
                 Text(
                     text = artistsNames,
                     fontSize = 13.sp,
-                    color = foregroundColor
+                    color = foregroundColor,
+                    lineHeight = 13.sp
                 )
             }
         }
 
-        IconButton(
+        Row(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 30.dp),
-            onClick = {
-                viewModel.playPause()
-            },
-            interactionSource = interactionSource
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
         ) {
-            Icon(
-                painter = if (isPlay)
-                    painterResource(R.drawable.play_icon)
-                else
-                    painterResource(R.drawable.pause_icon),
-                contentDescription = "play/pause icon",
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(28.dp),
-                tint = foregroundColor
-            )
+            IconButton(
+                onClick = { }
+            ) {
+                Icon(
+                    imageVector = if (false)
+                        Icons.Rounded.Favorite
+                    else
+                        Icons.Rounded.FavoriteBorder,
+                    contentDescription = "favorite icon button",
+                    modifier = Modifier
+                        .size(24.dp),
+                    tint = foregroundColor
+                )
+            }
+
+            IconButton(
+                onClick = {
+                    viewModel.playPause()
+                }
+            ) {
+                Icon(
+                    imageVector = if (isPlay)
+                        Icons.Rounded.Pause
+                    else
+                        Icons.Rounded.PlayArrow,
+                    contentDescription = "play/pause icon",
+                    modifier = Modifier
+                        .size(26.dp),
+                    tint = foregroundColor
+                )
+            }
         }
     }
 }
@@ -402,7 +421,7 @@ fun PlayerPage(
 @Composable
 private fun TopBar(
     textOnSecondaryColorAnimated: State<Color>,
-    currentTrack: RandomTrackResponse?,
+    currentTrack: FullTrack?,
     onCollapseRequest: () -> Unit
 ) {
     Row(
@@ -445,14 +464,14 @@ private fun TopBar(
 
 @Composable
 private fun TrackInfo(
-    currentTrack: RandomTrackResponse?,
+    currentTrack: FullTrack?,
     secondaryColor: MutableState<Color>,
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
     Column {
         Text(
-            text = currentTrack?.track?.name ?: "",
+            text = currentTrack?.name ?: "",
             fontSize = 80.sp,
             fontWeight = FontWeight.W800,
             lineHeight = 10.sp,
@@ -539,7 +558,7 @@ private fun PlayerControls(
     Column {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(15.dp)
+            horizontalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             Slider(
                 value = currentPositionAnimated.value,
@@ -579,24 +598,20 @@ private fun PlayerControls(
                 }
             )
 
-            CircleButton(
-                containerColor = primaryColor.value * 2f,
-                onClick = {
-                    onPlayPause()
-                },
-                content = {
-                    Icon(
-                        painter = if (isPlay)
-                            painterResource(R.drawable.play_icon)
-                        else
-                            painterResource(R.drawable.pause_icon),
-                        contentDescription = "play/pause icon",
-                        tint = secondaryColor.value,
-                        modifier = Modifier
-                            .size(30.dp)
-                    )
-                }
-            )
+            IconButton(
+                onClick = { /*TODO(лайк на трек)*/ }
+            ) {
+                Icon(
+                    imageVector = if (false)
+                        Icons.Rounded.Favorite
+                    else
+                        Icons.Rounded.FavoriteBorder,
+                    contentDescription = "play/pause icon",
+                    tint = secondaryColor.value,
+                    modifier = Modifier
+                        .size(26.dp)
+                )
+            }
         }
 
         Text(
@@ -625,39 +640,53 @@ private fun PlayerControls(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .align(Alignment.End)
+                .padding(top = 20.dp)
+                .align(Alignment.CenterHorizontally)
         ) {
+
+            IconButton(
+                onClick = { onPrev() }
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.SkipPrevious,
+                    contentDescription = "prev icon",
+                    tint = secondaryColor.value,
+                    modifier = Modifier
+                        .size(34.dp)
+                )
+            }
+
             CircleButton(
                 containerColor = primaryColor.value * 2f,
+                size = 70.dp,
                 onClick = {
-                    onPrev()
+                    onPlayPause()
                 },
                 content = {
                     Icon(
-                        painter = painterResource(R.drawable.previous_icon),
-                        contentDescription = "prev icon",
+                        imageVector = if (isPlay)
+                            Icons.Rounded.Pause
+                        else
+                            Icons.Rounded.PlayArrow,
+                        contentDescription = "play/pause icon",
                         tint = secondaryColor.value,
                         modifier = Modifier
-                            .size(30.dp)
+                            .size(36.dp)
                     )
                 }
             )
 
-            CircleButton(
-                containerColor = primaryColor.value * 2f,
-                onClick = {
-                    onNext()
-                },
-                content = {
-                    Icon(
-                        painter = painterResource(R.drawable.next_icon),
-                        contentDescription = "next icon",
-                        tint = secondaryColor.value,
-                        modifier = Modifier
-                            .size(30.dp)
-                    )
-                }
-            )
+            IconButton(
+                onClick = { onNext() }
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.SkipNext,
+                    contentDescription = "next icon",
+                    tint = secondaryColor.value,
+                    modifier = Modifier
+                        .size(34.dp)
+                )
+            }
         }
     }
 }

@@ -58,16 +58,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.api.methods.AlbumResponse
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
 import com.valentinilk.shimmer.shimmer
+import org.example.api.dtos.FullAlbum
 
 @Composable
 fun AlbumPage(
-    album: AlbumResponse,
+    album: FullAlbum,
     viewModel: ImagePaletteViewModel = viewModel(),
     onNavigateToArtist: (artistId: String) -> Unit = { }
 ) {
@@ -193,15 +193,6 @@ fun AlbumPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
-
-                            Text(
-                                text = "Популярные треки",
-                                fontSize = 26.sp,
-                                fontWeight = FontWeight.W700,
-                                modifier = Modifier
-                                    .padding(top = 50.dp, start = 25.dp)
-                            )
-
                             Spacer(Modifier.height(15.dp))
 
                             for (i in 1..5) {
@@ -350,7 +341,7 @@ private fun BoxScope.AlbumImage(
 @Composable
 fun AlbumHeader(
     modifier: Modifier = Modifier,
-    album: AlbumResponse,
+    album: FullAlbum,
     onArtistClick: () -> Unit = { }
 ) {
     Column(

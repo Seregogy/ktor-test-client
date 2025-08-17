@@ -13,7 +13,6 @@ import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
@@ -26,7 +25,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,17 +38,16 @@ import androidx.navigation.navArgument
 import com.example.ktor_test_client.api.KtorAPI
 import com.example.ktor_test_client.api.TokenHandler
 import com.example.ktor_test_client.api.TokenType
-import com.example.ktor_test_client.api.methods.AlbumResponse
-import com.example.ktor_test_client.api.methods.getAlbumById
 import com.example.ktor_test_client.screens.AlbumPage
 import com.example.ktor_test_client.screens.ArtistHomePage
 import com.example.ktor_test_client.screens.ArtistsCardSwipeables
 import com.example.ktor_test_client.screens.BottomSheetPlayerPage
-import com.example.ktor_test_client.screens.PlayerPage
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.example.api.dtos.FullAlbum
+import org.example.api.methods.getAlbum
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +62,6 @@ class MainActivity : ComponentActivity() {
         })
 
         setContent {
-            val screenHeight = LocalConfiguration.current.screenHeightDp.dp
             val miniPlayerHeight = 100.dp
             var allInit by remember { mutableStateOf(false) }
 
@@ -78,12 +74,6 @@ class MainActivity : ComponentActivity() {
                 val coroutineScope = rememberCoroutineScope()
                 val navController = rememberNavController()
                 val bottomSheetState = rememberBottomSheetScaffoldState()
-
-                val isExpanded = remember {
-                    derivedStateOf {
-                        bottomSheetState.bottomSheetState.currentValue == SheetValue.Expanded
-                    }
-                }
 
                 val yCurrentOffset = remember {
                     derivedStateOf {
@@ -156,10 +146,10 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
                 val albumId = it.arguments?.getString("albumId")
-                var album: AlbumResponse? by remember { mutableStateOf(null) }
+                var album: FullAlbum? by remember { mutableStateOf(null) }
 
                 LaunchedEffect(Unit) {
-                    album = ktorApi.getAlbumById(albumId)
+                    album = ktorApi.getAlbum(albumId ?: "")
                 }
 
                 when {
@@ -184,6 +174,7 @@ class MainActivity : ComponentActivity() {
                     fontWeight = FontWeight.W800,
                     modifier = Modifier
                         .padding(innerPadding)
+                        .padding(25.dp)
                 )
             }
 
