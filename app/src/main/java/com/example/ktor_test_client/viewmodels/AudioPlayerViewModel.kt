@@ -17,15 +17,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.example.api.dtos.FullTrack
-import org.example.api.methods.getRandomTrack
+import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.api.methods.getRandomTrack
+import com.example.ktor_test_client.data.repositories.Repository
 
-class AudioPlayerViewModel : ImagePaletteViewModel() {
-    private var tracks: MutableList<FullTrack> = mutableListOf()
-    private var currentTrackIndex = 0
+class AudioPlayerViewModel(
+    private val repository: Repository
+) : ImagePaletteViewModel() {
+    private val timeToPreviousTrack = 5000
 
     var exoPlayer: ExoPlayer? = null
-
     var isAutoplay: Boolean = true
 
     private val _isInit: MutableState<Boolean> = mutableStateOf(false)
@@ -40,8 +41,8 @@ class AudioPlayerViewModel : ImagePaletteViewModel() {
     private val _currentPlaybackState: MutableStateFlow<Int> = MutableStateFlow(Player.STATE_IDLE)
     var currentPlaybackState: StateFlow<Int> = _currentPlaybackState.asStateFlow()
 
-    private var _currentTrack: MutableStateFlow<FullTrack?> = MutableStateFlow(null)
-    val currentTrack: StateFlow<FullTrack?> = _currentTrack.asStateFlow()
+    private var _currentTrack: MutableStateFlow<Track?> = MutableStateFlow(null)
+    val currentTrack: StateFlow<Track?> = _currentTrack.asStateFlow()
 
     var onTrackEnd: () -> Unit = { }
 
@@ -122,44 +123,31 @@ class AudioPlayerViewModel : ImagePaletteViewModel() {
         exoPlayer?.addListener(eventListener)
     }
 
-    //TODO: убрать отсюда апи и вынести получение треков в отдельный сервис
-    fun getRandomTrack(api: KtorAPI, context: Context) {
+    fun prevTrack(context: Context) {
+        if ((exoPlayer?.currentPosition ?: 0L) > timeToPreviousTrack) {
+            exoPlayer?.seekTo(0)
+
+            return
+        }
+
         viewModelScope.launch {
-            _currentTrack.value = api.getRandomTrack()
-
-            _currentTrack.value?.let { track ->
-                tracks.add(track)
-                currentTrackIndex = tracks.indices.last
-
-                setTrack(context, track)
+            repository.previousTrack()?.let {
+                setTrack(context, it)
             }
         }
     }
 
-    fun prevTrack(context: Context) {
-        currentTrackIndex = (tracks.lastIndex - 1).coerceIn(0..tracks.indices.last)
-
+    fun nextTrack(context: Context) {
         viewModelScope.launch {
-            setTrack(context, tracks[currentTrackIndex])
-        }
-    }
-
-    fun nextTrack(api: KtorAPI, context: Context) {
-        println("currentTrackIndex = $currentTrackIndex, tracks.indices.last = ${tracks.indices.last}")
-        if (currentTrackIndex == tracks.indices.last) {
-            getRandomTrack(api, context)
-        } else {
-            currentTrackIndex++
-
-            viewModelScope.launch {
-                setTrack(context, tracks[currentTrackIndex])
+            repository.nextTrack()?.let {
+                setTrack(context, it)
             }
         }
     }
 
     private suspend fun setTrack(
         context: Context,
-        track: FullTrack
+        track: Track
     ) {
         fetchImageByUrl(context, track.album.imageUrl)
         setMediaFromUri(track.audioUrl)
@@ -169,7 +157,7 @@ class AudioPlayerViewModel : ImagePaletteViewModel() {
         exoPlayer?.prepare()
     }
 
-    fun setMediaFromUri(uri: String) {
+    private fun setMediaFromUri(uri: String) {
         exoPlayer?.setMediaItem(MediaItem.fromUri(Uri.parse(uri)))
     }
 

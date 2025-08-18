@@ -63,11 +63,11 @@ import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
 import com.valentinilk.shimmer.shimmer
-import org.example.api.dtos.FullAlbum
+import com.example.ktor_test_client.api.dtos.Album
 
 @Composable
 fun AlbumPage(
-    album: FullAlbum,
+    album: Album,
     viewModel: ImagePaletteViewModel = viewModel(),
     onNavigateToArtist: (artistId: String) -> Unit = { }
 ) {
@@ -193,7 +193,7 @@ fun AlbumPage(
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
-                            Spacer(Modifier.height(15.dp))
+                            Spacer(Modifier.height(25.dp))
 
                             for (i in 1..5) {
                                 Row(
@@ -341,7 +341,7 @@ private fun BoxScope.AlbumImage(
 @Composable
 fun AlbumHeader(
     modifier: Modifier = Modifier,
-    album: FullAlbum,
+    album: Album,
     onArtistClick: () -> Unit = { }
 ) {
     Column(

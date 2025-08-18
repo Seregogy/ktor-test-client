@@ -26,9 +26,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.ktor_test_client.R
+import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.controls.card.SwipeableCard
 import com.example.ktor_test_client.controls.card.SwipeableCardData
-import com.example.ktor_test_client.models.Artist
 import com.example.ktor_test_client.viewmodels.ArtistCardViewModel
 
 @Composable
@@ -43,7 +43,7 @@ fun artistSwipeableCard(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.fetchImageByUrl(context, artist.imagesUrl.first().first)
+        viewModel.fetchImageByUrl(context, artist.imagesUrl.first())
     }
 
     LaunchedEffect(Unit) {

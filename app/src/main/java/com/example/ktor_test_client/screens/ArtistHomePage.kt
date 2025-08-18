@@ -55,8 +55,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
+import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.controls.CircleButton
-import com.example.ktor_test_client.models.Artist
 import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.valentinilk.shimmer.shimmer
@@ -91,7 +91,7 @@ fun ArtistHomePage(
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
 
     val color = animateColorAsState(
-        targetValue = artist.imagesUrl[pagerState.currentPage].second,
+        targetValue = Color(0xFFFFFF),
         label = "color cross fade"
     )
 
@@ -146,7 +146,7 @@ private fun ArtistAvatarPager(
                 }
         ) { page ->
             AsyncImage(
-                model = artist.imagesUrl[page].first,
+                model = artist.imagesUrl[page],
                 contentDescription = "Artist avatar",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

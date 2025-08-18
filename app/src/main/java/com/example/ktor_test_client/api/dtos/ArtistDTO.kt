@@ -1,4 +1,4 @@
-package org.example.api.dtos
+package com.example.ktor_test_client.api.dtos
 
 import kotlinx.serialization.Serializable
 
@@ -16,10 +16,10 @@ data class BaseArtist(
 )
 
 @Serializable
-data class FullArtist(
+data class Artist(
 	val id: String = "",
 	val name: String = "unknown artist",
-	val imageUrl: String? = "",
+	val imagesUrl: List<String> = listOf(),
 	val about: String? = "",
 	val listeningInMonth: Int = 0,
 	val likes: Int = 0,

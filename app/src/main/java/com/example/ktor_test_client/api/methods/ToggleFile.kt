@@ -1,4 +1,4 @@
-package org.example.api.methods
+package com.example.ktor_test_client.api.methods
 
 import com.example.ktor_test_client.api.KtorAPI
 import io.ktor.client.call.*

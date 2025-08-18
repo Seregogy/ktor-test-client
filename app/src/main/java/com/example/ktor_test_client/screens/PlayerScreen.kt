@@ -82,7 +82,8 @@ import com.example.ktor_test_client.screens.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.screens.TopAppContentBar.topPartWeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
-import org.example.api.dtos.FullTrack
+import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.controls.MiniTrack
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
@@ -93,7 +94,6 @@ fun BottomSheetPlayerPage(
     yCurrentOffset: State<Float>,
     miniPlayerHeight: Dp,
     innerPadding: PaddingValues,
-    api: KtorAPI,
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
     onExpandRequest: () -> Unit = { },
@@ -112,7 +112,7 @@ fun BottomSheetPlayerPage(
         Box(
             modifier = Modifier.alpha(1f - targetMiniPlayerAlpha)
         ) {
-            PlayerPage(api, viewModel, modifier, onCollapseRequest, onAlbumClicked, onArtistClicked)
+            PlayerPage(viewModel, modifier, onCollapseRequest, onAlbumClicked, onArtistClicked)
         }
 
         Box(
@@ -156,19 +156,26 @@ fun MiniPlayer(
         }
     }
 
-    val artistsNames by remember {
-        derivedStateOf {
-            currentTrack?.artists?.joinToString(",") { it.name } ?: "unknown"
-        }
-    }
-
     val isPlay by remember { viewModel.isPlay }
 
     Box(
         modifier = Modifier
             .background(Color.Transparent)
     ) {
-        Row(
+        MiniTrack(
+            modifier = Modifier
+                .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
+                .height(miniPlayerHeight)
+                .fillMaxWidth()
+                .padding(15.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(backgroundColor),
+            onClick = { onExpandRequest() },
+            foregroundColor = foregroundColor,
+            track = currentTrack ?: Track()
+        )
+
+        /*Row(
             modifier = Modifier
                 .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
                 .height(miniPlayerHeight)
@@ -219,7 +226,7 @@ fun MiniPlayer(
                     lineHeight = 13.sp
                 )
             }
-        }
+        }*/
 
         Row(
             modifier = Modifier
@@ -264,7 +271,6 @@ fun MiniPlayer(
 
 @Composable
 fun PlayerPage(
-    api: KtorAPI,
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
     onCollapseRequest: () -> Unit = { },
@@ -276,10 +282,10 @@ fun PlayerPage(
 
     LaunchedEffect(Unit) {
         viewModel.initializePlayer(context)
-        viewModel.getRandomTrack(api, context)
+        viewModel.nextTrack(context)
 
         viewModel.onTrackEnd = {
-            viewModel.getRandomTrack(api, context)
+            viewModel.nextTrack(context)
         }
     }
 
@@ -408,7 +414,7 @@ fun PlayerPage(
                         isSliding,
                         primaryColorAnimated,
                         secondaryColorAnimated,
-                        onNext = { viewModel.nextTrack(api, context) },
+                        onNext = { viewModel.nextTrack(context) },
                         onPrev = { viewModel.prevTrack(context) },
                         onPlayPause = { viewModel.playPause() }
                     )
@@ -421,7 +427,7 @@ fun PlayerPage(
 @Composable
 private fun TopBar(
     textOnSecondaryColorAnimated: State<Color>,
-    currentTrack: FullTrack?,
+    currentTrack: Track?,
     onCollapseRequest: () -> Unit
 ) {
     Row(
@@ -464,7 +470,7 @@ private fun TopBar(
 
 @Composable
 private fun TrackInfo(
-    currentTrack: FullTrack?,
+    currentTrack: Track?,
     secondaryColor: MutableState<Color>,
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit

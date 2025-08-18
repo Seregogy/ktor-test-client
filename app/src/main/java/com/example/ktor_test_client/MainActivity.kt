@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -38,16 +37,19 @@ import androidx.navigation.navArgument
 import com.example.ktor_test_client.api.KtorAPI
 import com.example.ktor_test_client.api.TokenHandler
 import com.example.ktor_test_client.api.TokenType
+import com.example.ktor_test_client.api.dtos.Album
+import com.example.ktor_test_client.api.methods.getAlbum
+import com.example.ktor_test_client.data.providers.NetworkDataProvider
+import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
+import com.example.ktor_test_client.data.sources.RandomTrackDataSource
+import com.example.ktor_test_client.data.sources.TargetTrackDataSource
 import com.example.ktor_test_client.screens.AlbumPage
-import com.example.ktor_test_client.screens.ArtistHomePage
 import com.example.ktor_test_client.screens.ArtistsCardSwipeables
 import com.example.ktor_test_client.screens.BottomSheetPlayerPage
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.example.api.dtos.FullAlbum
-import org.example.api.methods.getAlbum
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +62,11 @@ class MainActivity : ComponentActivity() {
             override fun loadToken(type: TokenType): String = ""
             override fun hasToken(type: TokenType): Boolean = true
         })
+
+        val dataProvider = NetworkDataProvider(ktorApi)
+        val dataSource = RandomTrackDataSource(dataProvider)
+        val targetTrackDataSource = TargetTrackDataSource("23f8e39a-7b3f-48d7-8fff-a3b2bd300bbc", dataProvider)
+        val repository = BaseNetworkRepository(dataProvider, dataSource)
 
         setContent {
             val miniPlayerHeight = 100.dp
@@ -96,8 +103,7 @@ class MainActivity : ComponentActivity() {
                                 yCurrentOffset,
                                 miniPlayerHeight,
                                 innerPadding,
-                                ktorApi,
-                                viewModel<AudioPlayerViewModel>(),
+                                AudioPlayerViewModel(repository),
                                 Modifier.padding(top = innerPadding.calculateTopPadding()),
                                 onExpandRequest = {
                                     coroutineScope.launch {
@@ -146,7 +152,7 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
                 val albumId = it.arguments?.getString("albumId")
-                var album: FullAlbum? by remember { mutableStateOf(null) }
+                var album: Album? by remember { mutableStateOf(null) }
 
                 LaunchedEffect(Unit) {
                     album = ktorApi.getAlbum(albumId ?: "")
@@ -184,7 +190,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 val artistId = it.arguments?.getInt("artistId")
 
-                ArtistHomePage(Library.artists.first { artist -> artist.id == artistId })
+                //TODO(вызов api)
+                //ArtistHomePage()
             }
 
             composable(
@@ -192,7 +199,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 ArtistsCardSwipeables(
                     modifier = Modifier
-                        .padding(innerPadding)
+                        .padding(innerPadding),
+                    listOf()
                 ) {
                     navController.navigate("ArtistPage/?id=${it.id}")
                 }

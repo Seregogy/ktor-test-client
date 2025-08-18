@@ -1,13 +1,13 @@
-package org.example.api.methods
+package com.example.ktor_test_client.api.methods
 
 import com.example.ktor_test_client.api.KtorAPI
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import org.example.api.dtos.FullTrack
+import com.example.ktor_test_client.api.dtos.Track
 
-suspend fun KtorAPI.getRandomTrack(): FullTrack? {
+suspend fun KtorAPI.getRandomTrack(): Track? {
 	val response = httpClient.get {
 		url { host("/api/v1/tracks/random") }
 	}

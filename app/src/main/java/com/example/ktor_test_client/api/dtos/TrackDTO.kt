@@ -1,4 +1,4 @@
-package org.example.api.dtos
+package com.example.ktor_test_client.api.dtos
 
 import kotlinx.serialization.Serializable
 
@@ -11,7 +11,7 @@ open class BaseTrack(
 )
 
 @Serializable
-class FullTrack(
+class Track(
 	val id: String = "",
 	val name: String = "",
 	val imageUrl: String? = "",

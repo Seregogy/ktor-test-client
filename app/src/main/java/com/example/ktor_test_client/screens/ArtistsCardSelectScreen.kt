@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -23,21 +22,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ktor_test_client.Library
+import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.controls.ArtistCardState
 import com.example.ktor_test_client.controls.SwipeableCardStack
 import com.example.ktor_test_client.controls.artistSwipeableCard
-import com.example.ktor_test_client.controls.card
-import com.example.ktor_test_client.models.Artist
 
 @Composable
 fun ArtistsCardSwipeables(
     modifier: Modifier = Modifier,
+    artists: List<Artist>,
     onCardClicked: (artist: Artist) -> Unit
 ) {
-    val cardStates = List(Library.artists.size) { remember { mutableStateOf(ArtistCardState()) } }
+    val cardStates = List(artists.size) { remember { mutableStateOf(ArtistCardState()) } }
 
-    val cards = Library.artists.zip(cardStates) { artist, state ->
+    val cards = artists.zip(cardStates) { artist, state ->
         artistSwipeableCard(artist, state) {
             onCardClicked(it)
         }
