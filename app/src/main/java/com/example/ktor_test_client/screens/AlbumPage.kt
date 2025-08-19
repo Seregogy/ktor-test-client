@@ -1,15 +1,14 @@
 package com.example.ktor_test_client.screens
 
 import android.graphics.Bitmap
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -23,9 +22,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Downloading
@@ -48,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -58,6 +60,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.sensitiveContent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -71,6 +74,7 @@ import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
 import com.example.ktor_test_client.api.dtos.Album
+import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.MiniTrack
 import com.example.ktor_test_client.helpers.times
@@ -79,9 +83,12 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun AlbumPage(
-    album: Album,
+    album: Album = Album(),
+    otherAlbums: List<BaseAlbum> = listOf(),
     viewModel: ImagePaletteViewModel = viewModel(),
-    onNavigateToArtist: (artistId: String) -> Unit = { },
+    bottomPadding: Dp = 0.dp,
+    onAlbumClicked: (artistId: String) -> Unit = { },
+    onArtistClicked: (albumId: String) -> Unit = { },
     onTrackClicked: (track: BaseTrack) -> Unit = { }
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -193,6 +200,7 @@ fun AlbumPage(
         modifier = Modifier
             .background(Color.Black)
             .fillMaxSize()
+            .padding(bottom = bottomPadding)
     ) {
         Box(
             modifier = Modifier
@@ -245,7 +253,7 @@ fun AlbumPage(
                                 primaryButtonColor = primaryButtonColor,
                                 primaryIconColor = primaryIconColor
                             ) {
-                                onNavigateToArtist(album.artists.first().id)
+                                onArtistClicked(album.artists.first().id)
                             }
                         }
                     }
@@ -277,19 +285,19 @@ fun AlbumPage(
                     }
                 }
 
-                /*item(2) {
+                item(2) {
                     Box(
                         modifier = Modifier
                             .wrapContentHeight()
-                            .background(Color.Black)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
+                            Spacer(Modifier.height(25.dp))
 
                             Text(
-                                text = "Ещё треки",
+                                text = "Ещё от ${album.artists.first().name}",
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.W700,
                                 modifier = Modifier
@@ -298,50 +306,55 @@ fun AlbumPage(
 
                             Spacer(Modifier.height(15.dp))
 
-                            for (i in 1..5) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 25.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .shimmer()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceContainer)
-                                            .height(65.dp)
-                                            .padding(5.dp)
-                                            .aspectRatio(1f)
-                                    )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .horizontalScroll(rememberScrollState())
+                                    .background(Color.Black),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                for (i in otherAlbums.indices) {
+                                    if (i == 0)
+                                        Spacer(Modifier.width(20.dp))
 
                                     Column(
                                         modifier = Modifier
-                                            .height(60.dp)
-                                            .align(Alignment.CenterVertically),
-                                        verticalArrangement = Arrangement.SpaceEvenly
+                                            .width(180.dp)
+                                            .clickable {
+                                                onAlbumClicked(otherAlbums[i].id)
+                                            }
                                     ) {
-                                        Box(
+                                        AsyncImage(
+                                            model = otherAlbums[i].imageUrl,
                                             modifier = Modifier
-                                                .shimmer()
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                .size(170.dp, 20.dp)
+                                                .clip(MaterialTheme.shapes.small)
+                                                .fillMaxWidth()
+                                                .aspectRatio(1f),
+                                            contentDescription = "${otherAlbums[i].name} image",
+                                            contentScale = ContentScale.Crop
                                         )
 
-                                        Box(
+                                        Text(
+                                            text = otherAlbums[i].name,
+                                            fontWeight = FontWeight.W700,
+                                            fontSize = 18.sp,
+                                            lineHeight = 18.sp,
                                             modifier = Modifier
-                                                .shimmer()
-                                                .clip(RoundedCornerShape(5.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                .size(100.dp, 20.dp)
+                                                .basicMarquee()
+                                        )
+
+                                        Text(
+                                            text = otherAlbums[i].artists.first().name
                                         )
                                     }
                                 }
                             }
+
+                            Spacer(Modifier.height(50.dp))
                         }
                     }
-                }*/
+                }
             }
         }
     }

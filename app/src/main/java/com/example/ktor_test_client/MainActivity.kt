@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -39,7 +40,9 @@ import com.example.ktor_test_client.api.KtorAPI
 import com.example.ktor_test_client.api.TokenHandler
 import com.example.ktor_test_client.api.TokenType
 import com.example.ktor_test_client.api.dtos.Album
+import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.methods.getAlbum
+import com.example.ktor_test_client.api.methods.getAlbumsFromArtist
 import com.example.ktor_test_client.data.providers.NetworkDataProvider
 import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
@@ -54,6 +57,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var playerViewModel: AudioPlayerViewModel
+    private var sheetPeekHeight: Dp = 0.dp
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,8 +101,9 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Scaffold { innerPadding ->
+                    sheetPeekHeight = miniPlayerHeight + innerPadding.calculateBottomPadding()
                     BottomSheetScaffold(
-                        sheetPeekHeight = miniPlayerHeight + innerPadding.calculateBottomPadding(),
+                        sheetPeekHeight = sheetPeekHeight,
                         scaffoldState = bottomSheetState,
                         sheetDragHandle = { },
                         sheetShape = RoundedCornerShape(0.dp),
@@ -159,9 +164,11 @@ class MainActivity : ComponentActivity() {
             ) {
                 val albumId = it.arguments?.getString("albumId")
                 var album: Album? by remember { mutableStateOf(null) }
+                var otherAlbums: List<BaseAlbum> by remember { mutableStateOf(listOf()) }
 
                 LaunchedEffect(Unit) {
                     album = ktorApi.getAlbum(albumId ?: "")
+                    otherAlbums = ktorApi.getAlbumsFromArtist(album?.artists?.first()?.id ?: "")?.albums ?: listOf()
                 }
 
                 when {
@@ -171,8 +178,13 @@ class MainActivity : ComponentActivity() {
                     else -> {
                         AlbumPage(
                             album = album!!,
-                            onNavigateToArtist = { artistId ->
+                            otherAlbums = otherAlbums,
+                            bottomPadding = sheetPeekHeight,
+                            onArtistClicked = { artistId ->
                                 navController.navigate("ArtistPage/?id=$artistId")
+                            },
+                            onAlbumClicked = { otherAlbumId ->
+                                navController.navigate("AlbumPage/?id=$otherAlbumId")
                             }
                         ) { clickedTrack ->
                             album?.let { album ->
