@@ -91,7 +91,7 @@ fun ArtistHomePage(
     val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
 
     val color = animateColorAsState(
-        targetValue = Color(0xFFFFFF),
+        targetValue = Color(0xFFFFFFFF),
         label = "color cross fade"
     )
 

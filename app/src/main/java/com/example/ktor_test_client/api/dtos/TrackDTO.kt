@@ -21,6 +21,5 @@ class Track(
 	val listening: Int? = 0,
 	val isExplicit: Boolean? = false,
 	val audioUrl: String = "",
-	val album: BaseAlbum = BaseAlbum(),
-	val artists: List<BaseArtist> = listOf()
+	val album: BaseAlbum = BaseAlbum()
 )

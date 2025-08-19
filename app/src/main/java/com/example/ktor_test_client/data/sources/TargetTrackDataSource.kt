@@ -4,30 +4,25 @@ import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.providers.DataProvider
 
 class TargetTrackDataSource(
-    private val id: String,
-    private val dataProvider: DataProvider
+    private val id: String
 ) : DataSource() {
     private var track: Track? = null
 
-    override suspend fun nextTrack(): Track? {
-        loadTrack()
+    override suspend fun nextTrack(dataProvider: DataProvider): Track? {
+        return currentTrack(dataProvider)
+    }
+
+    override suspend fun currentTrack(dataProvider: DataProvider): Track? {
+        loadTrack(dataProvider)
 
         return track
     }
 
-    override suspend fun currentTrack(): Track? {
-        loadTrack()
-
-        return track
+    override suspend fun previousTrack(dataProvider: DataProvider): Track? {
+        return currentTrack(dataProvider)
     }
 
-    override suspend fun previousTrack(): Track? {
-        loadTrack()
-
-        return track
-    }
-
-    private suspend fun loadTrack() {
+    private suspend fun loadTrack(dataProvider: DataProvider) {
         if (track == null)
             track = dataProvider.getTrack(id)
     }

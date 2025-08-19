@@ -2,36 +2,46 @@ package com.example.ktor_test_client.data.sources
 
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.api.methods.getRandomTrackId
+import com.example.ktor_test_client.data.providers.DataProvider
 import com.example.ktor_test_client.data.providers.NetworkDataProvider
 
-class RandomTrackDataSource(
-    private val networkDataProvider: NetworkDataProvider,
-) : DataSource() {
-    private var currentTrackIndex = 0
+class RandomTrackDataSource : DataSource() {
+    private var currentTrack = 0
     private val tracks: MutableList<Track> = mutableListOf()
 
-    override suspend fun nextTrack(): Track {
-        if (currentTrackIndex < tracks.indices.last) {
-            currentTrackIndex++
+    override suspend fun nextTrack(dataProvider: DataProvider): Track {
+        if (currentTrack < tracks.indices.last) {
+            currentTrack++
         } else {
-            val track = networkDataProvider.getTrack(networkDataProvider.apiService.getRandomTrackId()?.id ?: "")
+            val track = loadNextTrack(dataProvider)
 
             track?.let {
                 tracks.add(it)
-                currentTrackIndex = tracks.indices.last
+                currentTrack = tracks.indices.last
             }
         }
 
-        return tracks[currentTrackIndex]
+        return tracks[currentTrack]
     }
 
-    override suspend fun currentTrack(): Track {
-        return tracks[currentTrackIndex]
+    override suspend fun currentTrack(dataProvider: DataProvider): Track {
+        if (tracks.size == 0) {
+            loadNextTrack(dataProvider)?.let {
+                tracks.add(it)
+
+                currentTrack = tracks.indices.last
+            }
+        }
+
+        return tracks[currentTrack]
     }
 
-    override suspend fun previousTrack(): Track {
-        currentTrackIndex = (currentTrackIndex - 1).coerceIn(tracks.indices)
+    override suspend fun previousTrack(dataProvider: DataProvider): Track {
+        currentTrack = (currentTrack - 1).coerceIn(tracks.indices)
 
-        return tracks[currentTrackIndex]
+        return tracks[currentTrack]
     }
+
+    private suspend fun loadNextTrack(dataProvider: DataProvider) =
+        dataProvider.getTrack((dataProvider as NetworkDataProvider).apiService.getRandomTrackId()?.id ?: "")
 }

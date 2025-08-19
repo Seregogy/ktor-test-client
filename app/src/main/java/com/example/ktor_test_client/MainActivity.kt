@@ -25,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,8 +42,8 @@ import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.methods.getAlbum
 import com.example.ktor_test_client.data.providers.NetworkDataProvider
 import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
+import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.data.sources.RandomTrackDataSource
-import com.example.ktor_test_client.data.sources.TargetTrackDataSource
 import com.example.ktor_test_client.screens.AlbumPage
 import com.example.ktor_test_client.screens.ArtistsCardSwipeables
 import com.example.ktor_test_client.screens.BottomSheetPlayerPage
@@ -52,6 +53,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private lateinit var playerViewModel: AudioPlayerViewModel
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,10 +66,11 @@ class MainActivity : ComponentActivity() {
             override fun hasToken(type: TokenType): Boolean = true
         })
 
-        val dataProvider = NetworkDataProvider(ktorApi)
-        val dataSource = RandomTrackDataSource(dataProvider)
-        val targetTrackDataSource = TargetTrackDataSource("23f8e39a-7b3f-48d7-8fff-a3b2bd300bbc", dataProvider)
-        val repository = BaseNetworkRepository(dataProvider, dataSource)
+        val networkDataProvider = NetworkDataProvider(ktorApi)
+        val randomTrackDataSource = RandomTrackDataSource()
+        val repository = BaseNetworkRepository(networkDataProvider, randomTrackDataSource)
+
+        playerViewModel = AudioPlayerViewModel(repository)
 
         setContent {
             val miniPlayerHeight = 100.dp
@@ -103,7 +107,7 @@ class MainActivity : ComponentActivity() {
                                 yCurrentOffset,
                                 miniPlayerHeight,
                                 innerPadding,
-                                AudioPlayerViewModel(repository),
+                                playerViewModel,
                                 Modifier.padding(top = innerPadding.calculateTopPadding()),
                                 onExpandRequest = {
                                     coroutineScope.launch {
@@ -143,6 +147,8 @@ class MainActivity : ComponentActivity() {
         ktorApi: KtorAPI,
         innerPadding: PaddingValues
     ) {
+        val context = LocalContext.current
+
         NavHost(
             navController = navController,
             startDestination = "Home"
@@ -162,10 +168,24 @@ class MainActivity : ComponentActivity() {
                     album == null -> Box(Modifier.fillMaxSize()) {
                         CircularProgressIndicator(Modifier.align(Alignment.Center))
                     }
-
                     else -> {
-                        AlbumPage(album!!) { artistId ->
-                            navController.navigate("ArtistPage/?id=$artistId")
+                        AlbumPage(
+                            album = album!!,
+                            onNavigateToArtist = { artistId ->
+                                navController.navigate("ArtistPage/?id=$artistId")
+                            }
+                        ) { clickedTrack ->
+                            album?.let { album ->
+                                //TODO: инжектить дата соурс, который будет храниться в вью модели и оттуда получать индекс текущего трека, чтобы отобразить трек с анимацией в альбоме
+                                playerViewModel.injectDataSource(context, PlaylistDataSource(
+                                    tracksId = album.tracks.map { track ->
+                                        track.id
+                                    },
+                                    firstTrack = clickedTrack.indexInAlbum
+                                ))
+
+                                playerViewModel.exoPlayer?.prepare()
+                            }
                         }
                     }
                 }

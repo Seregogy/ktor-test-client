@@ -6,7 +6,7 @@ import com.example.ktor_test_client.data.sources.DataSource
 
 class BaseNetworkRepository(
     private val dataProvider: DataProvider,
-    private val dataSource: DataSource
+    override var dataSource: DataSource
 ) : Repository() {
     override suspend fun getTrack(id: String): Track? {
         return dataProvider.getTrack(id)
@@ -17,14 +17,14 @@ class BaseNetworkRepository(
     }
 
     override suspend fun nextTrack(): Track? {
-        return dataSource.nextTrack()
+        return dataSource.nextTrack(dataProvider)
     }
 
     override suspend fun currentTrack(): Track? {
-        return dataSource.currentTrack()
+        return dataSource.currentTrack(dataProvider)
     }
 
     override suspend fun previousTrack(): Track? {
-        return dataSource.previousTrack()
+        return dataSource.previousTrack(dataProvider)
     }
 }

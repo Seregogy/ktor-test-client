@@ -8,6 +8,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -20,11 +21,18 @@ import kotlinx.coroutines.launch
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.api.methods.getRandomTrack
 import com.example.ktor_test_client.data.repositories.Repository
+import com.example.ktor_test_client.data.sources.PlaylistDataSource
+import kotlinx.coroutines.flow.collect
 
 class AudioPlayerViewModel(
     private val repository: Repository
 ) : ImagePaletteViewModel() {
-    private val timeToPreviousTrack = 5000
+    companion object {
+        private val _currentlyPlayTrackId: MutableState<String?> = mutableStateOf(null)
+        val currentlyPlayTrackId: State<String?> = _currentlyPlayTrackId
+    }
+
+    private val timeToPreviousTrack = 3000
 
     var exoPlayer: ExoPlayer? = null
     var isAutoplay: Boolean = true
@@ -47,6 +55,16 @@ class AudioPlayerViewModel(
     var onTrackEnd: () -> Unit = { }
 
     private lateinit var eventListener: Player.Listener
+
+    init {
+        viewModelScope.launch {
+            currentTrack.collect {
+                it?.let {
+                    _currentlyPlayTrackId.value = it.id
+                }
+            }
+        }
+    }
 
     fun initializePlayer(context: Context) {
         exoPlayer = ExoPlayer.Builder(context).build()
@@ -121,6 +139,22 @@ class AudioPlayerViewModel(
         }
 
         exoPlayer?.addListener(eventListener)
+
+        viewModelScope.launch {
+            repository.currentTrack()?.let {
+                setTrack(context, it)
+            }
+        }
+    }
+
+    fun injectDataSource(context: Context, dataSource: PlaylistDataSource) {
+        repository.injectDataSource(dataSource)
+
+        viewModelScope.launch {
+            repository.currentTrack()?.let {
+                setTrack(context, it)
+            }
+        }
     }
 
     fun prevTrack(context: Context) {
@@ -153,6 +187,7 @@ class AudioPlayerViewModel(
         setMediaFromUri(track.audioUrl)
 
         _currentTrack.value = track
+        _currentlyPlayTrackId.value = _currentTrack.value?.id
 
         exoPlayer?.prepare()
     }

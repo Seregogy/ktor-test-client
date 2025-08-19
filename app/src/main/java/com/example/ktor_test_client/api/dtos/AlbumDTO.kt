@@ -1,7 +1,5 @@
 package com.example.ktor_test_client.api.dtos
 
-import com.example.ktor_test_client.api.dtos.BaseArtist
-import com.example.ktor_test_client.api.dtos.BaseTrack
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -9,6 +7,7 @@ data class BaseAlbum(
 	val id: String = "",
 	val name: String = "",
 	val imageUrl: String = "",
+	val artists: List<BaseArtist> = listOf()
 )
 
 @Serializable

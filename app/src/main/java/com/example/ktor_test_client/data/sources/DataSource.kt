@@ -1,13 +1,13 @@
 package com.example.ktor_test_client.data.sources
 
 import com.example.ktor_test_client.api.dtos.Track
-
+import com.example.ktor_test_client.data.providers.DataProvider
 
 /**
  * Абстракиця класса, источника данных (плейлист, поток, избранные)
  **/
 abstract class DataSource {
-    abstract suspend fun nextTrack(): Track?
-    abstract suspend fun currentTrack(): Track?
-    abstract suspend fun previousTrack(): Track?
+    abstract suspend fun nextTrack(dataProvider: DataProvider): Track?
+    abstract suspend fun currentTrack(dataProvider: DataProvider): Track?
+    abstract suspend fun previousTrack(dataProvider: DataProvider): Track?
 }

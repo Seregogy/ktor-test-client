@@ -1,9 +1,12 @@
 package com.example.ktor_test_client.screens
 
 import android.graphics.Bitmap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -24,18 +27,22 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Downloading
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,27 +63,61 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.palette.graphics.Palette
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
-import com.valentinilk.shimmer.shimmer
 import com.example.ktor_test_client.api.dtos.Album
+import com.example.ktor_test_client.api.dtos.BaseTrack
+import com.example.ktor_test_client.controls.MiniTrack
+import com.example.ktor_test_client.helpers.times
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 @Composable
 fun AlbumPage(
     album: Album,
     viewModel: ImagePaletteViewModel = viewModel(),
-    onNavigateToArtist: (artistId: String) -> Unit = { }
+    onNavigateToArtist: (artistId: String) -> Unit = { },
+    onTrackClicked: (track: BaseTrack) -> Unit = { }
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val colorScheme = MaterialTheme.colorScheme
+
     val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val density = LocalDensity.current
 
     val lazyListState = rememberLazyListState()
-    val flingBehavior = rememberSnapFlingBehavior(SnapLayoutInfoProvider(lazyListState, SnapPosition.Start))
+
+    val noSnapLayout = object : SnapLayoutInfoProvider {
+        override fun calculateSnapOffset(velocity: Float): Float {
+            return velocity
+        }
+    }
+    val snapLayoutInfoProvider = SnapLayoutInfoProvider(lazyListState, SnapPosition.Start)
+
+    //TODO: Подумать как улучшить этот костыль (частичный fling эффект)
+    val isFirstVisibleIndex by remember {
+        var lastVisibleIndex = 0
+        derivedStateOf {
+            if (lastVisibleIndex >= 1 && lazyListState.firstVisibleItemIndex == 0) {
+                coroutineScope.launch {
+                    delay(300)
+                    lazyListState.animateScrollToItem(0)
+                }
+            }
+
+            lastVisibleIndex = lazyListState.firstVisibleItemIndex
+
+            lazyListState.firstVisibleItemIndex == 0
+        }
+    }
+    val flingBehavior = rememberSnapFlingBehavior(if (isFirstVisibleIndex) snapLayoutInfoProvider else noSnapLayout)
 
     var imageAlpha: Float by remember { mutableFloatStateOf(1f) }
     val albumHeaderHeight = 150.dp
@@ -111,12 +152,40 @@ fun AlbumPage(
         }
     }
 
-    var primaryColor: Color by remember { mutableStateOf(Color.Transparent) }
-    var secondaryColor: Color by remember { mutableStateOf(Color.Transparent) }
+    val palette: MutableState<Palette?> = remember { mutableStateOf(null) }
+    val backgroundColor by remember {
+        derivedStateOf {
+            Color(palette.value?.vibrantSwatch?.rgb ?: colorScheme.background.toArgb())
+        }
+    }
+
+    val foregroundColor by remember {
+        derivedStateOf {
+            Color(palette.value?.vibrantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
+        }
+    }
+
+    val iconsColor by remember {
+        derivedStateOf {
+            Color(palette.value?.vibrantSwatch?.bodyTextColor ?: colorScheme.onBackground.toArgb())
+        }
+    }
+
+    val primaryButtonColor by remember {
+        derivedStateOf {
+            Color(palette.value?.mutedSwatch?.rgb ?: colorScheme.onSurface.toArgb())
+        }
+    }
+
+    val primaryIconColor by remember {
+        derivedStateOf {
+            Color(palette.value?.mutedSwatch?.titleTextColor ?: colorScheme.onSecondary.toArgb())
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.palette.collect {
-            primaryColor = Color(it?.dominantSwatch?.rgb ?: Color.Transparent.toArgb())
-            secondaryColor = Color(it?.mutedSwatch?.rgb ?: Color.Transparent.toArgb())
+            palette.value = it
         }
     }
 
@@ -129,7 +198,7 @@ fun AlbumPage(
             modifier = Modifier
                 .alpha(scrollState.value.colorAlpha)
                 .fillMaxSize()
-                .background(primaryColor)
+                .background(backgroundColor)
         )
 
         Box(
@@ -169,7 +238,12 @@ fun AlbumPage(
                                 modifier = Modifier
                                     .alpha(scrollState.value.alpha)
                                     .align(Alignment.BottomCenter),
-                                album = album
+                                album = album,
+                                foregroundColor = foregroundColor,
+                                backgroundColor = backgroundColor,
+                                iconsColor = iconsColor,
+                                primaryButtonColor = primaryButtonColor,
+                                primaryIconColor = primaryIconColor
                             ) {
                                 onNavigateToArtist(album.artists.first().id)
                             }
@@ -186,61 +260,24 @@ fun AlbumPage(
                         AlbumHeaderFadingGradientBottom(
                             modifier = Modifier
                                 .alpha(scrollState.value.colorAlpha),
-                            targetColor = primaryColor
+                            targetColor = backgroundColor
                         )
 
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        ) {
-                            Spacer(Modifier.height(25.dp))
+                        Column {
+                            Spacer(Modifier.height(30.dp))
 
-                            for (i in 1..5) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 25.dp, vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .shimmer()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceContainer)
-                                            .height(65.dp)
-                                            .padding(5.dp)
-                                            .aspectRatio(1f)
-                                    )
-
-                                    Column(
-                                        modifier = Modifier
-                                            .height(60.dp)
-                                            .align(Alignment.CenterVertically),
-                                        verticalArrangement = Arrangement.SpaceEvenly
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .shimmer()
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                .size(170.dp, 20.dp)
-                                        )
-
-                                        Box(
-                                            modifier = Modifier
-                                                .shimmer()
-                                                .clip(RoundedCornerShape(5.dp))
-                                                .background(MaterialTheme.colorScheme.surfaceContainer)
-                                                .size(100.dp, 20.dp)
-                                        )
-                                    }
-                                }
+                            for (track in album.tracks) {
+                                MiniTrack(
+                                    track = track,
+                                    onClick = onTrackClicked,
+                                    primaryColor = backgroundColor
+                                )
                             }
                         }
                     }
                 }
 
-                item(2) {
+                /*item(2) {
                     Box(
                         modifier = Modifier
                             .wrapContentHeight()
@@ -304,7 +341,7 @@ fun AlbumPage(
                             }
                         }
                     }
-                }
+                }*/
             }
         }
     }
@@ -342,6 +379,11 @@ private fun BoxScope.AlbumImage(
 fun AlbumHeader(
     modifier: Modifier = Modifier,
     album: Album,
+    foregroundColor: Color,
+    backgroundColor: Color,
+    iconsColor: Color,
+    primaryButtonColor: Color,
+    primaryIconColor: Color,
     onArtistClick: () -> Unit = { }
 ) {
     Column(
@@ -354,7 +396,8 @@ fun AlbumHeader(
             text = album.name,
             fontWeight = FontWeight.W800,
             fontSize = 28.sp,
-            lineHeight = 10.sp
+            lineHeight = 10.sp,
+            color = foregroundColor
         )
 
         Row(
@@ -378,7 +421,8 @@ fun AlbumHeader(
 
             Text(
                 text = album.artists.first().name,
-                fontWeight = FontWeight.W700
+                fontWeight = FontWeight.W700,
+                color = foregroundColor
             )
         }
 
@@ -393,10 +437,11 @@ fun AlbumHeader(
                 underscoreText = "Скачать",
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.download_icon),
+                    imageVector = Icons.Rounded.Downloading,
                     modifier = Modifier
-                        .size(30.dp),
-                    contentDescription = ""
+                        .size(28.dp),
+                    contentDescription = "",
+                    tint = iconsColor
                 )
             }
 
@@ -405,10 +450,11 @@ fun AlbumHeader(
                 underscoreText = formatNumber(album.likes),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.heart_icon),
+                    imageVector = Icons.Rounded.FavoriteBorder,
                     modifier = Modifier
-                        .size(30.dp),
-                    contentDescription = ""
+                        .size(28.dp),
+                    contentDescription = "",
+                    tint = iconsColor
                 )
             }
 
@@ -419,13 +465,14 @@ fun AlbumHeader(
                 Icon(
                     painter = painterResource(R.drawable.queue_music_icon),
                     modifier = Modifier
-                        .size(30.dp),
-                    contentDescription = ""
+                        .size(28.dp),
+                    contentDescription = "",
+                    tint = iconsColor
                 )
             }
 
             CircleButton(
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = backgroundColor.times(1.5f),
                 onClick = { },
                 underscoreText = "Слушать"
             ) {
@@ -433,7 +480,8 @@ fun AlbumHeader(
                     painter = painterResource(R.drawable.pause_icon),
                     modifier = Modifier
                         .size(30.dp),
-                    contentDescription = ""
+                    contentDescription = "",
+                    tint = iconsColor
                 )
             }
         }

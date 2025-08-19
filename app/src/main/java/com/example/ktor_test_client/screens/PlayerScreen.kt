@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -73,8 +72,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.palette.graphics.Palette
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.api.KtorAPI
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
@@ -83,7 +82,7 @@ import com.example.ktor_test_client.screens.TopAppContentBar.topPartWeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import com.example.ktor_test_client.api.dtos.Track
-import com.example.ktor_test_client.controls.MiniTrack
+import com.example.ktor_test_client.controls.TrackControl
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
@@ -141,7 +140,6 @@ fun MiniPlayer(
     val colorScheme = MaterialTheme.colorScheme
 
     val currentTrack by viewModel.currentTrack.collectAsStateWithLifecycle()
-    val bitmap by viewModel.bitmap.collectAsStateWithLifecycle()
     val palette by viewModel.palette.collectAsStateWithLifecycle()
 
     val backgroundColor by remember {
@@ -162,7 +160,7 @@ fun MiniPlayer(
         modifier = Modifier
             .background(Color.Transparent)
     ) {
-        MiniTrack(
+        TrackControl(
             modifier = Modifier
                 .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
                 .height(miniPlayerHeight)
@@ -174,59 +172,6 @@ fun MiniPlayer(
             foregroundColor = foregroundColor,
             track = currentTrack ?: Track()
         )
-
-        /*Row(
-            modifier = Modifier
-                .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
-                .height(miniPlayerHeight)
-                .fillMaxWidth()
-                .padding(15.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(backgroundColor)
-                .clickable {
-                    onExpandRequest()
-                },
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AnimatedContent(
-                targetState = bitmap,
-                transitionSpec = { fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(animationsSpeed)) },
-                label = "mini player bitmap crossfade"
-            ) {
-                it?.let {
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .padding(10.dp)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(5.dp)),
-                        contentDescription = "mini player image",
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-
-            Column {
-                Text(
-                    text = currentTrack?.name ?: "Unknown",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.W700,
-                    color = foregroundColor,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .basicMarquee(),
-                    lineHeight = 18.sp
-                )
-                Text(
-                    text = artistsNames,
-                    fontSize = 13.sp,
-                    color = foregroundColor,
-                    lineHeight = 13.sp
-                )
-            }
-        }*/
 
         Row(
             modifier = Modifier
@@ -282,7 +227,6 @@ fun PlayerPage(
 
     LaunchedEffect(Unit) {
         viewModel.initializePlayer(context)
-        viewModel.nextTrack(context)
 
         viewModel.onTrackEnd = {
             viewModel.nextTrack(context)
@@ -307,35 +251,46 @@ fun PlayerPage(
         }
     }
 
-    val primaryColor: MutableState<Color> = remember { mutableStateOf(Color.Transparent) }
-    val secondaryColor: MutableState<Color> = remember { mutableStateOf(Color.Transparent) }
-    val textOnSecondaryColor: MutableState<Color> = remember { mutableStateOf(Color.Transparent) }
+    val palette: MutableState<Palette?> = remember { mutableStateOf(null) }
+    val primaryColor by remember {
+        derivedStateOf {
+            Color(palette.value?.dominantSwatch?.rgb ?: Color.Transparent.toArgb())
+        }
+    }
+
+    val secondaryColor by remember {
+        derivedStateOf {
+            Color(palette.value?.mutedSwatch?.rgb ?: Color.Transparent.toArgb())
+        }
+    }
+
+    val textOnSecondaryColor by remember {
+        derivedStateOf {
+            Color(palette.value?.mutedSwatch?.titleTextColor ?: Color.Transparent.toArgb())
+        }
+    }
 
     val primaryColorAnimated = animateColorAsState(
-        targetValue = primaryColor.value,
+        targetValue = primaryColor,
         animationSpec = tween(animationsSpeed),
         label = "primary color animation"
     )
 
     val secondaryColorAnimated = animateColorAsState(
-        targetValue = secondaryColor.value,
+        targetValue = secondaryColor,
         animationSpec = tween(animationsSpeed),
         label = "secondary color animation"
     )
 
     val textOnSecondaryColorAnimated = animateColorAsState(
-        targetValue = textOnSecondaryColor.value,
+        targetValue = textOnSecondaryColor,
         animationSpec = tween(animationsSpeed),
         label = "secondary color animation"
     )
 
     LaunchedEffect(Unit) {
         viewModel.palette.collect {
-            it?.let {
-                primaryColor.value = Color(it.dominantSwatch?.rgb ?: Color.Transparent.toArgb())
-                secondaryColor.value = Color(it.mutedSwatch?.rgb ?: Color.Transparent.toArgb())
-                textOnSecondaryColor.value = Color(it.mutedSwatch?.titleTextColor ?: Color.Transparent.toArgb())
-            }
+            palette.value = it
         }
     }
 
@@ -471,7 +426,7 @@ private fun TopBar(
 @Composable
 private fun TrackInfo(
     currentTrack: Track?,
-    secondaryColor: MutableState<Color>,
+    secondaryColor: Color,
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
@@ -488,22 +443,22 @@ private fun TrackInfo(
                 }
                 .padding(horizontal = 5.dp)
                 .basicMarquee(),
-            color = secondaryColor.value
+            color = secondaryColor
         )
 
         Text(
-            text = currentTrack?.artists?.firstOrNull()?.name ?: "",
+            text = currentTrack?.album?.artists?.firstOrNull()?.name ?: "",
             fontSize = 24.sp,
             fontWeight = FontWeight.W800,
             modifier = Modifier
                 .offset(y = (-7).dp)
                 .clip(MaterialTheme.shapes.small)
                 .clickable {
-                    onArtistClicked(currentTrack?.artists?.first()?.id ?: "")
+                    onArtistClicked(currentTrack?.album?.artists?.first()?.id ?: "")
                 }
                 .padding(horizontal = 5.dp)
                 .basicMarquee(),
-            color = secondaryColor.value
+            color = secondaryColor
         )
 
         Row(
@@ -516,26 +471,26 @@ private fun TrackInfo(
                 modifier = Modifier
                     .size(25.dp)
                     .alpha(.7f),
-                tint = secondaryColor.value
+                tint = secondaryColor
             )
 
             Text(
                 text = currentTrack?.album?.name ?: "",
                 fontWeight = FontWeight.W600,
-                color = secondaryColor.value
+                color = secondaryColor
             )
 
             Text(
                 text = "●",
                 fontSize = 8.sp,
-                color = secondaryColor.value
+                color = secondaryColor
             )
 
             //TODO: Добавить в response: album release date
             Text(
                 text = (1970 /* + randomTrackResponse.album.releaseDate */ / (3600 * 24 * 31 * 12 * 50)).toString(),
                 fontWeight = FontWeight.W600,
-                color = secondaryColor.value
+                color = secondaryColor
             )
         }
     }
