@@ -224,6 +224,7 @@ fun PlayerPage(
 ) {
     val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) {
         viewModel.initializePlayer(context)
@@ -260,13 +261,19 @@ fun PlayerPage(
 
     val secondaryColor by remember {
         derivedStateOf {
-            Color(palette.value?.mutedSwatch?.rgb ?: Color.Transparent.toArgb())
+
+            val colorValue: Int? = if (palette.value?.dominantSwatch?.rgb == palette.value?.vibrantSwatch?.rgb)
+                palette.value?.dominantSwatch?.titleTextColor
+            else
+                palette.value?.vibrantSwatch?.rgb
+
+            Color(colorValue ?: colorScheme.secondary.toArgb())
         }
     }
 
     val textOnSecondaryColor by remember {
         derivedStateOf {
-            Color(palette.value?.mutedSwatch?.titleTextColor ?: Color.Transparent.toArgb())
+            Color(palette.value?.vibrantSwatch?.titleTextColor ?: colorScheme.onSecondary.toArgb())
         }
     }
 
