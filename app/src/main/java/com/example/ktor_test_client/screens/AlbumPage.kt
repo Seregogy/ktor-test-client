@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.sensitiveContent
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -115,7 +116,9 @@ fun AlbumPage(
             if (lastVisibleIndex >= 1 && lazyListState.firstVisibleItemIndex == 0) {
                 coroutineScope.launch {
                     delay(300)
-                    lazyListState.animateScrollToItem(0)
+
+                    if (lazyListState.firstVisibleItemIndex == 0)
+                        lazyListState.animateScrollToItem(0)
                 }
             }
 
@@ -262,7 +265,6 @@ fun AlbumPage(
                 item(1) {
                     Box(
                         modifier = Modifier
-                            .wrapContentHeight()
                             .background(Color.Black)
                     ) {
                         AlbumHeaderFadingGradientBottom(
@@ -272,86 +274,84 @@ fun AlbumPage(
                         )
 
                         Column {
-                            Spacer(Modifier.height(30.dp))
+                            Column {
+                                Spacer(Modifier.height(30.dp))
 
-                            for (track in album.tracks) {
-                                MiniTrack(
-                                    track = track,
-                                    onClick = onTrackClicked,
-                                    primaryColor = backgroundColor
-                                )
-                            }
-                        }
-                    }
-                }
-
-                item(2) {
-                    Box(
-                        modifier = Modifier
-                            .wrapContentHeight()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        ) {
-                            Spacer(Modifier.height(25.dp))
-
-                            Text(
-                                text = "Ещё от ${album.artists.first().name}",
-                                fontSize = 26.sp,
-                                fontWeight = FontWeight.W700,
-                                modifier = Modifier
-                                    .padding(start = 25.dp)
-                            )
-
-                            Spacer(Modifier.height(15.dp))
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                                    .horizontalScroll(rememberScrollState())
-                                    .background(Color.Black),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                for (i in otherAlbums.indices) {
-                                    if (i == 0)
-                                        Spacer(Modifier.width(20.dp))
-
-                                    Column(
-                                        modifier = Modifier
-                                            .width(180.dp)
-                                            .clickable {
-                                                onAlbumClicked(otherAlbums[i].id)
-                                            }
-                                    ) {
-                                        AsyncImage(
-                                            model = otherAlbums[i].imageUrl,
-                                            modifier = Modifier
-                                                .clip(MaterialTheme.shapes.small)
-                                                .fillMaxWidth()
-                                                .aspectRatio(1f),
-                                            contentDescription = "${otherAlbums[i].name} image",
-                                            contentScale = ContentScale.Crop
-                                        )
-
-                                        Text(
-                                            text = otherAlbums[i].name,
-                                            fontWeight = FontWeight.W700,
-                                            fontSize = 18.sp,
-                                            lineHeight = 18.sp,
-                                            modifier = Modifier
-                                                .basicMarquee()
-                                        )
-
-                                        Text(
-                                            text = otherAlbums[i].artists.first().name
-                                        )
-                                    }
+                                for (track in album.tracks) {
+                                    MiniTrack(
+                                        track = track,
+                                        onClick = onTrackClicked,
+                                        primaryColor = backgroundColor
+                                    )
                                 }
                             }
 
-                            Spacer(Modifier.height(50.dp))
+                            Box(
+                                modifier = Modifier
+                                    .wrapContentHeight()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                ) {
+                                    Spacer(Modifier.height(25.dp))
+
+                                    Text(
+                                        text = "Ещё от ${album.artists.first().name}",
+                                        fontSize = 26.sp,
+                                        fontWeight = FontWeight.W700,
+                                        modifier = Modifier
+                                            .padding(start = 25.dp)
+                                    )
+
+                                    Spacer(Modifier.height(15.dp))
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                            .horizontalScroll(rememberScrollState()),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        for (i in otherAlbums.indices) {
+                                            if (i == 0)
+                                                Spacer(Modifier.width(20.dp))
+
+                                            Column(
+                                                modifier = Modifier
+                                                    .width(180.dp)
+                                                    .clickable {
+                                                        onAlbumClicked(otherAlbums[i].id)
+                                                    }
+                                            ) {
+                                                AsyncImage(
+                                                    model = otherAlbums[i].imageUrl,
+                                                    modifier = Modifier
+                                                        .clip(MaterialTheme.shapes.small)
+                                                        .fillMaxWidth()
+                                                        .aspectRatio(1f),
+                                                    contentDescription = "${otherAlbums[i].name} image",
+                                                    contentScale = ContentScale.Crop
+                                                )
+
+                                                Text(
+                                                    text = otherAlbums[i].name,
+                                                    fontWeight = FontWeight.W700,
+                                                    fontSize = 18.sp,
+                                                    lineHeight = 18.sp,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+
+                                                Text(
+                                                    text = otherAlbums[i].artists.first().name
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(Modifier.height(50.dp))
+                                }
+                            }
                         }
                     }
                 }

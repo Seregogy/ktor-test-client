@@ -10,8 +10,8 @@ import kotlinx.serialization.json.Json
 
 open class KtorAPI(
 	private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTP,
-	private val defaultHost: String = "192.168.1.64",
-	private val defaultPort: Int = 8080,
+	private val defaultHost: String = "95.31.212.185",
+	private val defaultPort: Int = 7777,
 	private val tokenHandler: TokenHandler
 ) {
 	internal val endpoint = "${defaultProtocol.name}$defaultHost:$defaultPort"
