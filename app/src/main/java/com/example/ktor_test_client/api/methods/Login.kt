@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.api.methods
 
+import android.util.Log
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -8,6 +9,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import com.example.ktor_test_client.api.KtorAPI
+import io.ktor.client.statement.bodyAsText
 
 @Serializable
 data class LoginRequest(
@@ -27,7 +29,8 @@ suspend fun KtorAPI.login(loginRequest: LoginRequest): HttpResponse {
 		setBody(loginRequest)
 	}
 
-	println("login: ${response.status}")
+	Log.d("API", response.status.toString())
+	Log.d("API", response.bodyAsText())
 
 	val tokens: LoginResponse = response.body()
 

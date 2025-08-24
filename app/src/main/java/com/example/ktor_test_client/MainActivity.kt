@@ -66,15 +66,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val miniPlayerHeight = 100.dp
-            var allInit by remember { mutableStateOf(false) }
-
-            LaunchedEffect(Unit) {
-                delay(300)
-                allInit = true
-            }
-
             KtortestclientTheme {
+                val miniPlayerHeight = 100.dp
+                var allInit by remember { mutableStateOf(false) }
+
+                LaunchedEffect(Unit) {
+                    delay(300)
+                    allInit = true
+                }
+
                 val context = LocalContext.current
 
                 val connectionChecker = InternetConnectionChecker(context)

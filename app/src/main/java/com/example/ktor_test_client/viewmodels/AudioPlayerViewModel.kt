@@ -3,6 +3,7 @@ package com.example.ktor_test_client.viewmodels
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableLongStateOf
@@ -11,6 +12,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +27,15 @@ import com.example.ktor_test_client.helpers.InternetConnectionChecker
 object DefaultPlayerConfig {
     var timeToPreviousTrack = 3000
     var isAutoplay: Boolean = false
+
+    var backBufferMs = 120_000
+
+    var minBufferMs = 5_000
+    var maxBufferMs = 300_000
+    var bufferForPlaybackMs = 5_000
+    var bufferForPlaybackAfterRebuffedMs = 5_000
+
+    var targetBufferBytesSize = 24 * 1024 * 1024
 }
 
 class AudioPlayerViewModel(
@@ -69,8 +81,8 @@ class AudioPlayerViewModel(
             }
         }
 
-        exoPlayer = ExoPlayer.Builder(context).build()
-        exoPlayer?.addListener(eventListener)
+        initExoPlayer(context)
+        exoPlayer!!.addListener(eventListener)
 
         connectionChecker = InternetConnectionChecker(context)
 
@@ -89,6 +101,24 @@ class AudioPlayerViewModel(
                 setFirstTrack()
             }
         }
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun initExoPlayer(context: Context) {
+        val audioLoadControl = DefaultLoadControl.Builder()
+            .setBackBuffer(DefaultPlayerConfig.backBufferMs, true)
+            .setBufferDurationsMs(
+                DefaultPlayerConfig.minBufferMs,
+                DefaultPlayerConfig.maxBufferMs,
+                DefaultPlayerConfig.bufferForPlaybackMs,
+                DefaultPlayerConfig.bufferForPlaybackAfterRebuffedMs
+            )
+            .setTargetBufferBytes(DefaultPlayerConfig.targetBufferBytesSize)
+            .build()
+
+        exoPlayer = ExoPlayer.Builder(context)
+            .setLoadControl(audioLoadControl)
+            .build()
     }
 
     fun injectDataSource(context: Context, dataSource: PlaylistDataSource) {

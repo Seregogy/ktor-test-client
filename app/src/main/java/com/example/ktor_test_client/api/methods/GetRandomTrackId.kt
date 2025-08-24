@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.api.methods
 
+import android.util.Log
 import com.example.ktor_test_client.api.KtorAPI
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -17,8 +18,8 @@ suspend fun KtorAPI.getRandomTrackId(): RandomTrackIdResponse? {
         url { host("api/v1/tracks/random/id") }
     }
 
-    println(response.status)
-    println(response.bodyAsText())
+    Log.d("API", response.status.toString())
+    Log.d("API", response.bodyAsText())
 
     return if (response.status.isSuccess()) {
         response.body()

@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.api.methods
 
+import android.util.Log
 import com.example.ktor_test_client.api.KtorAPI
 import io.ktor.client.call.body
 import io.ktor.client.request.post
@@ -33,8 +34,8 @@ suspend fun KtorAPI.registration(registerRequest: RegisterRequest): RegisterResp
 		setBody(registerRequest)
 	}
 
-	println(response.status)
-	println(response.bodyAsText())
+	Log.d("API", response.status.toString())
+	Log.d("API", response.bodyAsText())
 
 	return if (response.status.isSuccess()) {
 		val responseData = response.body<RegisterResponse>()
