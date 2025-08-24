@@ -24,8 +24,7 @@ data class LoginResponse(
 )
 
 suspend fun KtorAPI.login(loginRequest: LoginRequest): HttpResponse {
-	val response = httpClient.post("$endpoint/api/v1/auth/login") {
-		contentType(ContentType.Application.Json)
+	val response = httpClient.post("api/v1/auth/login") {
 		setBody(loginRequest)
 	}
 

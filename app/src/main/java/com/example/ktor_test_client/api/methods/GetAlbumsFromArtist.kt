@@ -15,9 +15,7 @@ data class GetAlbumsByArtistResponse(
 )
 
 suspend fun KtorAPI.getAlbumsFromArtist(artistId: String): GetAlbumsByArtistResponse? {
-    val response = httpClient.get {
-        url { host("api/v1/artists/$artistId/albums") }
-    }
+    val response = httpClient.get("api/v1/artists/$artistId/albums")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())

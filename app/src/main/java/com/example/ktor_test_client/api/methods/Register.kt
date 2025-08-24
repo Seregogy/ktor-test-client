@@ -27,10 +27,7 @@ data class RegisterResponse(
 )
 
 suspend fun KtorAPI.registration(registerRequest: RegisterRequest): RegisterResponse? {
-	val response = httpClient.post {
-		url { host("/api/v1/auth/register") }
-
-		contentType(ContentType.Application.Json)
+	val response = httpClient.post("api/v1/auth/register") {
 		setBody(registerRequest)
 	}
 

@@ -9,9 +9,7 @@ import io.ktor.http.*
 import com.example.ktor_test_client.api.dtos.Album
 
 suspend fun KtorAPI.getAlbum(albumId: String): Album? {
-	val response = httpClient.get {
-		url { host("/api/v1/albums/$albumId") }
-	}
+	val response = httpClient.get("api/v1/albums/$albumId")
 
 	Log.d("API", response.status.toString())
 	Log.d("API", response.bodyAsText())

@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.helpers
+package com.example.ktor_test_client.api
 
 import android.content.Context
 import android.net.ConnectivityManager

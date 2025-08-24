@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.repositories.Repository
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
-import com.example.ktor_test_client.helpers.InternetConnectionChecker
+import com.example.ktor_test_client.api.InternetConnectionChecker
 
 object DefaultPlayerConfig {
     var timeToPreviousTrack = 3000
@@ -50,8 +50,6 @@ class AudioPlayerViewModel(
         private set
 
     private val currentPlaybackState: MutableStateFlow<Int> = MutableStateFlow(Player.STATE_IDLE)
-
-    private lateinit var connectionChecker: InternetConnectionChecker
 
     private val _isInit: MutableState<Boolean> = mutableStateOf(false)
     val isInit: State<Boolean> = _isInit
@@ -84,21 +82,9 @@ class AudioPlayerViewModel(
         initExoPlayer(context)
         exoPlayer!!.addListener(eventListener)
 
-        connectionChecker = InternetConnectionChecker(context)
-
-        val setFirstTrack = {
-            viewModelScope.launch {
-                repository.currentTrack()?.let {
-                    setTrack(context, it)
-                }
-            }
-        }
-
-        if (connectionChecker.isConnected.value) {
-            setFirstTrack()
-        } else {
-            connectionChecker.waitForConnectionReturnsOnce {
-                setFirstTrack()
+        viewModelScope.launch {
+            repository.currentTrack()?.let {
+                setTrack(context, it)
             }
         }
     }

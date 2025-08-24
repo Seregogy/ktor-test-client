@@ -14,9 +14,7 @@ data class RandomTrackIdResponse(
 )
 
 suspend fun KtorAPI.getRandomTrackId(): RandomTrackIdResponse? {
-    val response = httpClient.get {
-        url { host("api/v1/tracks/random/id") }
-    }
+    val response = httpClient.get("api/v1/tracks/random/id")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())

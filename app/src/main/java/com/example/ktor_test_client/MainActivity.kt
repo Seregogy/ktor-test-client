@@ -47,7 +47,7 @@ import com.example.ktor_test_client.data.providers.NetworkDataProvider
 import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.data.sources.RandomTrackDataSource
-import com.example.ktor_test_client.helpers.InternetConnectionChecker
+import com.example.ktor_test_client.api.InternetConnectionChecker
 import com.example.ktor_test_client.screens.AlbumPage
 import com.example.ktor_test_client.screens.ArtistsCardSwipeables
 import com.example.ktor_test_client.screens.BottomSheetPlayerPage

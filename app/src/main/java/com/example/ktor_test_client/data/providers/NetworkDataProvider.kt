@@ -4,7 +4,7 @@ import android.content.Context
 import com.example.ktor_test_client.api.KtorAPI
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.api.methods.getTrack
-import com.example.ktor_test_client.helpers.InternetConnectionChecker
+import com.example.ktor_test_client.api.InternetConnectionChecker
 
 class NetworkDataProvider(
     val apiService: KtorAPI,

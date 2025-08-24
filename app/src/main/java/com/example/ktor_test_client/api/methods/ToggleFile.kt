@@ -15,12 +15,7 @@ data class ToggleLikeResponse(
 )
 
 suspend fun KtorAPI.toggleLike(trackId: String) : ToggleLikeResponse? {
-	val response = httpClient.post {
-		url { host("api/v1/tracks/$trackId/like") }
-		method = HttpMethod.Post
-
-		println("${method.value} $url")
-	}
+	val response = httpClient.post("api/v1/tracks/$trackId/like")
 
 	Log.d("API", response.status.toString())
 	Log.d("API", response.bodyAsText())

@@ -23,10 +23,7 @@ data class UpdateAccessTokensResponse(
 )
 
 suspend fun KtorAPI.refreshTokens(): UpdateAccessTokensResponse? {
-	val response = httpClient.post {
-		url { host("/api/v1/auth/refresh-token") }
-
-		contentType(ContentType.Application.Json)
+	val response = httpClient.post("api/v1/auth/refresh-token") {
 		setBody(UpdateAccessTokenRequest(refreshToken))
 	}
 

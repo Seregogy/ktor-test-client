@@ -2,14 +2,23 @@ package com.example.ktor_test_client.api
 
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
-import io.ktor.client.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.cache.storage.FileStorage
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
+import io.ktor.http.URLBuilder
+import io.ktor.http.URLProtocol
+import io.ktor.http.path
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Paths
 
 open class KtorAPI(
 	private val context: Context,
@@ -18,7 +27,7 @@ open class KtorAPI(
 	private val defaultPort: Int = 7777,
 	private val tokenHandler: TokenHandler
 ) {
-	internal val endpoint = "${defaultProtocol.name}$defaultHost:$defaultPort"
+	val connectionChecker = InternetConnectionChecker(context)
 
 	var accessToken = ""
 	var refreshToken = ""
@@ -30,6 +39,8 @@ open class KtorAPI(
 	}
 
 	internal val httpClient = HttpClient {
+		install(HttpCache)
+
 		install(ContentNegotiation.Plugin) {
 			json(
 				Json {
@@ -39,7 +50,20 @@ open class KtorAPI(
 			)
 		}
 
+		install(HttpRequestRetry) {
+			maxRetries = 5
+			retryOnExceptionIf { _, _ ->
+				connectionChecker.isConnected.value.not()
+			}
+			delayMillis { retry ->
+				Log.d("API", "resending request #$retry")
+
+				retry * 3000L
+			}
+		}
+
 		defaultRequest {
+			url { host("") }
 			header("Authorization", "Bearer $accessToken")
 		}
 
@@ -47,18 +71,16 @@ open class KtorAPI(
 
 		HttpResponseValidator {
 			handleResponseExceptionWithRequest { cause, request ->
-				Log.e("Network", "${request.url}, ${cause.message}")
+				Log.e("API", "${request.url}, ${cause.message}")
 			}
 		}
 	}
 
-	internal fun URLBuilder.host(endpointPath: String) {
+	private fun URLBuilder.host(endpointPath: String) {
 		host = defaultHost
 		protocol = defaultProtocol
 		port = defaultPort
 
 		path(endpointPath)
 	}
-
-	protected fun hostAsString(): String = "${defaultProtocol.name}://$endpoint:$defaultProtocol/"
 }

@@ -9,9 +9,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 
 suspend fun KtorAPI.getTrack(id: String): Track? {
-    val response = httpClient.get {
-        url { host("api/v1/tracks/$id") }
-    }
+    val response = httpClient.get("api/v1/tracks/$id")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())
