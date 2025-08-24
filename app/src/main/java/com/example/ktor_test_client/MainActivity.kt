@@ -91,7 +91,6 @@ class MainActivity : ComponentActivity() {
 
                 playerViewModel = AudioPlayerViewModel(repository)
 
-
                 val coroutineScope = rememberCoroutineScope()
                 val navController = rememberNavController()
                 val bottomSheetState = rememberBottomSheetScaffoldState()

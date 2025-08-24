@@ -10,9 +10,15 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.DisposableHandle
 
+interface ConnectionReturnsListener {
+    fun onConnectionReturns()
+}
+
 class InternetConnectionChecker(
     context: Context
 ): DisposableHandle {
+    private val connectionReturnsListeners: MutableList<ConnectionReturnsListener> = mutableListOf()
+
     private val _isConnected: MutableState<Boolean> = mutableStateOf(false)
     val isConnected: State<Boolean> = _isConnected
 
@@ -20,6 +26,12 @@ class InternetConnectionChecker(
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             super.onAvailable(network)
+
+            if (!isConnected.value) {
+                connectionReturnsListeners.forEach { listener ->
+                    listener.onConnectionReturns()
+                }
+            }
 
             _isConnected.value = true
             Log.d("Network", "Network available: $network")
@@ -44,6 +56,14 @@ class InternetConnectionChecker(
 
     init {
         connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
+    }
+
+    fun addConnectionReturnsListener(listener: ConnectionReturnsListener) {
+        connectionReturnsListeners.add(listener)
+    }
+
+    fun removeConnectionReturnsListener(listener: ConnectionReturnsListener) {
+        connectionReturnsListeners.remove(listener)
     }
 
     override fun dispose() {
