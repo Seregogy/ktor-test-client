@@ -3,7 +3,11 @@ package com.example.ktor_test_client.screens
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -86,6 +90,8 @@ import com.example.ktor_test_client.controls.TrackControl
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
+val additionalPlayerHeight = 3.dp
+
 const val animationsSpeed = 1200
 
 @Composable
@@ -339,7 +345,7 @@ fun PlayerPage(
 
             PlayerPageHeaderFadingGradientTop(
                 modifier = Modifier
-                    .height(screenHeight * topPartWeight),
+                    .height(screenHeight * topPartWeight + additionalPlayerHeight),
                 targetColor = primaryColorAnimated
             )
 
@@ -364,6 +370,7 @@ fun PlayerPage(
                     TrackInfo(
                         currentTrack,
                         secondaryColor,
+                        viewModel.isLoading,
                         onAlbumClicked,
                         onArtistClicked
                     )
@@ -376,6 +383,7 @@ fun PlayerPage(
                         isSliding,
                         primaryColorAnimated,
                         secondaryColorAnimated,
+                        viewModel.isLoading,
                         onNext = { viewModel.nextTrack(context) },
                         onPrev = { viewModel.prevTrack(context) },
                         onPlayPause = { viewModel.playPause() }
@@ -434,9 +442,27 @@ private fun TopBar(
 private fun TrackInfo(
     currentTrack: Track?,
     secondaryColor: Color,
+    isTrackLoading: State<Boolean>,
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
+    val infiniteTransition = rememberInfiniteTransition("cycling animation transition")
+    val textAlphaAnimated by infiniteTransition.animateFloat(
+        initialValue = .3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "text alpha animation"
+    )
+
+    val textAlpha by remember {
+        derivedStateOf {
+            if (isTrackLoading.value) textAlphaAnimated else 1f
+        }
+    }
+
     Column {
         Text(
             text = currentTrack?.name ?: "",
@@ -449,6 +475,7 @@ private fun TrackInfo(
                     onAlbumClicked(currentTrack?.album?.id ?: "")
                 }
                 .padding(horizontal = 5.dp)
+                .alpha(textAlpha)
                 .basicMarquee(),
             color = secondaryColor
         )
@@ -464,6 +491,7 @@ private fun TrackInfo(
                     onArtistClicked(currentTrack?.album?.artists?.first()?.id ?: "")
                 }
                 .padding(horizontal = 5.dp)
+                .alpha(textAlpha)
                 .basicMarquee(),
             color = secondaryColor
         )
@@ -477,27 +505,34 @@ private fun TrackInfo(
                 contentDescription = "",
                 modifier = Modifier
                     .size(25.dp)
-                    .alpha(.7f),
+                    .alpha(.7f)
+                    .alpha(textAlpha),
                 tint = secondaryColor
             )
 
             Text(
                 text = currentTrack?.album?.name ?: "",
                 fontWeight = FontWeight.W600,
-                color = secondaryColor
+                color = secondaryColor,
+                modifier = Modifier
+                    .alpha(textAlpha)
             )
 
             Text(
                 text = "●",
                 fontSize = 8.sp,
-                color = secondaryColor
+                color = secondaryColor,
+                modifier = Modifier
+                    .alpha(textAlpha)
             )
 
             //TODO: Добавить в response: album release date
             Text(
                 text = (1970 /* + randomTrackResponse.album.releaseDate */ / (3600 * 24 * 31 * 12 * 50)).toString(),
                 fontWeight = FontWeight.W600,
-                color = secondaryColor
+                color = secondaryColor,
+                modifier = Modifier
+                    .alpha(textAlpha)
             )
         }
     }
@@ -513,10 +548,21 @@ private fun PlayerControls(
     isSliding: MutableState<Boolean>,
     primaryColor: State<Color>,
     secondaryColor: State<Color>,
+    isTrackLoading: State<Boolean>,
     onNext: () -> Unit = { },
     onPrev: () -> Unit = { },
     onPlayPause: () -> Unit = { }
 ) {
+    val secondaryColorWithLoadingState by remember {
+        derivedStateOf {
+            if (isTrackLoading.value) {
+                secondaryColor.value.copy(.7f)
+            } else {
+                secondaryColor.value
+            }
+        }
+    }
+
     val currentPositionAnimated = animateFloatAsState(
         targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
         animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
@@ -548,12 +594,12 @@ private fun PlayerControls(
                     activeTrackColor = (primaryColor.value) * 2f,
                     inactiveTrackColor = (primaryColor.value) * .7f,
                     activeTickColor = primaryColor.value * 2.5f,
-                    inactiveTickColor = primaryColor.value,
-                    disabledThumbColor = primaryColor.value,
-                    disabledActiveTrackColor = primaryColor.value,
-                    disabledActiveTickColor = primaryColor.value,
-                    disabledInactiveTickColor = primaryColor.value,
-                    disabledInactiveTrackColor = primaryColor.value,
+                    inactiveTickColor = primaryColor.value * .7f,
+                    disabledThumbColor = primaryColor.value * .7f,
+                    disabledActiveTrackColor = primaryColor.value * .7f,
+                    disabledActiveTickColor = primaryColor.value * .7f,
+                    disabledInactiveTickColor = primaryColor.value * .7f,
+                    disabledInactiveTrackColor = primaryColor.value * .7f,
                 ),
                 thumb = {
                     Box(
@@ -563,7 +609,8 @@ private fun PlayerControls(
                             .clip(MaterialTheme.shapes.small)
                             .background(primaryColor.value * 2.5f)
                     )
-                }
+                },
+                enabled = isTrackLoading.value.not()
             )
 
             IconButton(
@@ -575,7 +622,7 @@ private fun PlayerControls(
                     else
                         Icons.Rounded.FavoriteBorder,
                     contentDescription = "play/pause icon",
-                    tint = secondaryColor.value,
+                    tint = secondaryColorWithLoadingState,
                     modifier = Modifier
                         .size(26.dp)
                 )
@@ -601,7 +648,7 @@ private fun PlayerControls(
                 append(formatMinuteTimer((currentTrackDuration / 1000).toInt()))
             },
             textAlign = TextAlign.Center,
-            color = secondaryColor.value
+            color = secondaryColorWithLoadingState
         )
 
         Row(
@@ -613,12 +660,13 @@ private fun PlayerControls(
         ) {
 
             IconButton(
-                onClick = { onPrev() }
+                onClick = { onPrev() },
+                enabled = isTrackLoading.value.not()
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
                     contentDescription = "prev icon",
-                    tint = secondaryColor.value,
+                    tint = secondaryColorWithLoadingState,
                     modifier = Modifier
                         .size(34.dp)
                 )
@@ -645,12 +693,13 @@ private fun PlayerControls(
             )
 
             IconButton(
-                onClick = { onNext() }
+                onClick = { onNext() },
+                enabled = isTrackLoading.value.not()
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,
                     contentDescription = "next icon",
-                    tint = secondaryColor.value,
+                    tint = secondaryColorWithLoadingState,
                     modifier = Modifier
                         .size(34.dp)
                 )

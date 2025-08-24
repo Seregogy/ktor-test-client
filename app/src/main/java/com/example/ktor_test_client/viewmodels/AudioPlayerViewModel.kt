@@ -3,6 +3,7 @@ package com.example.ktor_test_client.viewmodels
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableLongStateOf
@@ -35,10 +36,13 @@ class AudioPlayerViewModel(
     private val timeToPreviousTrack = 3000
 
     var exoPlayer: ExoPlayer? = null
-    var isAutoplay: Boolean = true
+    var isAutoplay: Boolean = false
 
     private val _isInit: MutableState<Boolean> = mutableStateOf(false)
     val isInit: State<Boolean> = _isInit
+
+    private val _isLoading: MutableState<Boolean> = mutableStateOf(false)
+    val isLoading: State<Boolean> = _isLoading
 
     private val _currentTrackDuration: MutableState<Long> = mutableLongStateOf(1L)
     val currentTrackDuration: State<Long> = _currentTrackDuration
@@ -78,21 +82,34 @@ class AudioPlayerViewModel(
                 if (state != currentPlaybackState.value)
                     _currentPlaybackState.value = state
 
+
                 when (state) {
                     Player.STATE_READY -> {
+                        Log.d("Player", "STATE_READY")
+
                         _currentTrackDuration.value = exoPlayer?.duration ?: 1L
                         exoPlayer?.prepare()
 
                         if (isAutoplay)
                             exoPlayer?.play()
+
+                        _isLoading.value = false
                     }
 
                     Player.STATE_ENDED -> {
+                        Log.d("Player", "STATE_ENDED")
+
                         onTrackEnd()
                     }
 
-                    Player.STATE_BUFFERING -> { }
-                    Player.STATE_IDLE -> { }
+                    Player.STATE_BUFFERING -> {
+                        Log.d("Player", "STATE_BUFFERING")
+
+                        _isLoading.value = true
+                    }
+                    Player.STATE_IDLE -> {
+                        Log.d("Player", "STATE_IDLE")
+                    }
                 }
             }
 
@@ -116,7 +133,7 @@ class AudioPlayerViewModel(
                     else -> "Unknown playback error: ${error.errorCodeName}"
                 }
 
-                Log.e("Player error", errorMessage)
+                Log.e("Player", errorMessage)
                 exoPlayer?.currentMediaItem?.let {
                     val currentPosition = exoPlayer?.currentPosition
 
@@ -134,7 +151,7 @@ class AudioPlayerViewModel(
             }
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                println("playWhenReady changed ($playWhenReady)")
+                Log.d("Player","playWhenReady changed ($playWhenReady)")
             }
         }
 

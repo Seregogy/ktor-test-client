@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.controls
 
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -56,6 +57,7 @@ fun MiniTrack(
     track: BaseTrack = BaseTrack(),
     primaryColor: Color,
     indexPlusOne: Boolean = true,
+    infiniteTransition: InfiniteTransition = rememberInfiniteTransition("infinity transition animation"),
     onClick: (it: BaseTrack) -> Unit = { }
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -67,7 +69,6 @@ fun MiniTrack(
         }
     }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "cycling_animation_transition")
     val animatedValue by infiniteTransition.animateFloat(
         initialValue = .7f,
         targetValue = 1f,

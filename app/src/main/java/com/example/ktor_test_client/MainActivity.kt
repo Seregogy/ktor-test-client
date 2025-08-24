@@ -47,6 +47,7 @@ import com.example.ktor_test_client.data.providers.NetworkDataProvider
 import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.data.sources.RandomTrackDataSource
+import com.example.ktor_test_client.helpers.InternetConnectionChecker
 import com.example.ktor_test_client.screens.AlbumPage
 import com.example.ktor_test_client.screens.ArtistsCardSwipeables
 import com.example.ktor_test_client.screens.BottomSheetPlayerPage
@@ -64,18 +65,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val ktorApi = KtorAPI(tokenHandler = object : TokenHandler {
-            override fun saveToken(type: TokenType, token: String) { }
-            override fun loadToken(type: TokenType): String = ""
-            override fun hasToken(type: TokenType): Boolean = true
-        })
-
-        val networkDataProvider = NetworkDataProvider(ktorApi)
-        val randomTrackDataSource = RandomTrackDataSource()
-        val repository = BaseNetworkRepository(networkDataProvider, randomTrackDataSource)
-
-        playerViewModel = AudioPlayerViewModel(repository)
-
         setContent {
             val miniPlayerHeight = 100.dp
             var allInit by remember { mutableStateOf(false) }
@@ -86,6 +75,23 @@ class MainActivity : ComponentActivity() {
             }
 
             KtortestclientTheme {
+                val context = LocalContext.current
+
+                val connectionChecker = InternetConnectionChecker(context)
+
+                val ktorApi = KtorAPI(context = context, tokenHandler = object : TokenHandler {
+                    override fun saveToken(type: TokenType, token: String) { }
+                    override fun loadToken(type: TokenType): String = ""
+                    override fun hasToken(type: TokenType): Boolean = true
+                })
+
+                val networkDataProvider = NetworkDataProvider(ktorApi, context)
+                val randomTrackDataSource = RandomTrackDataSource()
+                val repository = BaseNetworkRepository(networkDataProvider, randomTrackDataSource)
+
+                playerViewModel = AudioPlayerViewModel(repository)
+
+
                 val coroutineScope = rememberCoroutineScope()
                 val navController = rememberNavController()
                 val bottomSheetState = rememberBottomSheetScaffoldState()

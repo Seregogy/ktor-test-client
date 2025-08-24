@@ -1,5 +1,8 @@
 package com.example.ktor_test_client.api
 
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -9,6 +12,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 
 open class KtorAPI(
+	private val context: Context,
 	private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTP,
 	private val defaultHost: String = "95.31.212.185",
 	private val defaultPort: Int = 7777,
@@ -37,6 +41,14 @@ open class KtorAPI(
 
 		defaultRequest {
 			header("Authorization", "Bearer $accessToken")
+		}
+
+		expectSuccess = false
+
+		HttpResponseValidator {
+			handleResponseExceptionWithRequest { cause, request ->
+				Log.e("Network", "${request.url}, ${cause.message}")
+			}
 		}
 	}
 

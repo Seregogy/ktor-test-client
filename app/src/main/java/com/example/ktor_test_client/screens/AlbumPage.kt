@@ -1,6 +1,7 @@
 package com.example.ktor_test_client.screens
 
 import android.graphics.Bitmap
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -93,6 +94,7 @@ fun AlbumPage(
     onTrackClicked: (track: BaseTrack) -> Unit = { }
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val infiniteTransition = rememberInfiniteTransition("infinity transition animation")
 
     val colorScheme = MaterialTheme.colorScheme
 
@@ -280,6 +282,7 @@ fun AlbumPage(
                                 for (track in album.tracks) {
                                     MiniTrack(
                                         track = track,
+                                        infiniteTransition = infiniteTransition,
                                         onClick = onTrackClicked,
                                         primaryColor = backgroundColor
                                     )
@@ -309,9 +312,11 @@ fun AlbumPage(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .height(screenHeight)
                                             .padding(vertical = 4.dp)
                                             .horizontalScroll(rememberScrollState()),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.Top
                                     ) {
                                         for (i in otherAlbums.indices) {
                                             if (i == 0)
@@ -382,7 +387,8 @@ private fun BoxScope.AlbumImage(
                     .fillMaxSize()
                     .offset(y = (-20).dp)
                     .padding(75.dp)
-                    .clip(MaterialTheme.shapes.large)
+                    .clip(MaterialTheme.shapes.large),
+                contentScale = ContentScale.Crop
             )
         }
     }
