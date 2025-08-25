@@ -4,13 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,7 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -36,20 +32,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.ktor_test_client.api.KtorAPI
-import com.example.ktor_test_client.api.TokenHandler
-import com.example.ktor_test_client.api.TokenType
-import com.example.ktor_test_client.api.dtos.Album
-import com.example.ktor_test_client.api.dtos.BaseAlbum
-import com.example.ktor_test_client.api.methods.getAlbum
-import com.example.ktor_test_client.api.methods.getAlbumsFromArtist
+import com.example.ktor_test_client.api.ApiClient
+import com.example.ktor_test_client.api.MusicApiService
+import com.example.ktor_test_client.api.tools.TokenHandler
+import com.example.ktor_test_client.api.tools.TokenType
 import com.example.ktor_test_client.data.providers.NetworkDataProvider
 import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
-import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.data.sources.RandomTrackDataSource
-import com.example.ktor_test_client.api.InternetConnectionChecker
-import com.example.ktor_test_client.screens.AlbumPage
-import com.example.ktor_test_client.screens.ArtistsCardSwipeables
+import com.example.ktor_test_client.routers.AlbumPageRouter
+import com.example.ktor_test_client.routers.ArtistHomePageRouter
+import com.example.ktor_test_client.routers.ArtistsCardPageRouter
 import com.example.ktor_test_client.screens.BottomSheetPlayerPage
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
@@ -77,15 +69,14 @@ class MainActivity : ComponentActivity() {
 
                 val context = LocalContext.current
 
-                val connectionChecker = InternetConnectionChecker(context)
-
-                val ktorApi = KtorAPI(context = context, tokenHandler = object : TokenHandler {
+                val apiClient = ApiClient(context = context, tokenHandler = object : TokenHandler {
                     override fun saveToken(type: TokenType, token: String) { }
                     override fun loadToken(type: TokenType): String = ""
                     override fun hasToken(type: TokenType): Boolean = true
                 })
 
-                val networkDataProvider = NetworkDataProvider(ktorApi, context)
+                val musicApiService = MusicApiService(apiClient)
+                val networkDataProvider = NetworkDataProvider(musicApiService)
                 val randomTrackDataSource = RandomTrackDataSource()
                 val repository = BaseNetworkRepository(networkDataProvider, randomTrackDataSource)
 
@@ -144,7 +135,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     ) {
-                        NavRoutes(navController, ktorApi, innerPadding)
+                        NavRoutes(navController, musicApiService, innerPadding)
                     }
                 }
             }
@@ -154,71 +145,21 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun NavRoutes(
         navController: NavHostController,
-        ktorApi: KtorAPI,
+        musicApiService: MusicApiService,
         innerPadding: PaddingValues
     ) {
         val context = LocalContext.current
 
         NavHost(
             navController = navController,
-            startDestination = "Home"
+            startDestination = "ArtistsCardSwipeables"
         ) {
             composable(
                 route = "AlbumPage/?id={albumId}",
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
-                val albumId = it.arguments?.getString("albumId")
-                var album: Album? by remember { mutableStateOf(null) }
-                var otherAlbums: List<BaseAlbum> by remember { mutableStateOf(listOf()) }
-
-                LaunchedEffect(Unit) {
-                    album = ktorApi.getAlbum(albumId ?: "")
-                    otherAlbums = ktorApi.getAlbumsFromArtist(album?.artists?.first()?.id ?: "")?.albums ?: listOf()
-                }
-
-                when {
-                    album == null -> Box(Modifier.fillMaxSize()) {
-                        CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    }
-                    else -> {
-                        AlbumPage(
-                            album = album!!,
-                            otherAlbums = otherAlbums,
-                            bottomPadding = sheetPeekHeight,
-                            onArtistClicked = { artistId ->
-                                navController.navigate("ArtistPage/?id=$artistId")
-                            },
-                            onAlbumClicked = { otherAlbumId ->
-                                navController.navigate("AlbumPage/?id=$otherAlbumId")
-                            }
-                        ) { clickedTrack ->
-                            album?.let { album ->
-                                //TODO: инжектить дата соурс, который будет храниться в вью модели и оттуда получать индекс текущего трека, чтобы отобразить трек с анимацией в альбоме
-                                playerViewModel.injectDataSource(context, PlaylistDataSource(
-                                    tracksId = album.tracks.map { track ->
-                                        track.id
-                                    },
-                                    firstTrack = clickedTrack.indexInAlbum
-                                ))
-
-                                playerViewModel.exoPlayer?.prepare()
-                            }
-                        }
-                    }
-                }
-            }
-
-            composable(
-                route = "Home"
-            ) {
-                Text(
-                    text = "Главная страница",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.W800,
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .padding(25.dp)
-                )
+                val albumId = it.arguments?.getString("albumId") ?: ""
+                AlbumPageRouter(albumId, musicApiService, navController, playerViewModel, sheetPeekHeight, context)
             }
 
             composable(
@@ -226,19 +167,13 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("artistId") { type = NavType.IntType })
             ) {
                 val artistId = it.arguments?.getInt("artistId")
-
-                //TODO(вызов api)
-                //ArtistHomePage()
+                ArtistHomePageRouter()
             }
 
             composable(
                 route = "ArtistsCardSwipeables"
             ) {
-                ArtistsCardSwipeables(
-                    modifier = Modifier
-                        .padding(innerPadding),
-                    listOf()
-                ) {
+                ArtistsCardPageRouter(Modifier.padding(innerPadding), musicApiService) {
                     navController.navigate("ArtistPage/?id=${it.id}")
                 }
             }

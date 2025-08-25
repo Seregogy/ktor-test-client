@@ -81,8 +81,8 @@ import com.example.ktor_test_client.R
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
-import com.example.ktor_test_client.screens.TopAppContentBar.additionalHeight
-import com.example.ktor_test_client.screens.TopAppContentBar.topPartWeight
+import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
+import com.example.ktor_test_client.pages.TopAppContentBar.topPartWeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import com.example.ktor_test_client.api.dtos.Track

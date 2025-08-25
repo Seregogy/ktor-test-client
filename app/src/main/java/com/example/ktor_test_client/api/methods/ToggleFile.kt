@@ -1,7 +1,7 @@
 package com.example.ktor_test_client.api.methods
 
 import android.util.Log
-import com.example.ktor_test_client.api.KtorAPI
+import com.example.ktor_test_client.api.ApiClient
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.bodyAsText
@@ -14,7 +14,7 @@ data class ToggleLikeResponse(
 	val liked: Boolean
 )
 
-suspend fun KtorAPI.toggleLike(trackId: String) : ToggleLikeResponse? {
+suspend fun ApiClient.toggleLike(trackId: String) : ToggleLikeResponse? {
 	val response = httpClient.post("api/v1/tracks/$trackId/like")
 
 	Log.d("API", response.status.toString())

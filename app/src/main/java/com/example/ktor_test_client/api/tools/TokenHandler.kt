@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.api
+package com.example.ktor_test_client.api.tools
 
 enum class TokenType {
 	AccessToken,

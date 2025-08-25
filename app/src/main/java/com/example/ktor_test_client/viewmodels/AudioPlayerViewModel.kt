@@ -22,7 +22,6 @@ import kotlinx.coroutines.launch
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.repositories.Repository
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
-import com.example.ktor_test_client.api.InternetConnectionChecker
 
 object DefaultPlayerConfig {
     var timeToPreviousTrack = 3000

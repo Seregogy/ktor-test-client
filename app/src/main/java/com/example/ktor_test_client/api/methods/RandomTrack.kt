@@ -1,14 +1,14 @@
 package com.example.ktor_test_client.api.methods
 
 import android.util.Log
-import com.example.ktor_test_client.api.KtorAPI
+import com.example.ktor_test_client.api.ApiClient
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import com.example.ktor_test_client.api.dtos.Track
 
-suspend fun KtorAPI.getRandomTrack(): Track? {
+suspend fun ApiClient.getRandomTrack(): Track? {
 	val response = httpClient.get("api/v1/tracks/random")
 
 	Log.d("API", response.status.toString())

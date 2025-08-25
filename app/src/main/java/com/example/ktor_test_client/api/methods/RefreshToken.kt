@@ -1,13 +1,11 @@
 package com.example.ktor_test_client.api.methods
 
 import android.util.Log
-import com.example.ktor_test_client.api.KtorAPI
+import com.example.ktor_test_client.api.ApiClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 
@@ -22,7 +20,7 @@ data class UpdateAccessTokensResponse(
 	val refreshToken: String
 )
 
-suspend fun KtorAPI.refreshTokens(): UpdateAccessTokensResponse? {
+suspend fun ApiClient.refreshTokens(): UpdateAccessTokensResponse? {
 	val response = httpClient.post("api/v1/auth/refresh-token") {
 		setBody(UpdateAccessTokenRequest(refreshToken))
 	}

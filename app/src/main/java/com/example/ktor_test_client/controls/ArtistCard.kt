@@ -27,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.palette.graphics.Palette
-import com.example.ktor_test_client.api.dtos.Artist
+import com.example.ktor_test_client.api.dtos.BaseArtist
 import com.example.ktor_test_client.viewmodels.ArtistCardViewModel
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
@@ -39,7 +39,7 @@ data class ArtistCardState(
 
 @Composable
 fun ArtistCard(
-    artist: Artist,
+    artist: BaseArtist,
     artistCardState: MutableState<ArtistCardState>,
     viewModel: ArtistCardViewModel
 ) {
@@ -47,7 +47,7 @@ fun ArtistCard(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.fetchImageByUrl(context, artist.imagesUrl.first())
+        viewModel.fetchImageByUrl(context, artist.imageUrl ?: "")
     }
 
     LaunchedEffect(Unit) {

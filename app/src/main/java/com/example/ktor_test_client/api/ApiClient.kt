@@ -2,12 +2,13 @@ package com.example.ktor_test_client.api
 
 import android.content.Context
 import android.util.Log
+import com.example.ktor_test_client.api.tools.InternetConnectionChecker
+import com.example.ktor_test_client.api.tools.TokenHandler
+import com.example.ktor_test_client.api.tools.TokenType
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.cache.HttpCache
-import io.ktor.client.plugins.cache.storage.FileStorage
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
@@ -16,18 +17,15 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
 
-open class KtorAPI(
+open class ApiClient(
 	private val context: Context,
 	private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTP,
 	private val defaultHost: String = "95.31.212.185",
 	private val defaultPort: Int = 7777,
 	private val tokenHandler: TokenHandler
 ) {
-	val connectionChecker = InternetConnectionChecker(context)
+	private val connectionChecker = InternetConnectionChecker(context)
 
 	var accessToken = ""
 	var refreshToken = ""

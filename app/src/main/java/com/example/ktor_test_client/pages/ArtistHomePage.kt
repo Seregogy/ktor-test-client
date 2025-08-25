@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.screens
+package com.example.ktor_test_client.pages
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background

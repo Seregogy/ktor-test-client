@@ -5,10 +5,8 @@ import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
-import com.example.ktor_test_client.api.KtorAPI
+import com.example.ktor_test_client.api.ApiClient
 import io.ktor.client.statement.bodyAsText
 
 @Serializable
@@ -23,7 +21,7 @@ data class LoginResponse(
 	val refreshToken: String
 )
 
-suspend fun KtorAPI.login(loginRequest: LoginRequest): HttpResponse {
+suspend fun ApiClient.login(loginRequest: LoginRequest): HttpResponse {
 	val response = httpClient.post("api/v1/auth/login") {
 		setBody(loginRequest)
 	}

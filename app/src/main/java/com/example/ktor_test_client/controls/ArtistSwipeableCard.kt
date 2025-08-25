@@ -27,15 +27,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.dtos.Artist
+import com.example.ktor_test_client.api.dtos.BaseArtist
 import com.example.ktor_test_client.controls.card.SwipeableCard
 import com.example.ktor_test_client.controls.card.SwipeableCardData
 import com.example.ktor_test_client.viewmodels.ArtistCardViewModel
 
 @Composable
 fun artistSwipeableCard(
-    artist: Artist,
+    artist: BaseArtist,
     artistCardState: MutableState<ArtistCardState>,
-    onClick: (artist: Artist) -> Unit
+    onClick: (artist: BaseArtist) -> Unit
 ) : SwipeableCard {
     val threshold = 100.dp
 
@@ -43,7 +44,7 @@ fun artistSwipeableCard(
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        viewModel.fetchImageByUrl(context, artist.imagesUrl.first())
+        viewModel.fetchImageByUrl(context, artist.imageUrl ?: "")
     }
 
     LaunchedEffect(Unit) {

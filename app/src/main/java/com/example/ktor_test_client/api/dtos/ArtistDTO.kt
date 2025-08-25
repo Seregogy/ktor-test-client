@@ -12,6 +12,7 @@ data class SocialMedia(
 data class BaseArtist(
 	val id: String = "",
 	val name: String = "unknown artist",
+	val about: String? = "unknown artist",
 	val imageUrl: String? = ""
 )
 
