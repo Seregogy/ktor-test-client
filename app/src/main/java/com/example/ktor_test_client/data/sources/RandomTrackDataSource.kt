@@ -42,6 +42,12 @@ class RandomTrackDataSource : DataSource() {
         return tracks[currentTrack]
     }
 
-    private suspend fun loadNextTrack(dataProvider: DataProvider) =
-        dataProvider.getTrack((dataProvider as NetworkDataProvider).apiService.getRandomTrackId()?.id ?: "")
+    private suspend fun loadNextTrack(dataProvider: DataProvider): Track? {
+        val apiService = (dataProvider as NetworkDataProvider).apiService
+        apiService.getRandomTrack().onSuccess {
+            return it
+        }
+
+        return null
+    }
 }

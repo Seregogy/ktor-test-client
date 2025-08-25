@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material3.CircularProgressIndicator
@@ -11,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,27 +33,29 @@ fun ArtistsCardPageRouter(
     musicApiService: MusicApiService,
     onCardClicked: (artist: BaseArtist) -> Unit
 ) {
-    var artists: List<BaseArtist>? = null
+    val artists: MutableState<List<BaseArtist>?> = remember { mutableStateOf(null) }
     var isError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        musicApiService.getTopArtists().onSuccess {
-            artists = it
+        val result = musicApiService.getTopArtists().onSuccess {
+            artists.value = it
         }.onFailure {
             isError = true
         }
+
+        println(result)
     }
 
     when {
         isError -> {
             ErrorState()
         }
-        artists == null -> {
+        artists.value == null -> {
             LoadingState()
         }
         else -> {
-            val cardStates = List(artists!!.size) { remember { mutableStateOf(ArtistCardState()) } }
-            val cards = artists!!.zip(cardStates) { artist, state ->
+            val cardStates = List(artists.value!!.size) { remember { mutableStateOf(ArtistCardState()) } }
+            val cards = artists.value!!.zip(cardStates) { artist, state ->
                 artistSwipeableCard(artist, state) {
                     onCardClicked(it)
                 }
@@ -83,7 +87,9 @@ private fun ErrorState() {
         ) {
             Icon(
                 imageVector = Icons.Rounded.ErrorOutline,
-                contentDescription = "something went wrong icon"
+                contentDescription = "something went wrong icon",
+                modifier = Modifier
+                    .size(120.dp)
             )
 
             Text(

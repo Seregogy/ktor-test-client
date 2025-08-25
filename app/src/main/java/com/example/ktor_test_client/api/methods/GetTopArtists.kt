@@ -15,7 +15,7 @@ data class GetTopArtistsResponse(
 )
 
 suspend fun ApiClient.getTopArtists(): GetTopArtistsResponse? {
-    val response = httpClient.get("artists/top")
+    val response = httpClient.get("api/v1/artists/top")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())
