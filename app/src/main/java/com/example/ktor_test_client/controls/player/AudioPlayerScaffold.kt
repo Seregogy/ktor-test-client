@@ -38,6 +38,8 @@ fun AudioPlayerScaffold(
     navController: NavHostController,
     content: @Composable (sheetPeekHeight: Dp, innerPadding: PaddingValues) -> Unit
 ) {
+    val viewModel: AudioPlayerViewModel = koinViewModel()
+
     val miniPlayerHeight = 100.dp
     var allInit by remember { mutableStateOf(false) }
 
@@ -70,7 +72,7 @@ fun AudioPlayerScaffold(
                 yCurrentOffset,
                 miniPlayerHeight,
                 innerPadding,
-                koinViewModel(),
+                viewModel,
                 Modifier.padding(top = innerPadding.calculateTopPadding()),
                 onExpandRequest = {
                     coroutineScope.launch {

@@ -9,12 +9,7 @@ class PlaylistDataSource(
 ) : DataSource() {
     private var tracks: MutableList<Track?> = MutableList(tracksId.size) { null }
 
-    var currentTrack: Int = firstTrack
-        set(value) {
-            if (value in tracksId.indices) {
-                field = value
-            }
-        }
+    private var currentTrack: Int = firstTrack
 
     override suspend fun nextTrack(dataProvider: DataProvider): Track? {
         currentTrack = (currentTrack + 1) % tracks.size

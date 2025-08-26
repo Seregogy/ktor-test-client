@@ -258,10 +258,7 @@ fun AlbumPage(
                                 backgroundColor,
                                 album,
                                 infiniteTransition,
-                                onTrackClicked = {
-                                    onTrackClicked(it)
-                                    viewModel.onTrackClicked(it)
-                                },
+                                onTrackClicked,
                                 otherAlbums,
                                 onAlbumClicked
                             )

@@ -44,10 +44,18 @@ class AlbumViewModel(
     }
 
     fun onTrackClicked(clickedTrack: BaseTrack) {
-        albumsPlaylist.currentTrack = clickedTrack.indexInAlbum
-        audioPlayerViewModel.injectDataSource(albumsPlaylist)
+        album.value?.let { album ->
+            audioPlayerViewModel.injectDataSource(
+                PlaylistDataSource(
+                    tracksId = album.tracks.map { track ->
+                        track.id
+                    },
+                    firstTrack = clickedTrack.indexInAlbum
+                )
+            )
 
-        audioPlayerViewModel.exoPlayer?.prepare()
+            audioPlayerViewModel.exoPlayer?.prepare()
+        }
     }
 
     private fun loadOtherAlbums(artistId: String) {

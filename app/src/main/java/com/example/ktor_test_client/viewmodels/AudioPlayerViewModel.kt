@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.repositories.Repository
+import com.example.ktor_test_client.data.sources.DataSource
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
 
 object DefaultPlayerConfig {
@@ -107,7 +108,7 @@ class AudioPlayerViewModel(
             .build()
     }
 
-    fun injectDataSource(dataSource: PlaylistDataSource) {
+    fun injectDataSource(dataSource: DataSource) {
         repository.injectDataSource(dataSource)
 
         viewModelScope.launch {
@@ -141,10 +142,11 @@ class AudioPlayerViewModel(
 
     private suspend fun setTrack(track: Track) {
         fetchImageByUrl(context, track.album.imageUrl)
-        setMediaFromUri(track.audioUrl)
 
         _currentTrack.value = track
         _currentlyPlayTrackId.value = _currentTrack.value?.id
+
+        setMediaFromUri(track.audioUrl)
 
         exoPlayer?.prepare()
     }
