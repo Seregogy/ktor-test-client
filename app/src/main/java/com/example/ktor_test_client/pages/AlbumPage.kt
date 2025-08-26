@@ -13,28 +13,21 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -67,7 +60,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,7 +75,7 @@ import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.AlbumMiniPreview
-import com.example.ktor_test_client.controls.MiniTrack
+import com.example.ktor_test_client.controls.TrackMini
 import com.example.ktor_test_client.helpers.times
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -262,7 +254,6 @@ fun AlbumPage(
                         album,
                         infiniteTransition,
                         onTrackClicked,
-                        screenHeight,
                         otherAlbums,
                         onAlbumClicked
                     )
@@ -318,7 +309,6 @@ private fun AlbumContent(
     album: Album,
     infiniteTransition: InfiniteTransition,
     onTrackClicked: (track: BaseTrack) -> Unit,
-    screenHeight: Dp,
     otherAlbums: List<BaseAlbum>,
     onAlbumClicked: (artistId: String) -> Unit
 ) {
@@ -336,7 +326,7 @@ private fun AlbumContent(
             Spacer(Modifier.height(30.dp))
 
             for (track in album.tracks) {
-                MiniTrack(
+                TrackMini(
                     track = track,
                     infiniteTransition = infiniteTransition,
                     onClick = onTrackClicked,
@@ -347,32 +337,43 @@ private fun AlbumContent(
 
             Spacer(Modifier.height(20.dp))
 
-            Text(
-                text = "Ещё от ${album.artists.first().name}",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.W700,
-                modifier = Modifier
-                    .padding(start = 25.dp)
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .padding(bottom = 25.dp)
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalAlignment = Alignment.Top
-            ) {
-                Spacer(Modifier.width(20.dp))
-
-                for (otherAlbum in otherAlbums) {
-                    AlbumMiniPreview(onAlbumClicked, otherAlbum)
-                }
-
-                Spacer(Modifier.width(25.dp))
-            }
+            OtherAlbums("Ещё от ${album.artists.first().name}", otherAlbums, onAlbumClicked)
         }
+    }
+}
+
+@Composable
+fun OtherAlbums(
+    message: String?,
+    otherAlbums: List<BaseAlbum>,
+    onAlbumClicked: (artistId: String) -> Unit
+) {
+    message?.let {
+        Text(
+            text = message,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.W700,
+            modifier = Modifier
+                .padding(start = 25.dp)
+        )
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .padding(bottom = 25.dp)
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Spacer(Modifier.width(20.dp))
+
+        for (otherAlbum in otherAlbums) {
+            AlbumMiniPreview(onAlbumClicked, otherAlbum)
+        }
+
+        Spacer(Modifier.width(25.dp))
     }
 }
 

@@ -25,7 +25,7 @@ import com.example.ktor_test_client.di.dataSourceDi
 import com.example.ktor_test_client.di.repositoryDi
 import com.example.ktor_test_client.di.tokenHandlerDi
 import com.example.ktor_test_client.di.viewModelDi
-import com.example.ktor_test_client.pages.AudioPlayerScaffold
+import com.example.ktor_test_client.controls.player.AudioPlayerScaffold
 import com.example.ktor_test_client.routers.AlbumPageRouter
 import com.example.ktor_test_client.routers.ArtistHomePageRouter
 import com.example.ktor_test_client.routers.ArtistsCardPageRouter

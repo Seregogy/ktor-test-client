@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.screens
+package com.example.ktor_test_client.controls.player
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -19,7 +19,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +28,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -62,7 +60,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -72,13 +69,11 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.palette.graphics.Palette
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
@@ -86,7 +81,7 @@ import com.example.ktor_test_client.pages.TopAppContentBar.topPartWeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import com.example.ktor_test_client.api.dtos.Track
-import com.example.ktor_test_client.controls.TrackControl
+import com.example.ktor_test_client.controls.CircleButton
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
@@ -95,133 +90,7 @@ val additionalPlayerHeight = 3.dp
 const val animationsSpeed = 1200
 
 @Composable
-fun BottomSheetPlayerPage(
-    yCurrentOffset: State<Float>,
-    miniPlayerHeight: Dp,
-    innerPadding: PaddingValues,
-    viewModel: AudioPlayerViewModel,
-    modifier: Modifier,
-    onExpandRequest: () -> Unit = { },
-    onCollapseRequest: () -> Unit = { },
-    onAlbumClicked: (albumId: String) -> Unit,
-    onArtistClicked: (artistId: String) -> Unit
-) {
-    val screenHeight = LocalConfiguration.current.screenHeightDp
-    val targetMiniPlayerAlpha by remember {
-        derivedStateOf {
-            yCurrentOffset.value / screenHeight
-        }
-    }
-
-    Box {
-        Box(
-            modifier = Modifier.alpha(1f - targetMiniPlayerAlpha)
-        ) {
-            PlayerPage(viewModel, modifier, onCollapseRequest, onAlbumClicked, onArtistClicked)
-        }
-
-        Box(
-            modifier = Modifier
-                .alpha(targetMiniPlayerAlpha)
-                .align(Alignment.TopCenter)
-                .then(
-                    if (targetMiniPlayerAlpha < .8f)
-                        Modifier.pointerInteropFilter { return@pointerInteropFilter false }
-                    else
-                        Modifier
-                )
-        ) {
-            MiniPlayer(viewModel, miniPlayerHeight, innerPadding, onExpandRequest)
-        }
-    }
-}
-
-@Composable
-fun MiniPlayer(
-    viewModel: AudioPlayerViewModel,
-    miniPlayerHeight: Dp,
-    scaffoldInnerPadding: PaddingValues,
-    onExpandRequest: () -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
-
-    val currentTrack by viewModel.currentTrack.collectAsStateWithLifecycle()
-    val palette by viewModel.palette.collectAsStateWithLifecycle()
-
-    val backgroundColor by remember {
-        derivedStateOf {
-            Color(palette?.vibrantSwatch?.rgb ?: colorScheme.background.toArgb())
-        }
-    }
-
-    val foregroundColor by remember {
-        derivedStateOf {
-            Color(palette?.vibrantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
-        }
-    }
-
-    val isPlay by remember { viewModel.isPlay }
-
-    Box(
-        modifier = Modifier
-            .background(Color.Transparent)
-    ) {
-        TrackControl(
-            modifier = Modifier
-                .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
-                .height(miniPlayerHeight)
-                .fillMaxWidth()
-                .padding(15.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(backgroundColor),
-            onClick = { onExpandRequest() },
-            foregroundColor = foregroundColor,
-            track = currentTrack ?: Track()
-        )
-
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 30.dp),
-            horizontalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            IconButton(
-                onClick = { }
-            ) {
-                Icon(
-                    imageVector = if (false)
-                        Icons.Rounded.Favorite
-                    else
-                        Icons.Rounded.FavoriteBorder,
-                    contentDescription = "favorite icon button",
-                    modifier = Modifier
-                        .size(24.dp),
-                    tint = foregroundColor
-                )
-            }
-
-            IconButton(
-                onClick = {
-                    viewModel.playPause()
-                }
-            ) {
-                Icon(
-                    imageVector = if (isPlay)
-                        Icons.Rounded.Pause
-                    else
-                        Icons.Rounded.PlayArrow,
-                    contentDescription = "play/pause icon",
-                    modifier = Modifier
-                        .size(26.dp),
-                    tint = foregroundColor
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun PlayerPage(
+fun FullAudioPlayer(
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
     onCollapseRequest: () -> Unit = { },
@@ -318,7 +187,9 @@ fun PlayerPage(
         bitmap?.let {
             AnimatedContent(
                 targetState = it,
-                transitionSpec = { fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(animationsSpeed)) },
+                transitionSpec = { fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(
+                    animationsSpeed
+                )) },
                 label = "image animation"
             ) { animatedBitmap ->
                 Image(
