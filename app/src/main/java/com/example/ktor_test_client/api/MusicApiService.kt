@@ -1,7 +1,6 @@
 package com.example.ktor_test_client.api
 
 import com.example.ktor_test_client.api.dtos.Album
-import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.api.dtos.BaseArtist
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.api.methods.GetAlbumsByArtistResponse
@@ -13,7 +12,7 @@ import com.example.ktor_test_client.api.methods.getTopArtists
 import com.example.ktor_test_client.api.methods.getTrack
 import com.example.ktor_test_client.api.methods.toggleLike
 
-suspend fun <T>safeRequest(request: suspend () -> T): Result<T> {
+suspend fun <T> safeRequest(request: suspend () -> T): Result<T> {
     return try {
         Result.success(request())
     } catch (exc: Exception) {
@@ -32,9 +31,10 @@ class MusicApiService(
         apiClient.getAlbum(albumId)!!
     }
 
-    suspend fun getAlbumsByArtist(artistId: String): Result<GetAlbumsByArtistResponse> = safeRequest {
-        apiClient.getAlbumsFromArtist(artistId)!!
-    }
+    suspend fun getAlbumsByArtist(artistId: String): Result<GetAlbumsByArtistResponse> =
+        safeRequest {
+            apiClient.getAlbumsFromArtist(artistId)!!
+        }
 
     suspend fun getRandomTrackId(): Result<String> = safeRequest {
         apiClient.getRandomTrackId()?.id!!

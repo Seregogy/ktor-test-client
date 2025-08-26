@@ -11,31 +11,31 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateAccessTokenRequest(
-	val refreshToken: String
+    val refreshToken: String
 )
 
 @Serializable
 data class UpdateAccessTokensResponse(
-	val accessToken: String,
-	val refreshToken: String
+    val accessToken: String,
+    val refreshToken: String
 )
 
 suspend fun ApiClient.refreshTokens(): UpdateAccessTokensResponse? {
-	val response = httpClient.post("api/v1/auth/refresh-token") {
-		setBody(UpdateAccessTokenRequest(refreshToken))
-	}
+    val response = httpClient.post("api/v1/auth/refresh-token") {
+        setBody(UpdateAccessTokenRequest(refreshToken))
+    }
 
-	Log.d("API", response.status.toString())
-	Log.d("API", response.bodyAsText())
+    Log.d("API", response.status.toString())
+    Log.d("API", response.bodyAsText())
 
-	return if (response.status.isSuccess()) {
-		val parsedResponse = response.body<UpdateAccessTokensResponse>()
+    return if (response.status.isSuccess()) {
+        val parsedResponse = response.body<UpdateAccessTokensResponse>()
 
-		accessToken = parsedResponse.accessToken
-		refreshToken = parsedResponse.refreshToken
+        accessToken = parsedResponse.accessToken
+        refreshToken = parsedResponse.refreshToken
 
-		parsedResponse
-	} else {
-		null
-	}
+        parsedResponse
+    } else {
+        null
+    }
 }

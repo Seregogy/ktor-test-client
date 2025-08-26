@@ -12,13 +12,14 @@ import kotlinx.coroutines.DisposableHandle
 
 class InternetConnectionChecker(
     context: Context
-): DisposableHandle {
+) : DisposableHandle {
     private val connectionReturnsListenersOnce: MutableList<() -> Unit> = mutableListOf()
 
     private val _isConnected: MutableState<Boolean> = mutableStateOf(false)
     val isConnected: State<Boolean> = _isConnected
 
-    private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             super.onAvailable(network)

@@ -11,35 +11,35 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RegisterRequest(
-	val name: String = "",
-	val email: String = "",
-	val password: String = ""
+    val name: String = "",
+    val email: String = "",
+    val password: String = ""
 )
 
 @Serializable
 data class RegisterResponse(
-	val id: String,
-	val name: String,
-	val accessToken: String,
-	val refreshToken: String
+    val id: String,
+    val name: String,
+    val accessToken: String,
+    val refreshToken: String
 )
 
 suspend fun ApiClient.registration(registerRequest: RegisterRequest): RegisterResponse? {
-	val response = httpClient.post("api/v1/auth/register") {
-		setBody(registerRequest)
-	}
+    val response = httpClient.post("api/v1/auth/register") {
+        setBody(registerRequest)
+    }
 
-	Log.d("API", response.status.toString())
-	Log.d("API", response.bodyAsText())
+    Log.d("API", response.status.toString())
+    Log.d("API", response.bodyAsText())
 
-	return if (response.status.isSuccess()) {
-		val responseData = response.body<RegisterResponse>()
+    return if (response.status.isSuccess()) {
+        val responseData = response.body<RegisterResponse>()
 
-		this.accessToken = responseData.accessToken
-		this.refreshToken = responseData.refreshToken
+        this.accessToken = responseData.accessToken
+        this.refreshToken = responseData.refreshToken
 
-		responseData
-	} else {
-		null
-	}
+        responseData
+    } else {
+        null
+    }
 }

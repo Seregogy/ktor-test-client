@@ -19,66 +19,66 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 open class ApiClient(
-	private val context: Context,
-	private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTP,
-	private val defaultHost: String = "95.31.212.185",
-	private val defaultPort: Int = 7777,
-	private val tokenHandler: TokenHandler
+    private val context: Context,
+    private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTP,
+    private val defaultHost: String = "95.31.212.185",
+    private val defaultPort: Int = 7777,
+    private val tokenHandler: TokenHandler
 ) {
-	private val connectionChecker = InternetConnectionChecker(context)
+    private val connectionChecker = InternetConnectionChecker(context)
 
-	var accessToken = ""
-	var refreshToken = ""
+    var accessToken = ""
+    var refreshToken = ""
 
-	init {
-		if (tokenHandler.hasToken(TokenType.AccessToken).not()) {
-			TODO("login request")
-		}
-	}
+    init {
+        if (tokenHandler.hasToken(TokenType.AccessToken).not()) {
+            TODO("login request")
+        }
+    }
 
-	internal val httpClient = HttpClient {
-		install(HttpCache)
+    internal val httpClient = HttpClient {
+        install(HttpCache)
 
-		install(ContentNegotiation.Plugin) {
-			json(
-				Json {
-					prettyPrint = true
-					ignoreUnknownKeys = true
-				}
-			)
-		}
+        install(ContentNegotiation.Plugin) {
+            json(
+                Json {
+                    prettyPrint = true
+                    ignoreUnknownKeys = true
+                }
+            )
+        }
 
-		install(HttpRequestRetry) {
-			maxRetries = 5
-			retryOnExceptionIf { _, _ ->
-				connectionChecker.isConnected.value.not()
-			}
-			delayMillis { retry ->
-				Log.d("API", "resending request #$retry")
+        install(HttpRequestRetry) {
+            maxRetries = 5
+            retryOnExceptionIf { _, _ ->
+                connectionChecker.isConnected.value.not()
+            }
+            delayMillis { retry ->
+                Log.d("API", "resending request #$retry")
 
-				retry * 3000L
-			}
-		}
+                retry * 3000L
+            }
+        }
 
-		defaultRequest {
-			url { host("") }
-			header("Authorization", "Bearer $accessToken")
-		}
+        defaultRequest {
+            url { host("") }
+            header("Authorization", "Bearer $accessToken")
+        }
 
-		expectSuccess = false
+        expectSuccess = false
 
-		HttpResponseValidator {
-			handleResponseExceptionWithRequest { cause, request ->
-				Log.e("API", "${request.url}, ${cause.message}")
-			}
-		}
-	}
+        HttpResponseValidator {
+            handleResponseExceptionWithRequest { cause, request ->
+                Log.e("API", "${request.url}, ${cause.message}")
+            }
+        }
+    }
 
-	private fun URLBuilder.host(endpointPath: String) {
-		host = defaultHost
-		protocol = defaultProtocol
-		port = defaultPort
+    private fun URLBuilder.host(endpointPath: String) {
+        host = defaultHost
+        protocol = defaultProtocol
+        port = defaultPort
 
-		path(endpointPath)
-	}
+        path(endpointPath)
+    }
 }
