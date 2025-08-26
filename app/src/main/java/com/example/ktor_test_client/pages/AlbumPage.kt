@@ -1,6 +1,7 @@
 package com.example.ktor_test_client.pages
 
 import android.graphics.Bitmap
+import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,22 +13,28 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -75,6 +82,7 @@ import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
+import com.example.ktor_test_client.controls.AlbumMiniPreview
 import com.example.ktor_test_client.controls.MiniTrack
 import com.example.ktor_test_client.helpers.times
 import kotlinx.coroutines.launch
@@ -216,7 +224,7 @@ fun AlbumPage(
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            AlbumImage(
+            AlbumHeaderImage(
                 modifier = Modifier
                     .alpha(imageAlpha),
                 screenHeight = screenHeight,
@@ -234,128 +242,30 @@ fun AlbumPage(
                     }
             ) {
                 item(0) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
-                        ) {
-                            AlbumHeader(
-                                modifier = Modifier
-                                    .alpha(scrollState.value.alpha)
-                                    .align(Alignment.BottomCenter),
-                                album = album,
-                                foregroundColor = foregroundColor,
-                                backgroundColor = backgroundColor,
-                                iconsColor = iconsColor,
-                                primaryButtonColor = primaryButtonColor,
-                                primaryIconColor = primaryIconColor
-                            ) {
-                                onArtistClicked(album.artists.first().id)
-                            }
-                        }
-                    }
+                    AlbumHeader(
+                        screenHeight,
+                        scrollState,
+                        album,
+                        foregroundColor,
+                        backgroundColor,
+                        iconsColor,
+                        primaryButtonColor,
+                        primaryIconColor,
+                        onArtistClicked
+                    )
                 }
 
                 item(1) {
-                    Box(
-                        modifier = Modifier
-                            .background(Color.Black)
-                    ) {
-                        AlbumHeaderFadingGradientBottom(
-                            modifier = Modifier
-                                .alpha(scrollState.value.colorAlpha),
-                            targetColor = backgroundColor
-                        )
-
-                        Column {
-                            Column {
-                                Spacer(Modifier.height(30.dp))
-
-                                for (track in album.tracks) {
-                                    MiniTrack(
-                                        track = track,
-                                        infiniteTransition = infiniteTransition,
-                                        onClick = onTrackClicked,
-                                        primaryColor = backgroundColor
-                                    )
-                                }
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .wrapContentHeight()
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                ) {
-                                    Spacer(Modifier.height(25.dp))
-
-                                    Text(
-                                        text = "Ещё от ${album.artists.first().name}",
-                                        fontSize = 26.sp,
-                                        fontWeight = FontWeight.W700,
-                                        modifier = Modifier
-                                            .padding(start = 25.dp)
-                                    )
-
-                                    Spacer(Modifier.height(15.dp))
-
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(screenHeight)
-                                            .padding(vertical = 4.dp)
-                                            .horizontalScroll(rememberScrollState()),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        for (i in otherAlbums.indices) {
-                                            if (i == 0)
-                                                Spacer(Modifier.width(20.dp))
-
-                                            Column(
-                                                modifier = Modifier
-                                                    .width(180.dp)
-                                                    .clickable {
-                                                        onAlbumClicked(otherAlbums[i].id)
-                                                    }
-                                            ) {
-                                                AsyncImage(
-                                                    model = otherAlbums[i].imageUrl,
-                                                    modifier = Modifier
-                                                        .clip(MaterialTheme.shapes.small)
-                                                        .fillMaxWidth()
-                                                        .aspectRatio(1f),
-                                                    contentDescription = "${otherAlbums[i].name} image",
-                                                    contentScale = ContentScale.Crop
-                                                )
-
-                                                Text(
-                                                    text = otherAlbums[i].name,
-                                                    fontWeight = FontWeight.W700,
-                                                    fontSize = 18.sp,
-                                                    lineHeight = 18.sp,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-
-                                                Text(
-                                                    text = otherAlbums[i].artists.first().name
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    Spacer(Modifier.height(50.dp))
-                                }
-                            }
-                        }
-                    }
+                    AlbumContent(
+                        scrollState,
+                        backgroundColor,
+                        album,
+                        infiniteTransition,
+                        onTrackClicked,
+                        screenHeight,
+                        otherAlbums,
+                        onAlbumClicked
+                    )
                 }
             }
         }
@@ -363,7 +273,111 @@ fun AlbumPage(
 }
 
 @Composable
-private fun BoxScope.AlbumImage(
+private fun AlbumHeader(
+    screenHeight: Dp,
+    scrollState: State<ScrollState>,
+    album: Album,
+    foregroundColor: Color,
+    backgroundColor: Color,
+    iconsColor: Color,
+    primaryButtonColor: Color,
+    primaryIconColor: Color,
+    onArtistClicked: (albumId: String) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight)
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+        ) {
+            AlbumHeaderControls(
+                modifier = Modifier
+                    .alpha(scrollState.value.alpha)
+                    .align(Alignment.BottomCenter),
+                album = album,
+                foregroundColor = foregroundColor,
+                backgroundColor = backgroundColor,
+                iconsColor = iconsColor,
+                primaryButtonColor = primaryButtonColor,
+                primaryIconColor = primaryIconColor
+            ) {
+                onArtistClicked(album.artists.first().id)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AlbumContent(
+    scrollState: State<ScrollState>,
+    backgroundColor: Color,
+    album: Album,
+    infiniteTransition: InfiniteTransition,
+    onTrackClicked: (track: BaseTrack) -> Unit,
+    screenHeight: Dp,
+    otherAlbums: List<BaseAlbum>,
+    onAlbumClicked: (artistId: String) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .background(Color.Black)
+    ) {
+        AlbumHeaderFadingGradientBottom(
+            modifier = Modifier
+                .alpha(scrollState.value.colorAlpha),
+            targetColor = backgroundColor
+        )
+
+        Column {
+            Spacer(Modifier.height(30.dp))
+
+            for (track in album.tracks) {
+                MiniTrack(
+                    track = track,
+                    infiniteTransition = infiniteTransition,
+                    onClick = onTrackClicked,
+                    primaryColor = backgroundColor,
+                    onPrimaryColor = Color.White
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            Text(
+                text = "Ещё от ${album.artists.first().name}",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.W700,
+                modifier = Modifier
+                    .padding(start = 25.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .padding(bottom = 25.dp)
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Spacer(Modifier.width(20.dp))
+
+                for (otherAlbum in otherAlbums) {
+                    AlbumMiniPreview(onAlbumClicked, otherAlbum)
+                }
+
+                Spacer(Modifier.width(25.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.AlbumHeaderImage(
     modifier: Modifier,
     screenHeight: Dp,
     bitmap: Bitmap?
@@ -392,7 +406,7 @@ private fun BoxScope.AlbumImage(
 }
 
 @Composable
-fun AlbumHeader(
+fun AlbumHeaderControls(
     modifier: Modifier = Modifier,
     album: Album,
     foregroundColor: Color,

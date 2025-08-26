@@ -56,6 +56,7 @@ fun MiniTrack(
     modifier: Modifier = Modifier,
     track: BaseTrack = BaseTrack(),
     primaryColor: Color,
+    onPrimaryColor: Color,
     indexPlusOne: Boolean = true,
     infiniteTransition: InfiniteTransition = rememberInfiniteTransition("infinity transition animation"),
     onClick: (it: BaseTrack) -> Unit = { }
@@ -94,7 +95,7 @@ fun MiniTrack(
                 else
                     Modifier
             )
-            .padding(horizontal = 20.dp)
+            .padding(start = 20.dp, end = 10.dp)
             .padding(vertical = 5.dp),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -117,7 +118,7 @@ fun MiniTrack(
                 text = (track.indexInAlbum.plus(
                     if(indexPlusOne) 1 else 0
                 )).toString(),
-                color = MaterialTheme.colorScheme.onBackground * .8f,
+                color = onPrimaryColor * .8f,
                 fontWeight = FontWeight.W700,
                 fontSize = 12.sp
             )
@@ -128,8 +129,9 @@ fun MiniTrack(
             fontSize = 16.sp,
             fontWeight = FontWeight.W600,
             maxLines = 1,
+            color = onPrimaryColor,
             modifier = Modifier
-                .padding(start = 25.dp)
+                .padding(horizontal = 25.dp)
                 .basicMarquee()
         )
 

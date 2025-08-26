@@ -42,15 +42,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val context = LocalContext.current
+            KtortestclientTheme {
+                val context = LocalContext.current
 
-            KoinApplication(
-                application = {
-                    modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, dataProviderDi, dataSourceDi, repositoryDi, viewModelDi))
-                    androidContext(context)
-                }
-            ) {
-                KtortestclientTheme {
+                KoinApplication(
+                    application = {
+                        modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, dataProviderDi, dataSourceDi, repositoryDi, viewModelDi))
+                        androidContext(context)
+                    }
+                ) {
                     val navController = rememberNavController()
 
                     Scaffold { innerPadding ->
