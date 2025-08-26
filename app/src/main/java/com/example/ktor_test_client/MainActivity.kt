@@ -57,12 +57,12 @@ class MainActivity : ComponentActivity() {
                         AudioPlayerScaffold(
                             innerPadding = innerPadding,
                             navController = navController
-                        ) { sheetPeekHeight, audioPlayerInnerPadding ->
+                        ) { sheetPeekHeight, _ ->
                             NavRoutes(
                                 navController = navController,
                                 musicApiService = inject<MusicApiService>().value,
                                 audioPlayerViewModel = viewModel<AudioPlayerViewModel>().value,
-                                innerPadding = audioPlayerInnerPadding,
+                                innerPadding = innerPadding,
                                 additionalBottomPadding = sheetPeekHeight
                             )
                         }
