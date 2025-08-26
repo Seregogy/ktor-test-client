@@ -1,11 +1,12 @@
 package com.example.ktor_test_client.data.sources
 
+import com.example.ktor_test_client.api.MusicApiService
 import com.example.ktor_test_client.api.dtos.Track
-import com.example.ktor_test_client.api.methods.getRandomTrackId
 import com.example.ktor_test_client.data.providers.DataProvider
-import com.example.ktor_test_client.data.providers.NetworkDataProvider
 
-class RandomTrackDataSource : DataSource() {
+class RandomTrackDataSource(
+    private val apiService: MusicApiService
+) : DataSource() {
     private var currentTrack = 0
     private val tracks: MutableList<Track> = mutableListOf()
 
@@ -13,7 +14,7 @@ class RandomTrackDataSource : DataSource() {
         if (currentTrack < tracks.indices.last) {
             currentTrack++
         } else {
-            val track = loadNextTrack(dataProvider)
+            val track = loadNextTrack()
 
             track?.let {
                 tracks.add(it)
@@ -26,7 +27,7 @@ class RandomTrackDataSource : DataSource() {
 
     override suspend fun currentTrack(dataProvider: DataProvider): Track {
         if (tracks.size == 0) {
-            loadNextTrack(dataProvider)?.let {
+            loadNextTrack()?.let {
                 tracks.add(it)
 
                 currentTrack = tracks.indices.last
@@ -42,8 +43,7 @@ class RandomTrackDataSource : DataSource() {
         return tracks[currentTrack]
     }
 
-    private suspend fun loadNextTrack(dataProvider: DataProvider): Track? {
-        val apiService = (dataProvider as NetworkDataProvider).apiService
+    private suspend fun loadNextTrack(): Track? {
         apiService.getRandomTrack().onSuccess {
             return it
         }

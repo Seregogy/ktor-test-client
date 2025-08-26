@@ -55,6 +55,8 @@ android {
     }
 }
 
+val koin_version = "4.1.0"
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -83,6 +85,9 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.androidx.compose.navigation)
 
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.core)

@@ -3,7 +3,7 @@ package com.example.ktor_test_client.data.sources
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.providers.DataProvider
 
-class TargetTrackDataSource(
+class SingleTrackDataSource(
     private val id: String
 ) : DataSource() {
     private var track: Track? = null
