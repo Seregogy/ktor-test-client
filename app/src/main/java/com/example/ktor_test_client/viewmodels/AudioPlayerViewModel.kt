@@ -38,7 +38,8 @@ object DefaultPlayerConfig {
 }
 
 class AudioPlayerViewModel(
-    private val repository: Repository
+    private val repository: Repository,
+    private val context: Context
 ) : ImagePaletteViewModel() {
     companion object {
         private val _currentlyPlayTrackId: MutableState<String?> = mutableStateOf(null)
@@ -69,7 +70,7 @@ class AudioPlayerViewModel(
 
     private var eventListener: Player.Listener = getPlayerEventListener()
 
-    fun initializePlayer(context: Context) {
+    fun initializePlayer() {
         viewModelScope.launch {
             currentTrack.collect {
                 it?.let {
@@ -78,18 +79,18 @@ class AudioPlayerViewModel(
             }
         }
 
-        initExoPlayer(context)
+        initExoPlayer()
         exoPlayer!!.addListener(eventListener)
 
         viewModelScope.launch {
             repository.currentTrack()?.let {
-                setTrack(context, it)
+                setTrack(it)
             }
         }
     }
 
     @OptIn(UnstableApi::class)
-    private fun initExoPlayer(context: Context) {
+    private fun initExoPlayer() {
         val audioLoadControl = DefaultLoadControl.Builder()
             .setBackBuffer(DefaultPlayerConfig.backBufferMs, true)
             .setBufferDurationsMs(
@@ -106,17 +107,17 @@ class AudioPlayerViewModel(
             .build()
     }
 
-    fun injectDataSource(context: Context, dataSource: PlaylistDataSource) {
+    fun injectDataSource(dataSource: PlaylistDataSource) {
         repository.injectDataSource(dataSource)
 
         viewModelScope.launch {
             repository.currentTrack()?.let {
-                setTrack(context, it)
+                setTrack(it)
             }
         }
     }
 
-    fun prevTrack(context: Context) {
+    fun prevTrack() {
         if ((exoPlayer?.currentPosition ?: 0L) > DefaultPlayerConfig.timeToPreviousTrack) {
             exoPlayer?.seekTo(0)
 
@@ -125,23 +126,20 @@ class AudioPlayerViewModel(
 
         viewModelScope.launch {
             repository.previousTrack()?.let {
-                setTrack(context, it)
+                setTrack(it)
             }
         }
     }
 
-    fun nextTrack(context: Context) {
+    fun nextTrack() {
         viewModelScope.launch {
             repository.nextTrack()?.let {
-                setTrack(context, it)
+                setTrack(it)
             }
         }
     }
 
-    private suspend fun setTrack(
-        context: Context,
-        track: Track
-    ) {
+    private suspend fun setTrack(track: Track) {
         fetchImageByUrl(context, track.album.imageUrl)
         setMediaFromUri(track.audioUrl)
 

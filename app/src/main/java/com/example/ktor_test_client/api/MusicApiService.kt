@@ -1,11 +1,18 @@
 package com.example.ktor_test_client.api
 
 import com.example.ktor_test_client.api.dtos.Album
+import com.example.ktor_test_client.api.dtos.Artist
+import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseArtist
+import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.api.methods.GetAlbumsByArtistResponse
+import com.example.ktor_test_client.api.methods.GetArtistResponse
+import com.example.ktor_test_client.api.methods.GetArtistTopTracksResponse
 import com.example.ktor_test_client.api.methods.getAlbum
 import com.example.ktor_test_client.api.methods.getAlbumsFromArtist
+import com.example.ktor_test_client.api.methods.getArtist
+import com.example.ktor_test_client.api.methods.getArtistTopTracks
 import com.example.ktor_test_client.api.methods.getRandomTrack
 import com.example.ktor_test_client.api.methods.getRandomTrackId
 import com.example.ktor_test_client.api.methods.getTopArtists
@@ -31,9 +38,9 @@ class MusicApiService(
         apiClient.getAlbum(albumId)!!
     }
 
-    suspend fun getAlbumsByArtist(artistId: String): Result<GetAlbumsByArtistResponse> =
+    suspend fun getAlbumsByArtist(artistId: String): Result<List<BaseAlbum>> =
         safeRequest {
-            apiClient.getAlbumsFromArtist(artistId)!!
+            apiClient.getAlbumsFromArtist(artistId)!!.albums
         }
 
     suspend fun getRandomTrackId(): Result<String> = safeRequest {
@@ -44,9 +51,13 @@ class MusicApiService(
         apiClient.getTrack(trackId)!!
     }
 
-    /*suspend fun getArtist(artistId: String): Result<Artist> {
+    suspend fun getArtist(artistId: String): Result<GetArtistResponse> = safeRequest {
         apiClient.getArtist(artistId)!!
-    }*/
+    }
+
+    suspend fun getArtistTopTracks(artistId: String, limit: Int = 9): Result<List<BaseTrack>> = safeRequest {
+        apiClient.getArtistTopTracks(artistId, limit)!!.tracks
+    }
 
     suspend fun getTopArtists(): Result<List<BaseArtist>> = safeRequest {
         apiClient.getTopArtists()?.artists!!

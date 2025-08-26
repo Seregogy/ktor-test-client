@@ -81,7 +81,8 @@ fun MiniAudioPlayer(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 30.dp),
-            horizontalArrangement = Arrangement.spacedBy(0.dp)
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
                 onClick = { }

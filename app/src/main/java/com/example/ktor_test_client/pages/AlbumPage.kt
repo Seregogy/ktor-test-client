@@ -63,28 +63,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.palette.graphics.Palette
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.controls.CircleButton
-import com.example.ktor_test_client.state.ScrollState
-import com.example.ktor_test_client.helpers.formatNumber
-import com.example.ktor_test_client.viewmodels.ImagePaletteViewModel
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.AlbumMiniPreview
+import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.TrackMini
+import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
-import kotlinx.coroutines.launch
+import com.example.ktor_test_client.state.ScrollState
+import com.example.ktor_test_client.viewmodels.AlbumViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun AlbumPage(
-    album: Album = Album(),
-    otherAlbums: List<BaseAlbum> = listOf(),
-    viewModel: ImagePaletteViewModel = viewModel(),
+    viewModel: AlbumViewModel,
     bottomPadding: Dp = 0.dp,
     onAlbumClicked: (artistId: String) -> Unit = { },
     onArtistClicked: (albumId: String) -> Unit = { },
@@ -126,6 +123,7 @@ fun AlbumPage(
             lazyListState.firstVisibleItemIndex == 0
         }
     }
+
     val flingBehavior = rememberSnapFlingBehavior(if (isFirstVisibleIndex) snapLayoutInfoProvider else noSnapLayout)
 
     var imageAlpha: Float by remember { mutableFloatStateOf(1f) }
@@ -150,9 +148,12 @@ fun AlbumPage(
         }
     }
 
+    val album by viewModel.album
+    val otherAlbums by viewModel.otherAlbums
+
     var imageBitmap: Bitmap? by remember { mutableStateOf(null) }
     LaunchedEffect(Unit) {
-        album.imageUrl?.let {
+        viewModel.album.value?.imageUrl?.let {
             viewModel.fetchImageByUrl(context, it)
         }
 
@@ -234,29 +235,38 @@ fun AlbumPage(
                     }
             ) {
                 item(0) {
-                    AlbumHeader(
-                        screenHeight,
-                        scrollState,
-                        album,
-                        foregroundColor,
-                        backgroundColor,
-                        iconsColor,
-                        primaryButtonColor,
-                        primaryIconColor,
-                        onArtistClicked
-                    )
+                    album?.let { album ->
+                        AlbumHeader(
+                            screenHeight,
+                            scrollState,
+                            album,
+                            foregroundColor,
+                            backgroundColor,
+                            iconsColor,
+                            primaryButtonColor,
+                            primaryIconColor,
+                            onArtistClicked
+                        )
+                    }
                 }
 
                 item(1) {
-                    AlbumContent(
-                        scrollState,
-                        backgroundColor,
-                        album,
-                        infiniteTransition,
-                        onTrackClicked,
-                        otherAlbums,
-                        onAlbumClicked
-                    )
+                    album?.let { album ->
+                        otherAlbums?.let { otherAlbums ->
+                            AlbumContent(
+                                scrollState,
+                                backgroundColor,
+                                album,
+                                infiniteTransition,
+                                onTrackClicked = {
+                                    onTrackClicked(it)
+                                    viewModel.onTrackClicked(it)
+                                },
+                                otherAlbums,
+                                onAlbumClicked
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -1,6 +1,5 @@
 package com.example.ktor_test_client.pages
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.TargetedFlingBehavior
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -36,7 +35,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -57,10 +59,12 @@ import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.controls.CircleButton
-import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.helpers.formatNumber
+import com.example.ktor_test_client.state.ScrollState
+import com.example.ktor_test_client.viewmodels.ArtistViewModel
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 object TopAppContentBar {
     const val topPartWeight = .55f
@@ -69,31 +73,43 @@ object TopAppContentBar {
 
 @Composable
 fun ArtistHomePage(
-    artist: Artist
+    viewModel: ArtistViewModel
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val pagerState = rememberPagerState(0) { viewModel.artist.value?.imagesUrl?.size ?: 0 }
+
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-
-    val pagerState = rememberPagerState(0) { artist.imagesUrl.count() }
-
-    val lazyListState = rememberLazyListState()
     val density = LocalDensity.current
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(5000)
+    val lazyListState = rememberLazyListState()
 
-            val currentIndex = pagerState.currentPage
-            pagerState.animateScrollToPage((currentIndex + 1) % artist.imagesUrl.count())
+    val noSnapLayout = object : SnapLayoutInfoProvider {
+        override fun calculateSnapOffset(velocity: Float): Float {
+            return velocity
+        }
+    }
+    val snapLayoutInfoProvider = SnapLayoutInfoProvider(lazyListState, SnapPosition.Start)
+
+    val isFirstVisibleIndex by remember {
+        var lastVisibleIndex = 0
+        derivedStateOf {
+            if (lastVisibleIndex >= 1 && lazyListState.firstVisibleItemIndex == 0) {
+                coroutineScope.launch {
+                    delay(300)
+
+                    if (lazyListState.firstVisibleItemIndex == 0)
+                        lazyListState.animateScrollToItem(0)
+                }
+            }
+
+            lastVisibleIndex = lazyListState.firstVisibleItemIndex
+
+            lazyListState.firstVisibleItemIndex == 0
         }
     }
 
-    val snappingLayout = SnapLayoutInfoProvider(lazyListState, SnapPosition.Start)
-    val flingBehavior = rememberSnapFlingBehavior(snappingLayout)
-
-    val color = animateColorAsState(
-        targetValue = Color(0xFFFFFFFF),
-        label = "color cross fade"
-    )
+    val flingBehavior = rememberSnapFlingBehavior(if (isFirstVisibleIndex) snapLayoutInfoProvider else noSnapLayout)
 
     val scrollState: State<ScrollState> = remember {
         derivedStateOf {
@@ -112,14 +128,33 @@ fun ArtistHomePage(
         }
     }
 
+    val artist by viewModel.artist
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5000)
+
+            val currentIndex = pagerState.currentPage
+            pagerState.animateScrollToPage((currentIndex + 1) % (artist?.imagesUrl?.count() ?: 0))
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        ArtistAvatarPager(color, pagerState, scrollState, screenHeight, artist)
+        artist?.let {
+            ArtistAvatarPager(remember { mutableStateOf(Color.Black) }, pagerState, scrollState, screenHeight,
+                it
+            )
+        }
 
-        Content(lazyListState, flingBehavior, scrollState, color, screenHeight, artist)
+        artist?.let {
+            Content(lazyListState, flingBehavior, scrollState, remember { mutableStateOf(Color.Black) }, screenHeight,
+                it
+            )
+        }
     }
 }
 

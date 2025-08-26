@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -102,10 +103,10 @@ fun FullAudioPlayer(
     val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) {
-        viewModel.initializePlayer(context)
+        viewModel.initializePlayer()
 
         viewModel.onTrackEnd = {
-            viewModel.nextTrack(context)
+            viewModel.nextTrack()
         }
     }
 
@@ -255,8 +256,8 @@ fun FullAudioPlayer(
                         primaryColorAnimated,
                         secondaryColorAnimated,
                         viewModel.isLoading,
-                        onNext = { viewModel.nextTrack(context) },
-                        onPrev = { viewModel.prevTrack(context) },
+                        onNext = { viewModel.nextTrack() },
+                        onPrev = { viewModel.prevTrack() },
                         onPlayPause = { viewModel.playPause() }
                     )
                 }
@@ -345,7 +346,6 @@ private fun TrackInfo(
                 .clickable {
                     onAlbumClicked(currentTrack?.album?.id ?: "")
                 }
-                .padding(horizontal = 5.dp)
                 .alpha(textAlpha)
                 .basicMarquee(),
             color = secondaryColor
@@ -356,7 +356,6 @@ private fun TrackInfo(
             fontSize = 24.sp,
             fontWeight = FontWeight.W800,
             modifier = Modifier
-                .offset(y = (-7).dp)
                 .clip(MaterialTheme.shapes.small)
                 .clickable {
                     onArtistClicked(currentTrack?.album?.artists?.first()?.id ?: "")
@@ -364,48 +363,9 @@ private fun TrackInfo(
                 .padding(horizontal = 5.dp)
                 .alpha(textAlpha)
                 .basicMarquee(),
-            color = secondaryColor
+            color = secondaryColor,
+            lineHeight = 10.sp
         )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.album_icon),
-                contentDescription = "",
-                modifier = Modifier
-                    .size(25.dp)
-                    .alpha(.7f)
-                    .alpha(textAlpha),
-                tint = secondaryColor
-            )
-
-            Text(
-                text = currentTrack?.album?.name ?: "",
-                fontWeight = FontWeight.W600,
-                color = secondaryColor,
-                modifier = Modifier
-                    .alpha(textAlpha)
-            )
-
-            Text(
-                text = "●",
-                fontSize = 8.sp,
-                color = secondaryColor,
-                modifier = Modifier
-                    .alpha(textAlpha)
-            )
-
-            //TODO: Добавить в response: album release date
-            Text(
-                text = (1970 /* + randomTrackResponse.album.releaseDate */ / (3600 * 24 * 31 * 12 * 50)).toString(),
-                fontWeight = FontWeight.W600,
-                color = secondaryColor,
-                modifier = Modifier
-                    .alpha(textAlpha)
-            )
-        }
     }
 }
 

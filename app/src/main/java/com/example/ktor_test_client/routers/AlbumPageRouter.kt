@@ -1,79 +1,43 @@
 package com.example.ktor_test_client.routers
 
-import android.content.Context
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.navigation.NavHostController
-import com.example.ktor_test_client.api.MusicApiService
-import com.example.ktor_test_client.api.dtos.Album
-import com.example.ktor_test_client.api.dtos.BaseAlbum
-import com.example.ktor_test_client.data.sources.PlaylistDataSource
+import com.example.ktor_test_client.controls.states.ErrorState
+import com.example.ktor_test_client.controls.states.LoadingState
 import com.example.ktor_test_client.pages.AlbumPage
-import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodels.AlbumViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AlbumPageRouter(
-    albumId: String,
-    apiService: MusicApiService,
-    navController: NavHostController,
-    playerViewModel: AudioPlayerViewModel,
+    albumId: String?,
     bottomPadding: Dp,
-    context: Context
+    onArtistClicked: (artistId: String) -> Unit,
+    onAlbumClicked: (otherAlbumId: String) -> Unit
 ) {
-    var album: Album? by remember { mutableStateOf(null) }
-    var otherAlbums: List<BaseAlbum> by remember { mutableStateOf(listOf()) }
+    val albumViewModel: AlbumViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
-        apiService.getAlbum(albumId).onSuccess { respondAlbum ->
-            album = respondAlbum
+        albumId?.let {
+            albumViewModel.loadAlbum(it)
         }
-
-        apiService.getAlbumsByArtist(album?.artists?.first()?.id ?: "")
-            .onSuccess { respondOtherAlbums ->
-                otherAlbums = respondOtherAlbums.albums
-            }
     }
 
     when {
-        album == null -> Box(Modifier.fillMaxSize()) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+        albumId == null -> {
+            ErrorState()
         }
-
+        albumViewModel.album.value == null -> {
+            LoadingState()
+        }
         else -> {
             AlbumPage(
-                album = album!!,
-                otherAlbums = otherAlbums,
+                viewModel = albumViewModel,
                 bottomPadding = bottomPadding,
-                onArtistClicked = { artistId ->
-                    navController.navigate("ArtistPage/?id=$artistId")
-                },
-                onAlbumClicked = { otherAlbumId ->
-                    navController.navigate("AlbumPage/?id=$otherAlbumId")
-                }
-            ) { clickedTrack ->
-                album?.let { album ->
-                    playerViewModel.injectDataSource(
-                        context, PlaylistDataSource(
-                            tracksId = album.tracks.map { track ->
-                                track.id
-                            },
-                            firstTrack = clickedTrack.indexInAlbum
-                        )
-                    )
-
-                    playerViewModel.exoPlayer?.prepare()
-                }
-            }
+                onArtistClicked = onArtistClicked,
+                onAlbumClicked = onAlbumClicked
+            ) { _ ->  }
         }
     }
 }

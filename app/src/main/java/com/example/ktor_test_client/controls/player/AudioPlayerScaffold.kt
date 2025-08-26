@@ -29,6 +29,7 @@ import androidx.navigation.NavHostController
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +70,7 @@ fun AudioPlayerScaffold(
                 yCurrentOffset,
                 miniPlayerHeight,
                 innerPadding,
-                viewModel<AudioPlayerViewModel>(),
+                koinViewModel(),
                 Modifier.padding(top = innerPadding.calculateTopPadding()),
                 onExpandRequest = {
                     coroutineScope.launch {
@@ -83,13 +84,13 @@ fun AudioPlayerScaffold(
                 },
                 onAlbumClicked = { albumId ->
                     coroutineScope.launch {
-                        navController.navigate("AlbumPage/?id=$albumId")
+                        navController.navigate("AlbumPage?id=$albumId")
                         bottomSheetState.bottomSheetState.partialExpand()
                     }
                 },
                 onArtistClicked = { artistId ->
                     coroutineScope.launch {
-                        navController.navigate("ArtistPage/?id=$artistId")
+                        navController.navigate("ArtistPage?id=$artistId")
                         bottomSheetState.bottomSheetState.partialExpand()
                     }
                 }
