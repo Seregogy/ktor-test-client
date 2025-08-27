@@ -11,7 +11,7 @@ val viewModelDi = module {
     }
 
     factory<AlbumViewModel> {
-        AlbumViewModel(apiService = get(), audioPlayerViewModel = get())
+        AlbumViewModel(apiService = get())
     }
 
     factory<ArtistViewModel> {

@@ -4,12 +4,16 @@ import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.providers.DataProvider
 
 class PlaylistDataSource(
-    private val tracksId: List<String>,
+    var tracksId: List<String>,
     firstTrack: Int = 0
 ) : DataSource() {
-    private var tracks: MutableList<Track?> = MutableList(tracksId.size) { null }
+    var tracks: MutableList<Track?> = MutableList(tracksId.size) { null }
 
-    private var currentTrack: Int = firstTrack
+    var currentTrack: Int = firstTrack
+        set(value) {
+            if (value in tracks.indices)
+                field = value
+        }
 
     override suspend fun nextTrack(dataProvider: DataProvider): Track? {
         currentTrack = (currentTrack + 1) % tracks.size

@@ -10,6 +10,10 @@ import com.example.ktor_test_client.pages.AlbumPage
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.getKoin
+import org.koin.compose.koinInject
+import org.koin.core.context.loadKoinModules
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AlbumPageRouter(
@@ -42,14 +46,12 @@ fun AlbumPageRouter(
                 onAlbumClicked = onAlbumClicked
             ) { clickedTrack ->
                 albumViewModel.album.value?.let { album ->
-                    playerViewModel.injectDataSource(
-                        PlaylistDataSource(
-                            tracksId = album.tracks.map { track ->
-                                track.id
-                            },
-                            firstTrack = clickedTrack.indexInAlbum
-                        )
-                    )
+                    playerViewModel.injectDataSource(PlaylistDataSource(
+                        tracksId = album.tracks.map { it.id },
+                        firstTrack = clickedTrack.indexInAlbum
+                    ))
+
+                    playerViewModel.exoPlayer?.prepare()
                 }
             }
         }

@@ -23,6 +23,8 @@ import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.repositories.Repository
 import com.example.ktor_test_client.data.sources.DataSource
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
+import com.example.ktor_test_client.di.dataSourceDi
+import kotlinx.coroutines.delay
 
 object DefaultPlayerConfig {
     var timeToPreviousTrack = 3000
@@ -70,6 +72,15 @@ class AudioPlayerViewModel(
     var onTrackEnd: () -> Unit = { }
 
     private var eventListener: Player.Listener = getPlayerEventListener()
+
+    init {
+        viewModelScope.launch {
+            while (true) {
+                delay(500)
+                Log.d("Player", repository.dataSource.toString())
+            }
+        }
+    }
 
     fun initializePlayer() {
         viewModelScope.launch {

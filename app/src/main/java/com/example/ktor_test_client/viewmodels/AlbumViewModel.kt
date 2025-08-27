@@ -6,13 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.ktor_test_client.api.MusicApiService
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
-import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import kotlinx.coroutines.launch
 
 class AlbumViewModel(
-    private val apiService: MusicApiService,
-    private val audioPlayerViewModel: AudioPlayerViewModel
+    private val apiService: MusicApiService
 ) : ImagePaletteViewModel() {
     private lateinit var albumsPlaylist: PlaylistDataSource
 
@@ -40,21 +38,6 @@ class AlbumViewModel(
                     }
                 )
             }
-        }
-    }
-
-    fun onTrackClicked(clickedTrack: BaseTrack) {
-        album.value?.let { album ->
-            audioPlayerViewModel.injectDataSource(
-                PlaylistDataSource(
-                    tracksId = album.tracks.map { track ->
-                        track.id
-                    },
-                    firstTrack = clickedTrack.indexInAlbum
-                )
-            )
-
-            audioPlayerViewModel.exoPlayer?.prepare()
         }
     }
 
