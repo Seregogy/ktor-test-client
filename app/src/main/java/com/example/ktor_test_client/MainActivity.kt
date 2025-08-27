@@ -17,7 +17,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.ktor_test_client.api.MusicApiService
 import com.example.ktor_test_client.controls.player.AudioPlayerScaffold
 import com.example.ktor_test_client.di.apiClientDi
 import com.example.ktor_test_client.di.apiServiceDi
@@ -32,7 +31,6 @@ import com.example.ktor_test_client.routers.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
 
@@ -77,6 +75,8 @@ class MainActivity : ComponentActivity() {
         innerPadding: PaddingValues,
         additionalBottomPadding: Dp
     ) {
+        val audioPlayerViewModel: AudioPlayerViewModel = koinInject()
+
         NavHost(
             navController = navController,
             startDestination = "ArtistsCardSwipeables"
@@ -86,7 +86,14 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("artistId") { type = NavType.StringType })
             ) {
                 val artistId = it.arguments?.getString("artistId")
-                ArtistHomePageRouter(artistId)
+                ArtistHomePageRouter(artistId, audioPlayerViewModel,
+                    onTrackClicked = {
+
+                    },
+                    onAlbumClicked = { albumId ->
+                        navController.navigate("AlbumPage?id=$albumId")
+                    }
+                )
             }
 
             composable(
@@ -94,7 +101,7 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
                 val albumId = it.arguments?.getString("albumId")
-                AlbumPageRouter(albumId, additionalBottomPadding,
+                AlbumPageRouter(albumId, additionalBottomPadding, audioPlayerViewModel,
                     onArtistClicked = { artistId ->
                         navController.navigate("ArtistPage?id=$artistId")
                     },

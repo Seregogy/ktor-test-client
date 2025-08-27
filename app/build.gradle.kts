@@ -4,9 +4,6 @@ plugins {
 
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-
-    id("kotlin-kapt")
-    alias(libs.plugins.hilt)
 }
 
 android {
@@ -103,10 +100,6 @@ dependencies {
     implementation(libs.androidx.media3.ui)
 
     implementation(libs.androidx.palette.ktx)
-
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-    implementation(libs.hilt.navigation.compose)
 
     implementation(libs.haze)
     implementation(libs.haze.materials)

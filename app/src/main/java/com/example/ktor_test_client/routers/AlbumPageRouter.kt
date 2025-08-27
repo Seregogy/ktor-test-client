@@ -19,11 +19,11 @@ import org.koin.core.parameter.parametersOf
 fun AlbumPageRouter(
     albumId: String?,
     bottomPadding: Dp,
+    playerViewModel: AudioPlayerViewModel,
     onArtistClicked: (artistId: String) -> Unit,
     onAlbumClicked: (otherAlbumId: String) -> Unit
 ) {
     val albumViewModel: AlbumViewModel = koinViewModel()
-    val playerViewModel: AudioPlayerViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
         albumId?.let {

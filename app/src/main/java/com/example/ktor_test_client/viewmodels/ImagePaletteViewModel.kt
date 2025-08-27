@@ -18,17 +18,34 @@ open class ImagePaletteViewModel : ViewModel() {
     private val _palette: MutableStateFlow<Palette?> = MutableStateFlow(null)
     val palette: StateFlow<Palette?> = _palette.asStateFlow()
 
+    private companion object {
+        val fetchCache: MutableMap<String, Pair<Bitmap, Palette>> = mutableMapOf()
+    }
+
     suspend fun fetchImageByUrl(
         context: Context,
         imageUrl: String
     ) {
-        _bitmap.value = ImageLoader(context).execute(
-            ImageRequest.Builder(context)
-                .data(imageUrl)
-                .build()
-        ).image!!.toBitmap()
+        if (fetchCache.containsKey(imageUrl)) {
+            fetchCache[imageUrl]?.let {
+                _bitmap.value = it.first
+                _palette.value = it.second
+            }
+        } else {
+            _bitmap.value = ImageLoader(context).execute(
+                ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .build()
+            ).image!!.toBitmap()
 
-        tryExtractPaletteFromCurrentBitmap()
+            tryExtractPaletteFromCurrentBitmap()
+
+            _bitmap.value?.let { bitmap ->
+                _palette.value?.let { palette ->
+                    fetchCache[imageUrl] = (bitmap to palette)
+                }
+            }
+        }
     }
 
     private fun tryExtractPaletteFromCurrentBitmap() {

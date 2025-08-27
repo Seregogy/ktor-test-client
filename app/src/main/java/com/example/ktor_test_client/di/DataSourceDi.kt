@@ -17,5 +17,4 @@ val dataSourceDi = module {
     factory<RandomTrackDataSource> {
         RandomTrackDataSource(apiService = get())
     }
-
 }

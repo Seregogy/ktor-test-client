@@ -30,6 +30,7 @@ import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +39,7 @@ fun AudioPlayerScaffold(
     navController: NavHostController,
     content: @Composable (sheetPeekHeight: Dp, innerPadding: PaddingValues) -> Unit
 ) {
-    val viewModel: AudioPlayerViewModel = koinViewModel()
+    val viewModel: AudioPlayerViewModel = koinInject()
 
     val miniPlayerHeight = 100.dp
     var allInit by remember { mutableStateOf(false) }

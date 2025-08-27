@@ -6,8 +6,9 @@ import com.example.ktor_test_client.data.sources.DataSource
 
 class BaseNetworkRepository(
     private val dataProvider: DataProvider,
-    override var dataSource: DataSource
 ) : Repository() {
+    override lateinit var dataSource: DataSource
+
     override suspend fun getTrack(id: String): Track? {
         return dataProvider.getTrack(id)
     }

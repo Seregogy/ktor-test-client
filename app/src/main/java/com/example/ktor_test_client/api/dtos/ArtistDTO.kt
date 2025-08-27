@@ -20,7 +20,6 @@ data class BaseArtist(
 data class Artist(
     val id: String = "",
     val name: String = "unknown artist",
-    val imagesUrl: List<String> = listOf(),
     val about: String? = "",
     val listeningInMonth: Int = 0,
     val likes: Int = 0,

@@ -12,7 +12,10 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,9 +36,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
@@ -46,7 +51,7 @@ fun TrackMini(
     modifier: Modifier = Modifier,
     track: BaseTrack = BaseTrack(),
     primaryColor: Color,
-    onPrimaryColor: Color,
+    onPrimaryColor: Color = Color.White,
     indexPlusOne: Boolean = true,
     infiniteTransition: InfiniteTransition = rememberInfiniteTransition("infinity transition animation"),
     onClick: (it: BaseTrack) -> Unit = { }
@@ -124,6 +129,85 @@ fun TrackMini(
                 .padding(horizontal = 25.dp)
                 .basicMarquee()
         )
+
+        IconButton(
+            modifier = Modifier
+                .align(Alignment.CenterEnd),
+            onClick = {
+                //TODO: контекстный bottom sheet
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.MoreVert,
+                contentDescription = "dots"
+            )
+        }
+    }
+
+}
+
+
+@Composable
+fun TrackMiniWithImage(
+    modifier: Modifier = Modifier,
+    track: BaseTrack = BaseTrack(),
+    primaryColor: Color,
+    onPrimaryColor: Color = Color.White,
+    onClick: (it: BaseTrack) -> Unit = { }
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val isCurrentlyPlay by remember {
+        derivedStateOf {
+            AudioPlayerViewModel.currentlyPlayTrackId.value == track.id
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable {
+                onClick(track)
+                coroutineScope.launch {
+                    interactionSource.emit(PressInteraction.Press(Offset.Zero))
+                }
+            }
+            .then(
+                if (isCurrentlyPlay)
+                    Modifier.background(primaryColor.copy(.3f))
+                else
+                    Modifier
+            )
+            .padding(start = 20.dp, end = 10.dp)
+            .padding(vertical = 5.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = track.imageUrl,
+                contentDescription = "mini track image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+                    .aspectRatio(1f),
+                contentScale = ContentScale.Crop
+            )
+
+            Text(
+                text = track.name,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.W600,
+                maxLines = 1,
+                color = onPrimaryColor,
+                modifier = Modifier
+                    .padding(horizontal = 25.dp)
+                    .basicMarquee()
+            )
+        }
 
         IconButton(
             modifier = Modifier
