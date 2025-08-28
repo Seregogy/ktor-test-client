@@ -15,7 +15,7 @@ data class GetArtistTopTracksResponse(
 )
 
 suspend fun ApiClient.getArtistTopTracks(artistId: String, limit: Int = 9): GetArtistTopTracksResponse? {
-    val response = httpClient.get("api/v1/artists/$artistId/top?limit=$limit")
+    val response = httpClient.get("api/v1/artists/$artistId/tracks/top?limit=$limit")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())

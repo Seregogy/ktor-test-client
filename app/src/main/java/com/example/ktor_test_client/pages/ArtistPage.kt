@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -449,17 +450,21 @@ private fun TopTracks(
     tracks: List<BaseTrack>,
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit
 ) {
-    message?.let {
-        Text(
-            text = message,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.W700,
-            modifier = Modifier
-                .padding(start = 25.dp)
-        )
-    }
-
     Column {
+        Spacer(Modifier.height(25.dp))
+
+        message?.let {
+            Text(
+                text = message,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.W700,
+                modifier = Modifier
+                    .padding(start = 25.dp)
+            )
+        }
+
+        Spacer(Modifier.height(15.dp))
+
         for (track in tracks) {
             TrackMiniWithImage(
                 track = track,
@@ -468,6 +473,8 @@ private fun TopTracks(
                 onClick = onTrackClicked
             )
         }
+
+        Spacer(Modifier.height(15.dp))
     }
 }
 

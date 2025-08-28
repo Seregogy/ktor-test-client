@@ -6,6 +6,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,69 +35,73 @@ class ColoredScaffoldState(
 )
 
 @Composable
-fun rememberColoredScaffoldState(): State<ColoredScaffoldState> {
+fun rememberColoredScaffoldState(): ColoredScaffoldState {
     return remember {
         mutableStateOf(ColoredScaffoldState())
-    }
+    }.value
 }
 
 @Composable
-fun ColoredScaffoldState.ColoredScaffold(
+fun ColoredScaffold(
+    state: ColoredScaffoldState,
     content: @Composable (ColoredScaffoldState.() -> Unit)
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
-    backgroundColor = remember {
-        derivedStateOf {
-            Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
+    state.run {
+        backgroundColor = remember {
+            derivedStateOf {
+                Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
+            }
         }
+
+        foregroundColor = remember {
+            derivedStateOf {
+                Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
+            }
+        }
+
+        primaryColor = remember {
+            derivedStateOf {
+                Color(currentPalette.value?.vibrantSwatch?.rgb ?: colorScheme.onSurface.toArgb())
+
+            }
+        }
+
+        onPrimaryColor = remember {
+            derivedStateOf {
+                Color(currentPalette.value?.vibrantSwatch?.titleTextColor ?: colorScheme.onSurface.toArgb())
+
+            }
+        }
+
+        animatedBackgroundColor = animateColorAsState(
+            targetValue = backgroundColor.value,
+            label = "animated background value",
+            animationSpec = animationSpec
+        )
+
+        animatedForegroundColor = animateColorAsState(
+            targetValue = foregroundColor.value,
+            label = "animated background value",
+            animationSpec = animationSpec
+        )
+
+        animatedPrimaryColor = animateColorAsState(
+            targetValue = primaryColor.value,
+            label = "animated background value",
+            animationSpec = animationSpec
+        )
+
+        animatedOnPrimaryColor = animateColorAsState(
+            targetValue = onPrimaryColor.value,
+            label = "animated background value",
+            animationSpec = animationSpec
+        )
     }
 
-    foregroundColor = remember {
-        derivedStateOf {
-            Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
-        }
-    }
 
-    primaryColor = remember {
-        derivedStateOf {
-            Color(currentPalette.value?.vibrantSwatch?.rgb ?: colorScheme.onSurface.toArgb())
-
-        }
-    }
-
-    onPrimaryColor = remember {
-        derivedStateOf {
-            Color(currentPalette.value?.vibrantSwatch?.titleTextColor ?: colorScheme.onSurface.toArgb())
-
-        }
-    }
-
-    animatedBackgroundColor = animateColorAsState(
-        targetValue = backgroundColor.value,
-        label = "animated background value",
-        animationSpec = animationSpec
-    )
-
-    animatedForegroundColor = animateColorAsState(
-        targetValue = foregroundColor.value,
-        label = "animated background value",
-        animationSpec = animationSpec
-    )
-
-    animatedPrimaryColor = animateColorAsState(
-        targetValue = primaryColor.value,
-        label = "animated background value",
-        animationSpec = animationSpec
-    )
-
-    animatedOnPrimaryColor = animateColorAsState(
-        targetValue = onPrimaryColor.value,
-        label = "animated background value",
-        animationSpec = animationSpec
-    )
-
-    with(this) {
+    with(state) {
         content()
     }
 }
