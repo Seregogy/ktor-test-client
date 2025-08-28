@@ -36,9 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -53,7 +51,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -65,7 +62,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.palette.graphics.Palette
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.dtos.Album
@@ -73,9 +69,9 @@ import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.AlbumMiniPreview
 import com.example.ktor_test_client.controls.CircleButton
-import com.example.ktor_test_client.controls.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.TrackMini
-import com.example.ktor_test_client.controls.rememberColoredScaffoldState
+import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.state.ScrollState
@@ -91,13 +87,17 @@ fun AlbumPage(
     onArtistClicked: (albumId: String) -> Unit = { },
     onTrackClicked: (track: BaseTrack) -> Unit = { }
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val infiniteTransition = rememberInfiniteTransition("infinity transition animation")
 
-    val coloredScaffoldState = rememberColoredScaffoldState()
-    coloredScaffoldState.currentPalette = viewModel.palette.collectAsStateWithLifecycle()
-
     val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        viewModel.album.value?.imageUrl?.let {
+            viewModel.fetchImageByUrl(context, it)
+        }
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val density = LocalDensity.current
 
@@ -153,22 +153,15 @@ fun AlbumPage(
         }
     }
 
+    val imageBitmap: Bitmap? by viewModel.bitmap.collectAsStateWithLifecycle()
     val album by viewModel.album
     val otherAlbums by viewModel.otherAlbums
 
-    var imageBitmap: Bitmap? by remember { mutableStateOf(null) }
-    LaunchedEffect(Unit) {
-        viewModel.album.value?.imageUrl?.let {
-            viewModel.fetchImageByUrl(context, it)
-        }
-
-        viewModel.bitmap.collect {
-            imageBitmap = it
-        }
-    }
 
     ColoredScaffold(
-        state = coloredScaffoldState
+        state = rememberColoredScaffoldState {
+            viewModel.palette.collectAsStateWithLifecycle()
+        }
     ) {
         Box(
             modifier = Modifier
@@ -181,12 +174,6 @@ fun AlbumPage(
                     .alpha(scrollState.value.colorAlpha)
                     .fillMaxSize()
                     .background(primaryColor.value)
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
             ) {
                 AlbumHeaderImage(
                     modifier = Modifier
@@ -194,6 +181,14 @@ fun AlbumPage(
                     screenHeight = screenHeight,
                     bitmap = imageBitmap
                 )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+
 
                 LazyColumn(
                     state = lazyListState,
