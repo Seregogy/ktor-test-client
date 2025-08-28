@@ -89,13 +89,6 @@ fun AlbumPage(
 ) {
     val infiniteTransition = rememberInfiniteTransition("infinity transition animation")
 
-    val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        viewModel.album.value?.imageUrl?.let {
-            viewModel.fetchImageByUrl(context, it)
-        }
-    }
-
     val coroutineScope = rememberCoroutineScope()
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp

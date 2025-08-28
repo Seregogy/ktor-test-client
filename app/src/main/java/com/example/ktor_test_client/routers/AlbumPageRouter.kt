@@ -2,6 +2,7 @@ package com.example.ktor_test_client.routers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import com.example.ktor_test_client.controls.states.ErrorState
 import com.example.ktor_test_client.controls.states.LoadingState
@@ -9,11 +10,9 @@ import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.pages.AlbumPage
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import kotlinx.coroutines.async
+import okhttp3.internal.wait
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.getKoin
-import org.koin.compose.koinInject
-import org.koin.core.context.loadKoinModules
-import org.koin.core.parameter.parametersOf
 
 @Composable
 fun AlbumPageRouter(
@@ -23,11 +22,20 @@ fun AlbumPageRouter(
     onArtistClicked: (artistId: String) -> Unit,
     onAlbumClicked: (otherAlbumId: String) -> Unit
 ) {
+    val context = LocalContext.current
     val albumViewModel: AlbumViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
-        albumId?.let {
-            albumViewModel.loadAlbum(it)
+        albumId?.let { albumId ->
+            async {
+                albumViewModel.loadAlbum(albumId)
+            }.invokeOnCompletion {
+                async {
+                    albumViewModel.album.value?.let { album ->
+                        albumViewModel.fetchImageByUrl(context, album.imageUrl ?: "")
+                    }
+                }
+            }
         }
     }
 
