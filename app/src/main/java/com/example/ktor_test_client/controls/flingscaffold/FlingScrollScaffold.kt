@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.controls
+package com.example.ktor_test_client.controls.flingscaffold
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
@@ -7,12 +7,9 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -26,31 +23,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.pages.TopAppContentBar
 import com.example.ktor_test_client.state.ScrollState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
-class FlingScrollScaffoldState(
-    val onScrollStateChange: (state: FlingScrollScaffoldState) -> Unit
-) {
-    var screenHeight: Dp = 0.dp
-
-    lateinit var lazyListState: LazyListState
-    lateinit var noSnapLayout: SnapLayoutInfoProvider
-    lateinit var snapLayoutInfoProvider: SnapLayoutInfoProvider
-
-    lateinit var scrollState: State<ScrollState>
-}
-
 @Composable
 fun FlingScrollScaffold(
-    state: FlingScrollScaffoldState,
     modifier: Modifier = Modifier,
+    state: FlingScrollScaffoldState,
     backgroundContent: @Composable FlingScrollScaffoldState.() -> Unit,
     headingContent: @Composable FlingScrollScaffoldState.() -> Unit,
     mainContent: @Composable FlingScrollScaffoldState.() -> Unit
@@ -164,5 +146,4 @@ fun FlingScrollScaffold(
             }
         }
     }
-
 }

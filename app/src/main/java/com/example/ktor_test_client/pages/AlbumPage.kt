@@ -35,7 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -54,7 +54,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,9 +68,11 @@ import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.AlbumMiniPreview
 import com.example.ktor_test_client.controls.CircleButton
+import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.TrackMini
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
+import com.example.ktor_test_client.controls.flingscaffold.rememberFlingScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.state.ScrollState
@@ -87,64 +88,13 @@ fun AlbumPage(
     onArtistClicked: (albumId: String) -> Unit = { },
     onTrackClicked: (track: BaseTrack) -> Unit = { }
 ) {
-    val infiniteTransition = rememberInfiniteTransition("infinity transition animation")
-
-    val coroutineScope = rememberCoroutineScope()
-
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val density = LocalDensity.current
-
-    val lazyListState = rememberLazyListState()
-
-    val noSnapLayout = object : SnapLayoutInfoProvider {
-        override fun calculateSnapOffset(velocity: Float): Float {
-            return velocity
-        }
-    }
-    val snapLayoutInfoProvider = SnapLayoutInfoProvider(lazyListState, SnapPosition.Start)
-
-    //TODO: Подумать как улучшить этот костыль (частичный fling эффект)
-    val isFirstVisibleIndex by remember {
-        var lastVisibleIndex = 0
-        derivedStateOf {
-            if (lastVisibleIndex >= 1 && lazyListState.firstVisibleItemIndex == 0) {
-                coroutineScope.launch {
-                    delay(300)
-
-                    if (lazyListState.firstVisibleItemIndex == 0)
-                        lazyListState.animateScrollToItem(0)
-                }
-            }
-
-            lastVisibleIndex = lazyListState.firstVisibleItemIndex
-
-            lazyListState.firstVisibleItemIndex == 0
-        }
-    }
-
-    val flingBehavior = rememberSnapFlingBehavior(if (isFirstVisibleIndex) snapLayoutInfoProvider else noSnapLayout)
+    val infiniteTransition = rememberInfiniteTransition("infinity transition animation")
 
     var imageAlpha: Float by remember { mutableFloatStateOf(1f) }
     val albumHeaderHeight = 150.dp
 
-    val scrollState: State<ScrollState> = remember {
-        derivedStateOf {
-            val isAvatarVisible = lazyListState.firstVisibleItemIndex == 0
-            val scrollState = ScrollState(isAvatarVisible = isAvatarVisible)
-            val totalHeight = screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight
-
-            if (scrollState.isAvatarVisible) {
-                scrollState.currentOffset = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
-
-                scrollState.alpha = ((totalHeight - scrollState.currentOffset) / totalHeight).coerceIn(0f..1f)
-                scrollState.colorAlpha = ((totalHeight - scrollState.currentOffset) / 60.dp).coerceIn(0f..1f)
-
-                imageAlpha = (albumHeaderHeight - scrollState.currentOffset) / albumHeaderHeight
-            }
-
-            return@derivedStateOf scrollState
-        }
-    }
+    val scrollState: MutableState<ScrollState> = remember { mutableStateOf(ScrollState()) }
 
     val imageBitmap: Bitmap? by viewModel.bitmap.collectAsStateWithLifecycle()
     val album by viewModel.album
@@ -156,80 +106,76 @@ fun AlbumPage(
             viewModel.palette.collectAsStateWithLifecycle()
         }
     ) {
-        Box(
+        FlingScrollScaffold(
             modifier = Modifier
                 .background(Color.Black)
                 .fillMaxSize()
-                .padding(bottom = bottomPadding)
-        ) {
-            Box(
-                modifier = Modifier
-                    .alpha(scrollState.value.colorAlpha)
-                    .fillMaxSize()
-                    .background(primaryColor.value)
-            ) {
-                AlbumHeaderImage(
+                .padding(bottom = bottomPadding),
+            state = rememberFlingScaffoldState {
+                val isAvatarVisible = lazyListState.firstVisibleItemIndex == 0
+                scrollState.value = ScrollState(isAvatarVisible = isAvatarVisible)
+                val totalHeight =
+                    screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight
+
+                if (scrollState.value.isAvatarVisible) {
+                    scrollState.value.currentOffset =
+                        with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+
+                    scrollState.value.alpha =
+                        ((totalHeight - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
+                    scrollState.value.colorAlpha =
+                        ((totalHeight - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
+
+                    imageAlpha =
+                        (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
+                }
+            },
+            backgroundContent = {
+                Box(
                     modifier = Modifier
-                        .alpha(imageAlpha),
-                    screenHeight = screenHeight,
-                    bitmap = imageBitmap
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-
-
-                LazyColumn(
-                    state = lazyListState,
-                    flingBehavior = flingBehavior,
-                    modifier = Modifier
+                        .alpha(scrollState.value.colorAlpha)
                         .fillMaxSize()
-                        .background(Color.Transparent)
-                        .pointerInteropFilter {
-                            return@pointerInteropFilter false
-                        }
+                        .background(primaryColor.value)
                 ) {
-                    item(0) {
-                        album?.let { album ->
-                            AlbumHeader(
-                                screenHeight = screenHeight,
-                                scrollState = scrollState,
-                                album = album,
-                                foregroundColor = onPrimaryColor.value,
-                                backgroundColor = primaryColor.value,
-                                iconsColor = primaryColor.value,
-                                primaryButtonColor = primaryColor.value,
-                                primaryIconColor = primaryColor.value,
-                                onArtistClicked = onArtistClicked
-                            )
-                        }
-                    }
-
-                    item(1) {
-                        album?.let { album ->
-                            otherAlbums?.let { otherAlbums ->
-                                AlbumContent(
-                                    scrollState,
-                                    primaryColor.value,
-                                    album,
-                                    infiniteTransition,
-                                    onTrackClicked,
-                                    otherAlbums,
-                                    onAlbumClicked
-                                )
-                            }
-                        }
-                    }
+                    AlbumHeaderImage(
+                        modifier = Modifier
+                            .alpha(imageAlpha),
+                        screenHeight = screenHeight,
+                        bitmap = imageBitmap
+                    )
+                }
+            },
+            headingContent = {
+                album?.let { album ->
+                    AlbumHeader(
+                        screenHeight = screenHeight,
+                        scrollState = scrollState,
+                        album = album,
+                        foregroundColor = onPrimaryColor.value,
+                        backgroundColor = primaryColor.value,
+                        iconsColor = primaryColor.value,
+                        primaryButtonColor = primaryColor.value,
+                        primaryIconColor = primaryColor.value,
+                        onArtistClicked = onArtistClicked
+                    )
+                }
+            }
+        ) {
+            album?.let { album ->
+                otherAlbums?.let { otherAlbums ->
+                    AlbumContent(
+                        scrollState,
+                        primaryColor.value,
+                        album,
+                        infiniteTransition,
+                        onTrackClicked,
+                        otherAlbums,
+                        onAlbumClicked
+                    )
                 }
             }
         }
     }
-
-
 }
 
 @Composable

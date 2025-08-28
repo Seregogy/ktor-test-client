@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.controls
+package com.example.ktor_test_client.controls.card
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,8 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.zIndex
-import com.example.ktor_test_client.controls.card.SwipeDirection
-import com.example.ktor_test_client.controls.card.SwipeableCard
 
 @Composable
 fun SwipeableCardStack(

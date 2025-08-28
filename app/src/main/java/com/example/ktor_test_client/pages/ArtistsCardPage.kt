@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ktor_test_client.controls.ArtistCardState
-import com.example.ktor_test_client.controls.SwipeableCardStack
+import com.example.ktor_test_client.controls.card.SwipeableCardStack
 import com.example.ktor_test_client.controls.card.SwipeableCard
 
 @Composable

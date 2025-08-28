@@ -25,6 +25,7 @@ fun CircleButton(
     onClick: () -> Unit,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = .4f),
     underscoreText: String = "",
+    underscoreTextColor: Color = Color.White,
     content: @Composable () -> Unit = { }
 ) {
     Column(
@@ -50,7 +51,8 @@ fun CircleButton(
             Text(
                 text = underscoreText,
                 fontSize = 12.sp,
-                fontWeight = FontWeight.W700
+                fontWeight = FontWeight.W700,
+                color = underscoreTextColor
             )
         }
     }
