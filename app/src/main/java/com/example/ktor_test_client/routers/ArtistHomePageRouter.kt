@@ -2,6 +2,7 @@ package com.example.ktor_test_client.routers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.unit.Dp
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.states.ErrorState
 import com.example.ktor_test_client.controls.states.LoadingState
@@ -14,6 +15,7 @@ import org.koin.androidx.compose.koinViewModel
 fun ArtistHomePageRouter(
     artistId: String?,
     playerViewModel: AudioPlayerViewModel,
+    bottomPadding: Dp,
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
     onAlbumClicked: (albumId: String) -> Unit
 ) {
@@ -38,6 +40,7 @@ fun ArtistHomePageRouter(
             ArtistPage(
                 viewModel = viewModel,
                 onTrackClicked = onTrackClicked,
+                bottomPadding = bottomPadding,
                 onAlbumClicked = onAlbumClicked
             )
         }

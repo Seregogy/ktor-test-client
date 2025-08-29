@@ -98,7 +98,6 @@ fun FullAudioPlayer(
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
-    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val colorScheme = MaterialTheme.colorScheme
 

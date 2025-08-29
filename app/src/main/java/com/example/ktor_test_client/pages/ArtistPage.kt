@@ -77,6 +77,7 @@ object TopAppContentBar {
 @Composable
 fun ArtistPage(
     viewModel: ArtistViewModel,
+    bottomPadding: Dp,
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
     onAlbumClicked: (albumId: String) -> Unit
 ) {
@@ -161,31 +162,6 @@ fun ArtistPage(
         }
     }
 
-
-    val foregroundColor by remember {
-        derivedStateOf {
-            Color(palette.value?.vibrantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
-        }
-    }
-
-    val iconsColor by remember {
-        derivedStateOf {
-            Color(palette.value?.vibrantSwatch?.bodyTextColor ?: colorScheme.onBackground.toArgb())
-        }
-    }
-
-    val primaryButtonColor by remember {
-        derivedStateOf {
-            Color(palette.value?.mutedSwatch?.rgb ?: colorScheme.onSurface.toArgb())
-        }
-    }
-
-    val primaryIconColor by remember {
-        derivedStateOf {
-            Color(palette.value?.mutedSwatch?.titleTextColor ?: colorScheme.onSecondary.toArgb())
-        }
-    }
-
     val backgroundColorAnimated = animateColorAsState(
         targetValue = backgroundColor.value,
         animationSpec = tween(durationMillis = 700, easing = LinearEasing),
@@ -196,6 +172,7 @@ fun ArtistPage(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(bottom = bottomPadding)
                 .background(Color.Black)
         ) {
             ArtistAvatarPager(

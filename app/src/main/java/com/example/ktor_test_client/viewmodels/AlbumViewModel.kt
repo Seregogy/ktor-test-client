@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.viewmodels
 
+import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.example.ktor_test_client.api.MusicApiService
@@ -19,13 +20,15 @@ class AlbumViewModel(
     val otherAlbums: State<List<BaseAlbum>?> = _otherAlbums
 
 
-    suspend fun loadAlbum(albumId: String) {
+    suspend fun loadAlbum(context: Context, albumId: String) {
         apiService.getAlbum(albumId).onSuccess {
             _album.value = it
 
             album.value?.artists?.first()?.let { artist ->
                 loadOtherAlbums(artist.id)
             }
+
+            fetchImageByUrl(context, album.value?.imageUrl ?: "")
         }
 
         album.value?.let {

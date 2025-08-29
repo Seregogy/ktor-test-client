@@ -30,14 +30,14 @@ fun ColoredScaffold(
 
         primaryColor = remember {
             derivedStateOf {
-                Color(currentPalette.value?.vibrantSwatch?.rgb ?: colorScheme.onSurface.toArgb())
+                Color(currentPalette.value?.vibrantSwatch?.rgb ?: currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
 
             }
         }
 
         onPrimaryColor = remember {
             derivedStateOf {
-                Color(currentPalette.value?.vibrantSwatch?.titleTextColor ?: colorScheme.onSurface.toArgb())
+                Color(currentPalette.value?.vibrantSwatch?.titleTextColor ?: currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
 
             }
         }

@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.ktor_test_client.controls.player.AudioPlayerScaffold
 import com.example.ktor_test_client.di.apiClientDi
 import com.example.ktor_test_client.di.apiServiceDi
@@ -31,8 +32,10 @@ import com.example.ktor_test_client.routers.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
+import org.koin.dsl.koinApplication
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,7 +78,7 @@ class MainActivity : ComponentActivity() {
         innerPadding: PaddingValues,
         additionalBottomPadding: Dp
     ) {
-        val audioPlayerViewModel: AudioPlayerViewModel = koinInject()
+        val audioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
 
         NavHost(
             navController = navController,
@@ -86,7 +89,7 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("artistId") { type = NavType.StringType })
             ) {
                 val artistId = it.arguments?.getString("artistId")
-                ArtistHomePageRouter(artistId, audioPlayerViewModel,
+                ArtistHomePageRouter(artistId, audioPlayerViewModel, additionalBottomPadding,
                     onTrackClicked = {
 
                     },

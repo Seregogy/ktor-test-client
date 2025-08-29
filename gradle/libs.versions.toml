@@ -1,4 +1,5 @@
 [versions]
+accompanistSwiperefresh = "0.36.0"
 composeShimmer = "1.3.2"
 agp = "8.7.3"
 coilCompose = "3.2.0"
@@ -6,6 +7,7 @@ haze = "1.6.9"
 hazeMaterials = "1.6.9"
 koinAndroidxCompose = "4.1.0"
 koinAndroidxComposeNavigation = "4.1.0"
+koinAndroidxViewmodel = "4.1.0"
 kotlin = "2.1.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -26,6 +28,7 @@ paletteKtx = "1.0.0"
 runner = "1.6.1"
 
 [libraries]
+accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefresh" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
@@ -53,6 +56,7 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koinAndroidxCompose" }
 koin-androidx-compose-navigation = { module = "io.insert-koin:koin-androidx-compose-navigation", version.ref = "koinAndroidxComposeNavigation" }
+koin-androidx-viewmodel = { module = "io.insert-koin:koin-androidx-viewmodel", version.ref = "koinAndroidxViewmodel" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientVersion" }

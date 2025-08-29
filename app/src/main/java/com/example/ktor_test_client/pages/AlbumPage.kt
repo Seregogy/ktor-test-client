@@ -6,9 +6,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
-import androidx.compose.foundation.gestures.snapping.SnapPosition
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,25 +21,24 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,10 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -72,13 +65,12 @@ import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.TrackMini
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
+import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.rememberFlingScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @Composable
 fun AlbumPage(
@@ -88,13 +80,10 @@ fun AlbumPage(
     onArtistClicked: (albumId: String) -> Unit = { },
     onTrackClicked: (track: BaseTrack) -> Unit = { }
 ) {
-    val density = LocalDensity.current
     val infiniteTransition = rememberInfiniteTransition("infinity transition animation")
 
-    var imageAlpha: Float by remember { mutableFloatStateOf(1f) }
+    val imageAlpha = remember { mutableFloatStateOf(1f) }
     val albumHeaderHeight = 150.dp
-
-    val scrollState: MutableState<ScrollState> = remember { mutableStateOf(ScrollState()) }
 
     val imageBitmap: Bitmap? by viewModel.bitmap.collectAsStateWithLifecycle()
     val album by viewModel.album
@@ -112,23 +101,7 @@ fun AlbumPage(
                 .fillMaxSize()
                 .padding(bottom = bottomPadding),
             state = rememberFlingScaffoldState {
-                val isAvatarVisible = lazyListState.firstVisibleItemIndex == 0
-                scrollState.value = ScrollState(isAvatarVisible = isAvatarVisible)
-                val totalHeight =
-                    screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight
-
-                if (scrollState.value.isAvatarVisible) {
-                    scrollState.value.currentOffset =
-                        with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
-
-                    scrollState.value.alpha =
-                        ((totalHeight - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
-                    scrollState.value.colorAlpha =
-                        ((totalHeight - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
-
-                    imageAlpha =
-                        (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
-                }
+                calcScrollState(imageAlpha, albumHeaderHeight)
             },
             backgroundContent = {
                 Box(
@@ -139,7 +112,7 @@ fun AlbumPage(
                 ) {
                     AlbumHeaderImage(
                         modifier = Modifier
-                            .alpha(imageAlpha),
+                            .alpha(imageAlpha.floatValue),
                         screenHeight = screenHeight,
                         bitmap = imageBitmap
                     )
@@ -381,6 +354,7 @@ fun AlbumHeaderControls(
             CircleButton(
                 onClick = { },
                 underscoreText = "Скачать",
+                underscoreTextColor = foregroundColor
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Downloading,
@@ -394,6 +368,7 @@ fun AlbumHeaderControls(
             CircleButton(
                 onClick = { },
                 underscoreText = formatNumber(album.likes),
+                underscoreTextColor = foregroundColor
             ) {
                 Icon(
                     imageVector = Icons.Rounded.FavoriteBorder,
@@ -407,9 +382,10 @@ fun AlbumHeaderControls(
             CircleButton(
                 onClick = { },
                 underscoreText = "Трейлер",
+                underscoreTextColor = foregroundColor
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.queue_music_icon),
+                    imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
                     modifier = Modifier
                         .size(28.dp),
                     contentDescription = "",
@@ -420,10 +396,11 @@ fun AlbumHeaderControls(
             CircleButton(
                 containerColor = backgroundColor.times(1.5f),
                 onClick = { },
-                underscoreText = "Слушать"
+                underscoreText = "Слушать",
+                underscoreTextColor = foregroundColor
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.pause_icon),
+                    imageVector = Icons.Rounded.PlayArrow,
                     modifier = Modifier
                         .size(30.dp),
                     contentDescription = "",
@@ -455,5 +432,28 @@ fun AlbumHeaderFadingGradientBottom(
                     )
                 )
         )
+    }
+}
+
+private fun FlingScrollScaffoldState.calcScrollState(
+    imageAlpha: MutableFloatState,
+    albumHeaderHeight: Dp
+) {
+    val isAvatarVisible = lazyListState.firstVisibleItemIndex == 0
+    scrollState.value = ScrollState(isAvatarVisible = isAvatarVisible)
+    val totalHeight =
+        screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight
+
+    if (scrollState.value.isAvatarVisible) {
+        scrollState.value.currentOffset =
+            with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+
+        scrollState.value.alpha =
+            ((totalHeight - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
+        scrollState.value.colorAlpha =
+            ((totalHeight - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
+
+        imageAlpha.floatValue =
+            (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
     }
 }

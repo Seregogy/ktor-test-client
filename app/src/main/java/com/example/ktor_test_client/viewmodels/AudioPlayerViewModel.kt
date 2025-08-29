@@ -73,15 +73,6 @@ class AudioPlayerViewModel(
 
     private var eventListener: Player.Listener = getPlayerEventListener()
 
-    init {
-        viewModelScope.launch {
-            while (true) {
-                delay(500)
-                Log.d("Player", repository.dataSource.toString())
-            }
-        }
-    }
-
     fun initializePlayer() {
         viewModelScope.launch {
             currentTrack.collect {
