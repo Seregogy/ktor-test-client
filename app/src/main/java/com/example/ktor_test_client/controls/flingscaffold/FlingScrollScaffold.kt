@@ -82,19 +82,6 @@ fun FlingScrollScaffold(
 
             backgroundContent()
 
-            /*Box(
-                modifier = modifier
-                    .alpha(scrollState.value.colorAlpha)
-                    .fillMaxSize()
-            ) {
-                AlbumHeaderImage(
-                    modifier = Modifier
-                        .alpha(imageAlpha),
-                    screenHeight = screenHeight,
-                    bitmap = imageBitmap
-                )
-            }*/
-
             Box(
                 modifier = Modifier
                     .fillMaxSize(),

@@ -28,18 +28,15 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -48,14 +45,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
@@ -166,7 +161,7 @@ private fun AlbumHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight)
+            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight)
     ) {
         Box(
             modifier = Modifier
@@ -275,7 +270,7 @@ private fun BoxScope.AlbumHeaderImage(
         modifier = modifier
             .align(Alignment.TopCenter)
             .fillMaxWidth()
-            .height(screenHeight * TopAppContentBar.topPartWeight)
+            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT)
     ) {
         bitmap?.let {
             Image(
@@ -439,10 +434,11 @@ private fun FlingScrollScaffoldState.calcScrollState(
     imageAlpha: MutableFloatState,
     albumHeaderHeight: Dp
 ) {
-    val isAvatarVisible = lazyListState.firstVisibleItemIndex == 0
-    scrollState.value = ScrollState(isAvatarVisible = isAvatarVisible)
+    if (lazyListState.firstVisibleItemIndex != 0) return
+
+    scrollState.value = ScrollState(isAvatarVisible = true)
     val totalHeight =
-        screenHeight * TopAppContentBar.topPartWeight + TopAppContentBar.additionalHeight
+        screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
     if (scrollState.value.isAvatarVisible) {
         scrollState.value.currentOffset =

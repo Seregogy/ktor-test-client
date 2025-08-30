@@ -20,12 +20,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -63,7 +61,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -78,7 +75,7 @@ import com.example.ktor_test_client.R
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
-import com.example.ktor_test_client.pages.TopAppContentBar.topPartWeight
+import com.example.ktor_test_client.pages.TopAppContentBar.TOP_PART_WEIGHT
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import com.example.ktor_test_client.api.dtos.Track
@@ -197,7 +194,7 @@ fun FullAudioPlayer(
                     contentDescription = "album image",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height((screenHeight * topPartWeight) + additionalHeight),
+                        .height((screenHeight * TOP_PART_WEIGHT) + additionalHeight),
                     contentScale = ContentScale.Crop
                 )
             }
@@ -216,14 +213,14 @@ fun FullAudioPlayer(
 
             PlayerPageHeaderFadingGradientTop(
                 modifier = Modifier
-                    .height(screenHeight * topPartWeight + additionalPlayerHeight),
+                    .height(screenHeight * TOP_PART_WEIGHT + additionalPlayerHeight),
                 targetColor = primaryColorAnimated
             )
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = screenHeight * topPartWeight - bottomGap)
+                    .padding(top = screenHeight * TOP_PART_WEIGHT - bottomGap)
                     .fillMaxHeight()
             ) {
                 Box(
