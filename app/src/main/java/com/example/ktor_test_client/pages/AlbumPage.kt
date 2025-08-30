@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -62,6 +63,8 @@ import com.example.ktor_test_client.controls.TrackMini
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.rememberFlingScaffoldState
+import com.example.ktor_test_client.controls.toolscaffold.ToolScaffold
+import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.state.ScrollState
@@ -70,7 +73,9 @@ import com.example.ktor_test_client.viewmodels.AlbumViewModel
 @Composable
 fun AlbumPage(
     viewModel: AlbumViewModel,
-    bottomPadding: Dp = 0.dp,
+    innerPadding: PaddingValues,
+    bottomPadding: Dp,
+    onBackRequest: () -> Unit = { },
     onAlbumClicked: (artistId: String) -> Unit = { },
     onArtistClicked: (albumId: String) -> Unit = { },
     onTrackClicked: (track: BaseTrack) -> Unit = { }
@@ -90,56 +95,63 @@ fun AlbumPage(
             viewModel.palette.collectAsStateWithLifecycle()
         }
     ) {
-        FlingScrollScaffold(
+        ToolScaffold(
             modifier = Modifier
-                .background(Color.Black)
-                .fillMaxSize()
-                .padding(bottom = bottomPadding),
-            state = rememberFlingScaffoldState {
-                calcScrollState(imageAlpha, albumHeaderHeight)
-            },
-            backgroundContent = {
-                Box(
-                    modifier = Modifier
-                        .alpha(scrollState.value.colorAlpha)
-                        .fillMaxSize()
-                        .background(primaryColor.value)
-                ) {
-                    AlbumHeaderImage(
+                .padding(innerPadding),
+            state = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+        ) { toolBarInnerPadding ->
+            FlingScrollScaffold(
+                modifier = Modifier
+                    .background(Color.Black)
+                    .fillMaxSize()
+                    .padding(bottom = bottomPadding),
+                state = rememberFlingScaffoldState {
+                    calcScrollState(imageAlpha, albumHeaderHeight)
+                },
+                backgroundContent = {
+                    Box(
                         modifier = Modifier
-                            .alpha(imageAlpha.floatValue),
-                        screenHeight = screenHeight,
-                        bitmap = imageBitmap
-                    )
+                            .alpha(scrollState.value.colorAlpha)
+                            .fillMaxSize()
+                            .background(primaryColor.value)
+                    ) {
+                        AlbumHeaderImage(
+                            modifier = Modifier
+                                .alpha(imageAlpha.floatValue),
+                            innerPadding = toolBarInnerPadding,
+                            screenHeight = screenHeight,
+                            bitmap = imageBitmap
+                        )
+                    }
+                },
+                headingContent = {
+                    album?.let { album ->
+                        AlbumHeader(
+                            screenHeight = screenHeight,
+                            scrollState = scrollState,
+                            album = album,
+                            foregroundColor = onPrimaryColor.value,
+                            backgroundColor = primaryColor.value,
+                            iconsColor = primaryColor.value,
+                            primaryButtonColor = primaryColor.value,
+                            primaryIconColor = primaryColor.value,
+                            onArtistClicked = onArtistClicked
+                        )
+                    }
                 }
-            },
-            headingContent = {
+            ) {
                 album?.let { album ->
-                    AlbumHeader(
-                        screenHeight = screenHeight,
-                        scrollState = scrollState,
-                        album = album,
-                        foregroundColor = onPrimaryColor.value,
-                        backgroundColor = primaryColor.value,
-                        iconsColor = primaryColor.value,
-                        primaryButtonColor = primaryColor.value,
-                        primaryIconColor = primaryColor.value,
-                        onArtistClicked = onArtistClicked
-                    )
-                }
-            }
-        ) {
-            album?.let { album ->
-                otherAlbums?.let { otherAlbums ->
-                    AlbumContent(
-                        scrollState,
-                        primaryColor.value,
-                        album,
-                        infiniteTransition,
-                        onTrackClicked,
-                        otherAlbums,
-                        onAlbumClicked
-                    )
+                    otherAlbums?.let { otherAlbums ->
+                        AlbumContent(
+                            scrollState,
+                            primaryColor.value,
+                            album,
+                            infiniteTransition,
+                            onTrackClicked,
+                            otherAlbums,
+                            onAlbumClicked
+                        )
+                    }
                 }
             }
         }
@@ -263,9 +275,12 @@ fun OtherAlbums(
 @Composable
 private fun BoxScope.AlbumHeaderImage(
     modifier: Modifier,
+    innerPadding: PaddingValues,
     screenHeight: Dp,
     bitmap: Bitmap?
 ) {
+    val defaultImagePaddingDp = 75.dp
+
     Box(
         modifier = modifier
             .align(Alignment.TopCenter)
@@ -281,7 +296,8 @@ private fun BoxScope.AlbumHeaderImage(
                     .aspectRatio(1f)
                     .fillMaxSize()
                     .offset(y = (-20).dp)
-                    .padding(75.dp)
+                    .padding(defaultImagePaddingDp)
+//                    .padding(top = defaultImagePaddingDp - innerPadding.calculateTopPadding(), bottom = defaultImagePaddingDp)
                     .clip(MaterialTheme.shapes.large),
                 contentScale = ContentScale.Crop
             )
@@ -434,22 +450,23 @@ private fun FlingScrollScaffoldState.calcScrollState(
     imageAlpha: MutableFloatState,
     albumHeaderHeight: Dp
 ) {
-    if (lazyListState.firstVisibleItemIndex != 0) return
-
     scrollState.value = ScrollState(isAvatarVisible = true)
-    val totalHeight =
-        screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
-    if (scrollState.value.isAvatarVisible) {
-        scrollState.value.currentOffset =
-            with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+    if (lazyListState.firstVisibleItemIndex != 0) {
+        val totalHeight =
+            screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
-        scrollState.value.alpha =
-            ((totalHeight - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
-        scrollState.value.colorAlpha =
-            ((totalHeight - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
+        if (scrollState.value.isAvatarVisible) {
+            scrollState.value.currentOffset =
+                with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
 
-        imageAlpha.floatValue =
-            (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
+            scrollState.value.alpha =
+                ((totalHeight - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
+            scrollState.value.colorAlpha =
+                ((totalHeight - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
+
+            imageAlpha.floatValue =
+                (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
+        }
     }
 }

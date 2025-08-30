@@ -11,39 +11,37 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
+import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.states.ErrorState
 import com.example.ktor_test_client.controls.states.LoadingState
-import com.example.ktor_test_client.data.sources.PlaylistDataSource
-import com.example.ktor_test_client.pages.AlbumPage
-import com.example.ktor_test_client.viewmodels.AlbumViewModel
+import com.example.ktor_test_client.pages.ArtistPage
+import com.example.ktor_test_client.viewmodels.ArtistViewModel
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun AlbumPageRouter(
-    albumId: String?,
+fun ArtistPageRouter(
+    artistId: String?,
     playerViewModel: AudioPlayerViewModel,
     innerPadding: PaddingValues,
     bottomPadding: Dp,
-    onArtistClicked: (artistId: String) -> Unit,
-    onAlbumClicked: (otherAlbumId: String) -> Unit,
-    onBackRequest: () -> Unit
+    onBackRequest: () -> Unit,
+    onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
+    onAlbumClicked: (albumId: String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-
-    val context = LocalContext.current
-    val albumViewModel: AlbumViewModel = koinViewModel()
+    val viewModel: ArtistViewModel = koinViewModel()
 
     LaunchedEffect(Unit) {
-        albumId?.let { albumId ->
-            albumViewModel.loadAlbum(context, albumId)
+        artistId?.let {
+            viewModel.loadArtist(it)
+            viewModel.loadTopTracks(it, 9)
+            viewModel.loadAlbums(it)
         }
     }
-
 
     var isRefreshing by remember { mutableStateOf(false) }
     PullToRefreshBox(
@@ -61,35 +59,21 @@ fun AlbumPageRouter(
         }
     ) {
         when {
-            albumId == null -> {
+            artistId == null -> {
                 ErrorState()
             }
-
-            albumViewModel.album.value == null -> {
+            viewModel.artist.value == null -> {
                 LoadingState()
             }
-
             else -> {
-                AlbumPage(
-                    viewModel = albumViewModel,
+                ArtistPage(
+                    viewModel = viewModel,
                     innerPadding = innerPadding,
-
+                    onTrackClicked = onTrackClicked,
                     bottomPadding = bottomPadding,
                     onBackRequest = onBackRequest,
-                    onArtistClicked = onArtistClicked,
-                    onAlbumClicked = onAlbumClicked,
-                ) { clickedTrack ->
-                    albumViewModel.album.value?.let { album ->
-                        playerViewModel.injectDataSource(
-                            PlaylistDataSource(
-                                tracksId = album.tracks.map { it.id },
-                                firstTrack = clickedTrack.indexInAlbum
-                            )
-                        )
-
-                        playerViewModel.exoPlayer?.prepare()
-                    }
-                }
+                    onAlbumClicked = onAlbumClicked
+                )
             }
         }
     }

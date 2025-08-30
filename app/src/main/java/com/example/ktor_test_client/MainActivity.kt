@@ -17,7 +17,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
 import com.example.ktor_test_client.controls.player.AudioPlayerScaffold
 import com.example.ktor_test_client.di.apiClientDi
 import com.example.ktor_test_client.di.apiServiceDi
@@ -27,7 +26,7 @@ import com.example.ktor_test_client.di.repositoryDi
 import com.example.ktor_test_client.di.tokenHandlerDi
 import com.example.ktor_test_client.di.viewModelDi
 import com.example.ktor_test_client.routers.AlbumPageRouter
-import com.example.ktor_test_client.routers.ArtistHomePageRouter
+import com.example.ktor_test_client.routers.ArtistPageRouter
 import com.example.ktor_test_client.routers.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
@@ -35,7 +34,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
-import org.koin.dsl.koinApplication
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,7 +87,14 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("artistId") { type = NavType.StringType })
             ) {
                 val artistId = it.arguments?.getString("artistId")
-                ArtistHomePageRouter(artistId, audioPlayerViewModel, additionalBottomPadding,
+                ArtistPageRouter(
+                    artistId = artistId,
+                    playerViewModel = audioPlayerViewModel,
+                    innerPadding = innerPadding,
+                    bottomPadding = additionalBottomPadding,
+                    onBackRequest = {
+                        navController.popBackStack()
+                    },
                     onTrackClicked = {
 
                     },
@@ -104,7 +109,14 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
                 val albumId = it.arguments?.getString("albumId")
-                AlbumPageRouter(albumId, additionalBottomPadding, audioPlayerViewModel,
+                AlbumPageRouter(
+                    albumId = albumId,
+                    playerViewModel = audioPlayerViewModel,
+                    innerPadding = innerPadding,
+                    bottomPadding = additionalBottomPadding,
+                    onBackRequest = {
+                        navController.popBackStack()
+                    },
                     onArtistClicked = { artistId ->
                         navController.navigate("ArtistPage?id=$artistId")
                     },

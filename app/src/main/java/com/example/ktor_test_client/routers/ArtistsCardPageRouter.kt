@@ -26,13 +26,11 @@ fun ArtistsCardPageRouter(
     var isError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        val result = musicApiService.getTopArtists().onSuccess {
+        musicApiService.getTopArtists().onSuccess {
             artists.value = it
         }.onFailure {
             isError = true
         }
-
-        println(result)
     }
 
     when {

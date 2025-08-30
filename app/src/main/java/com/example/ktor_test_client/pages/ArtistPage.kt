@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -53,6 +54,8 @@ import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaf
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.rememberFlingScaffoldState
+import com.example.ktor_test_client.controls.toolscaffold.ToolScaffold
+import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.viewmodels.ArtistViewModel
@@ -66,9 +69,11 @@ object TopAppContentBar {
 @Composable
 fun ArtistPage(
     viewModel: ArtistViewModel,
+    innerPadding: PaddingValues,
     bottomPadding: Dp,
-    onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
-    onAlbumClicked: (albumId: String) -> Unit
+    onBackRequest: () -> Unit = { },
+    onTrackClicked: (clickedTrack: BaseTrack) -> Unit = { },
+    onAlbumClicked: (albumId: String) -> Unit = { }
 ) {
     val pagerState = rememberPagerState(0) { viewModel.artist.value?.images?.size ?: 0 }
 
@@ -90,48 +95,54 @@ fun ArtistPage(
             viewModel.palette.collectAsStateWithLifecycle()
         }
     ) {
-        FlingScrollScaffold(
+        ToolScaffold(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = bottomPadding)
-                .background(Color.Black),
-            state = rememberFlingScaffoldState {
-                calcScrollState()
-            },
-            backgroundContent = {
-                artist?.let {
-                    ArtistAvatarPager(
-                        viewModel = viewModel,
-                        color = animatedBackgroundColor,
-                        pagerState = pagerState,
-                        scrollState = scrollState,
-                        screenHeight = screenHeight,
-                        artist = it
-                    )
+                .padding(innerPadding),
+            state = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+        ) { toolScaffoldInnerPadding ->
+            FlingScrollScaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = bottomPadding)
+                    .background(Color.Black),
+                state = rememberFlingScaffoldState {
+                    calcScrollState()
+                },
+                backgroundContent = {
+                    artist?.let {
+                        ArtistAvatarPager(
+                            viewModel = viewModel,
+                            color = animatedBackgroundColor,
+                            pagerState = pagerState,
+                            scrollState = scrollState,
+                            screenHeight = screenHeight,
+                            artist = it
+                        )
+                    }
+                },
+                headingContent = {
+                    artist?.let {
+                        Header(
+                            screenHeight,
+                            scrollState,
+                            animatedBackgroundColor,
+                            it
+                        )
+                    }
                 }
-            },
-            headingContent = {
+            ) {
                 artist?.let {
-                    Header(
-                        screenHeight,
+                    Content(
+                        it,
                         scrollState,
                         animatedBackgroundColor,
-                        it
+                        primaryColor,
+                        topTracks ?: listOf(),
+                        albums ?: listOf(),
+                        onTrackClicked = onTrackClicked,
+                        onAlbumClicked = onAlbumClicked
                     )
                 }
-            }
-        ) {
-            artist?.let {
-                Content(
-                    it,
-                    scrollState,
-                    animatedBackgroundColor,
-                    primaryColor,
-                    topTracks ?: listOf(),
-                    albums ?: listOf(),
-                    onTrackClicked = onTrackClicked,
-                    onAlbumClicked = onAlbumClicked
-                )
             }
         }
     }
@@ -422,18 +433,18 @@ fun ArtistHeaderFadingGradientBottom(
 }
 
 private fun FlingScrollScaffoldState.calcScrollState() {
-    if (lazyListState.firstVisibleItemIndex != 0) return
-
     scrollState.value = ScrollState(isAvatarVisible = true)
 
-    val totalHeight =
-        screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
+    if (lazyListState.firstVisibleItemIndex == 0) {
+        val totalHeight =
+            screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
-    if (scrollState.value.isAvatarVisible) {
-        scrollState.value.currentOffset =
-            with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+        if (scrollState.value.isAvatarVisible) {
+            scrollState.value.currentOffset =
+                with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
 
-        scrollState.value.alpha = (totalHeight - scrollState.value.currentOffset) / totalHeight
-        scrollState.value.colorAlpha = (totalHeight - scrollState.value.currentOffset) / 60.dp
+            scrollState.value.alpha = (totalHeight - scrollState.value.currentOffset) / totalHeight
+            scrollState.value.colorAlpha = (totalHeight - scrollState.value.currentOffset) / 60.dp
+        }
     }
 }
