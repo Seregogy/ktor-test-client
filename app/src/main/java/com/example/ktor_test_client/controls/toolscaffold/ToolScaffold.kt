@@ -33,7 +33,7 @@ fun ToolScaffold(
     state: ToolScaffoldState<*, *> ,
     content: @Composable (innerPadding: PaddingValues) -> Unit = { }
 ) {
-    val toolBarHeight = 60.dp
+    val toolBarHeight = 50.dp
 
     state.run {
         Box {

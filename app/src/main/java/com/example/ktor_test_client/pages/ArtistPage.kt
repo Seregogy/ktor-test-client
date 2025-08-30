@@ -100,13 +100,16 @@ fun ArtistPage(
                 .padding(innerPadding),
             state = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
         ) { toolScaffoldInnerPadding ->
+
             FlingScrollScaffold(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = bottomPadding)
                     .background(Color.Black),
-                state = rememberFlingScaffoldState {
-                    calcScrollState()
+                state = rememberFlingScaffoldState(
+                    yFlingOffset = toolScaffoldInnerPadding.calculateTopPadding()
+                ) {
+                    calcScrollState(toolScaffoldInnerPadding.calculateTopPadding())
                 },
                 backgroundContent = {
                     artist?.let {
@@ -204,7 +207,7 @@ private fun Header(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
+                .height(100.dp)
                 .background(Color.Black)
                 .align(Alignment.BottomCenter)
         )
@@ -332,6 +335,7 @@ private fun Content(
                 .alpha(scrollState.value.colorAlpha),
             targetColor = backgroundColorAnimated
         )
+
         Column {
             TopTracks(
                 message = "Популярные треки",
@@ -357,7 +361,7 @@ private fun TopTracks(
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit
 ) {
     Column {
-        Spacer(Modifier.height(25.dp))
+        Spacer(Modifier.height(50.dp))
 
         message?.let {
             Text(
@@ -432,19 +436,17 @@ fun ArtistHeaderFadingGradientBottom(
     }
 }
 
-private fun FlingScrollScaffoldState.calcScrollState() {
-    scrollState.value = ScrollState(isAvatarVisible = true)
+private fun FlingScrollScaffoldState.calcScrollState(
+    topPadding: Dp
+) {
+    scrollState.value = ScrollState(isAvatarVisible = lazyListState.firstVisibleItemIndex == 0)
 
-    if (lazyListState.firstVisibleItemIndex == 0) {
-        val totalHeight =
-            screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
+    val totalHeight = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
-        if (scrollState.value.isAvatarVisible) {
-            scrollState.value.currentOffset =
-                with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+    if (scrollState.value.isAvatarVisible) {
+        scrollState.value.currentOffset = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
 
-            scrollState.value.alpha = (totalHeight - scrollState.value.currentOffset) / totalHeight
-            scrollState.value.colorAlpha = (totalHeight - scrollState.value.currentOffset) / 60.dp
-        }
+        scrollState.value.alpha = (totalHeight - topPadding - scrollState.value.currentOffset) / totalHeight
+        scrollState.value.colorAlpha = (totalHeight - topPadding - scrollState.value.currentOffset) / 45.dp
     }
 }

@@ -46,7 +46,21 @@ fun FlingScrollScaffold(
                 return velocity
             }
         }
-        snapLayoutInfoProvider = SnapLayoutInfoProvider(lazyListState, SnapPosition.Start)
+
+        val snapPosition = object : SnapPosition {
+            override fun position(
+                layoutSize: Int,
+                itemSize: Int,
+                beforeContentPadding: Int,
+                afterContentPadding: Int,
+                itemIndex: Int,
+                itemCount: Int,
+            ): Int {
+                return beforeContentPadding + with(density) { yFlingOffset.roundToPx() }
+            }
+        }
+
+        snapLayoutInfoProvider = SnapLayoutInfoProvider(lazyListState, snapPosition)
 
         val isFirstVisibleIndex by remember {
             var lastVisibleIndex = 0
@@ -67,6 +81,7 @@ fun FlingScrollScaffold(
         }
 
         val flingBehavior = rememberSnapFlingBehavior(if (isFirstVisibleIndex) snapLayoutInfoProvider else noSnapLayout)
+        //val flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider)
 
         LaunchedEffect(Unit) {
             snapshotFlow { lazyListState.firstVisibleItemScrollOffset }.collect {

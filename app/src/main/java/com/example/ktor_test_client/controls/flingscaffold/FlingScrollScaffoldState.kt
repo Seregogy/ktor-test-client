@@ -12,7 +12,8 @@ import androidx.compose.ui.unit.dp
 import com.example.ktor_test_client.state.ScrollState
 
 class FlingScrollScaffoldState(
-    val onScrollStateChange: FlingScrollScaffoldState.() -> Unit = { }
+    val onScrollStateChange: FlingScrollScaffoldState.() -> Unit = { },
+    val yFlingOffset: Dp = 0.dp
 ) {
     var screenHeight: Dp = 0.dp
 
@@ -22,6 +23,7 @@ class FlingScrollScaffoldState(
     lateinit var snapLayoutInfoProvider: SnapLayoutInfoProvider
 
     var scrollState: MutableState<ScrollState> = mutableStateOf(ScrollState())
+
 }
 
 @Composable
@@ -33,9 +35,10 @@ fun rememberFlingScaffoldState(): FlingScrollScaffoldState {
 
 @Composable
 fun rememberFlingScaffoldState(
+    yFlingOffset: Dp = 0.dp,
     onScrollStateChange: FlingScrollScaffoldState.() -> Unit
 ): FlingScrollScaffoldState {
     return remember {
-        mutableStateOf(FlingScrollScaffoldState(onScrollStateChange))
+        mutableStateOf(FlingScrollScaffoldState(onScrollStateChange, yFlingOffset))
     }.value
 }

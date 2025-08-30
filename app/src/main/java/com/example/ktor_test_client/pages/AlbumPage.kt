@@ -100,13 +100,16 @@ fun AlbumPage(
                 .padding(innerPadding),
             state = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
         ) { toolBarInnerPadding ->
+
             FlingScrollScaffold(
                 modifier = Modifier
                     .background(Color.Black)
                     .fillMaxSize()
                     .padding(bottom = bottomPadding),
-                state = rememberFlingScaffoldState {
-                    calcScrollState(imageAlpha, albumHeaderHeight)
+                state = rememberFlingScaffoldState(
+                    yFlingOffset = toolBarInnerPadding.calculateTopPadding()
+                ) {
+                    calcScrollState(imageAlpha, albumHeaderHeight, toolBarInnerPadding.calculateTopPadding())
                 },
                 backgroundContent = {
                     Box(
@@ -448,25 +451,19 @@ fun AlbumHeaderFadingGradientBottom(
 
 private fun FlingScrollScaffoldState.calcScrollState(
     imageAlpha: MutableFloatState,
-    albumHeaderHeight: Dp
+    albumHeaderHeight: Dp,
+    topPadding: Dp
 ) {
-    scrollState.value = ScrollState(isAvatarVisible = true)
+    scrollState.value = ScrollState(isAvatarVisible = lazyListState.firstVisibleItemIndex == 0)
 
-    if (lazyListState.firstVisibleItemIndex != 0) {
-        val totalHeight =
-            screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
+    val totalHeight = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
-        if (scrollState.value.isAvatarVisible) {
-            scrollState.value.currentOffset =
-                with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+    if (scrollState.value.isAvatarVisible) {
+        scrollState.value.currentOffset = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
 
-            scrollState.value.alpha =
-                ((totalHeight - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
-            scrollState.value.colorAlpha =
-                ((totalHeight - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
+        scrollState.value.alpha = ((totalHeight - topPadding - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
+        scrollState.value.colorAlpha = ((totalHeight - topPadding - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
 
-            imageAlpha.floatValue =
-                (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
-        }
+        imageAlpha.floatValue = (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
     }
 }
