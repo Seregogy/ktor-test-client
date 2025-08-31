@@ -90,15 +90,18 @@ fun ArtistPage(
         }
     }
 
+    val coloredScaffoldState = rememberColoredScaffoldState {
+        viewModel.palette.collectAsStateWithLifecycle()
+    }
+    val toolScaffoldState = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+
     ColoredScaffold(
-        state = rememberColoredScaffoldState {
-            viewModel.palette.collectAsStateWithLifecycle()
-        }
+        state = coloredScaffoldState
     ) {
         ToolScaffold(
             modifier = Modifier
                 .padding(innerPadding),
-            state = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+            state = toolScaffoldState
         ) { toolScaffoldInnerPadding ->
 
             FlingScrollScaffold(
@@ -110,6 +113,12 @@ fun ArtistPage(
                     yFlingOffset = toolScaffoldInnerPadding.calculateTopPadding()
                 ) {
                     calcScrollState(toolScaffoldInnerPadding.calculateTopPadding())
+
+                    toolScaffoldState.toolBarTitle.value = if (isHeaderSwiped.value.not()) {
+                        artist?.name
+                    } else {
+                        null
+                    }
                 },
                 backgroundContent = {
                     artist?.let {

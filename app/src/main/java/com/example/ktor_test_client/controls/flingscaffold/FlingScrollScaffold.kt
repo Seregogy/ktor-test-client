@@ -87,11 +87,10 @@ fun FlingScrollScaffold(
                 onScrollStateChange(this@run)
 
                 with(density) {
-                    isHeaderSwiped.value = totalHeight.value != 0.dp && (
+                    isHeaderSwiped.value = (totalHeight.value != 0.dp && (
                         lazyListState.firstVisibleItemIndex != 0 ||
                         totalHeight.value.roundToPx() - lazyListState.firstVisibleItemScrollOffset <= (yFlingOffset.roundToPx() + 5)
-                    )
-                    println("${totalHeight.value} ${isHeaderSwiped.value}")
+                    )).not()
                 }
             }
         }

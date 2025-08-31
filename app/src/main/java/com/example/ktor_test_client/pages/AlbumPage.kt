@@ -123,7 +123,7 @@ fun AlbumPage(
 
                     println(isHeaderSwiped.value)
 
-                    toolBarScaffoldState.toolBarTitle.value = if (isHeaderSwiped.value) {
+                    toolBarScaffoldState.toolBarTitle.value = if (isHeaderSwiped.value.not()) {
                          album?.name
                     } else {
                         null

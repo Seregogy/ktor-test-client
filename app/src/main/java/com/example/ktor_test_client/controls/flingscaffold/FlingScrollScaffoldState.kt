@@ -25,7 +25,7 @@ class FlingScrollScaffoldState(
     lateinit var noSnapLayout: SnapLayoutInfoProvider
     lateinit var snapLayoutInfoProvider: SnapLayoutInfoProvider
 
-    var isHeaderSwiped: MutableState<Boolean> = mutableStateOf(false)
+    var isHeaderSwiped: MutableState<Boolean> = mutableStateOf(true)
 
     var alpha: MutableFloatState = mutableFloatStateOf(0f)
     var colorAlpha: MutableFloatState = mutableFloatStateOf(0f)
@@ -46,8 +46,15 @@ fun rememberFlingScaffoldState(
     yFlingOffset: Dp = 0.dp,
     onScrollStateChange: FlingScrollScaffoldState.() -> Unit
 ): FlingScrollScaffoldState {
+    val isHeaderSwiped = rememberSaveable {
+        mutableStateOf(true)
+    }
 
     return remember {
-        mutableStateOf(FlingScrollScaffoldState(onScrollStateChange, yFlingOffset))
+        mutableStateOf(
+            FlingScrollScaffoldState(onScrollStateChange, yFlingOffset).apply {
+                this.isHeaderSwiped = isHeaderSwiped
+            }
+        )
     }.value
 }

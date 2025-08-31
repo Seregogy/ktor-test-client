@@ -30,8 +30,11 @@ fun <T, C> rememberToolScaffoldState(
     onPrimaryColor: State<Color> = mutableStateOf(Color.White),
     toolBarTitle: String? = null
 ): ToolScaffoldState<T, C> {
+    val toolBarTitleState = rememberSaveable {
+        mutableStateOf(toolBarTitle)
+    }
     return remember {
-        ToolScaffoldState(onBackRequest, onSearchRequest, toolAction, contextAction, primaryColor, onPrimaryColor, mutableStateOf(toolBarTitle))
+        ToolScaffoldState(onBackRequest, onSearchRequest, toolAction, contextAction, primaryColor, onPrimaryColor, toolBarTitleState)
     }
 }
 
