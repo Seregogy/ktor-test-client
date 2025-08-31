@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -22,7 +23,6 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.example.ktor_test_client.state.ScrollState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -81,11 +81,18 @@ fun FlingScrollScaffold(
         }
 
         val flingBehavior = rememberSnapFlingBehavior(if (isFirstVisibleIndex) snapLayoutInfoProvider else noSnapLayout)
-        //val flingBehavior = rememberSnapFlingBehavior(snapLayoutInfoProvider)
 
         LaunchedEffect(Unit) {
             snapshotFlow { lazyListState.firstVisibleItemScrollOffset }.collect {
                 onScrollStateChange(this@run)
+
+                with(density) {
+                    isHeaderSwiped.value = totalHeight.value != 0.dp && (
+                        lazyListState.firstVisibleItemIndex != 0 ||
+                        totalHeight.value.roundToPx() - lazyListState.firstVisibleItemScrollOffset <= (yFlingOffset.roundToPx() + 5)
+                    )
+                    println("${totalHeight.value} ${isHeaderSwiped.value}")
+                }
             }
         }
 

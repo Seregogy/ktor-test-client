@@ -44,7 +44,6 @@ fun AlbumPageRouter(
         }
     }
 
-
     var isRefreshing by remember { mutableStateOf(false) }
     PullToRefreshBox(
         modifier = Modifier
@@ -73,7 +72,6 @@ fun AlbumPageRouter(
                 AlbumPage(
                     viewModel = albumViewModel,
                     innerPadding = innerPadding,
-
                     bottomPadding = bottomPadding,
                     onBackRequest = onBackRequest,
                     onArtistClicked = onArtistClicked,

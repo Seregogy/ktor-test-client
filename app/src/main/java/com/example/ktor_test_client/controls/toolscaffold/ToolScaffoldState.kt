@@ -1,12 +1,12 @@
 package com.example.ktor_test_client.controls.toolscaffold
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 class ToolScaffoldState<ToolAction, ContextAction>(
     var onBackRequest: () -> Unit,
@@ -17,7 +17,7 @@ class ToolScaffoldState<ToolAction, ContextAction>(
     var primaryColor: State<Color> = mutableStateOf(Color.Black),
     var onPrimaryColor: State<Color> = mutableStateOf(Color.White),
 
-    var toolBarTitle: String? = null
+    var toolBarTitle: MutableState<String?> = mutableStateOf(null)
 )
 
 @Composable
@@ -31,7 +31,7 @@ fun <T, C> rememberToolScaffoldState(
     toolBarTitle: String? = null
 ): ToolScaffoldState<T, C> {
     return remember {
-        ToolScaffoldState(onBackRequest, onSearchRequest, toolAction, contextAction, primaryColor, onPrimaryColor, toolBarTitle)
+        ToolScaffoldState(onBackRequest, onSearchRequest, toolAction, contextAction, primaryColor, onPrimaryColor, mutableStateOf(toolBarTitle))
     }
 }
 

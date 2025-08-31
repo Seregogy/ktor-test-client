@@ -33,8 +33,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.FloatState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -57,18 +58,18 @@ import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.AlbumMiniPreview
 import com.example.ktor_test_client.controls.CircleButton
-import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
-import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.TrackMini
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
+import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.rememberFlingScaffoldState
 import com.example.ktor_test_client.controls.toolscaffold.ToolScaffold
 import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
-import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun AlbumPage(
@@ -90,15 +91,24 @@ fun AlbumPage(
     val otherAlbums by viewModel.otherAlbums
 
 
-    ColoredScaffold(
-        state = rememberColoredScaffoldState {
-            viewModel.palette.collectAsStateWithLifecycle()
+    val coloredScaffoldState = rememberColoredScaffoldState {
+        viewModel.palette.collectAsStateWithLifecycle()
+    }
+    val toolBarScaffoldState = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+
+    LaunchedEffect(Unit) {
+        viewModel.palette.collectLatest {
+            println("extracted: $it")
         }
+    }
+
+    ColoredScaffold(
+        state = coloredScaffoldState
     ) {
         ToolScaffold(
             modifier = Modifier
                 .padding(innerPadding),
-            state = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+            state = toolBarScaffoldState
         ) { toolBarInnerPadding ->
 
             FlingScrollScaffold(
@@ -110,11 +120,19 @@ fun AlbumPage(
                     yFlingOffset = toolBarInnerPadding.calculateTopPadding()
                 ) {
                     calcScrollState(imageAlpha, albumHeaderHeight, toolBarInnerPadding.calculateTopPadding())
+
+                    println(isHeaderSwiped.value)
+
+                    toolBarScaffoldState.toolBarTitle.value = if (isHeaderSwiped.value) {
+                         album?.name
+                    } else {
+                        null
+                    }
                 },
                 backgroundContent = {
                     Box(
                         modifier = Modifier
-                            .alpha(scrollState.value.colorAlpha)
+                            .alpha(colorAlpha.floatValue)
                             .fillMaxSize()
                             .background(primaryColor.value)
                     ) {
@@ -131,7 +149,7 @@ fun AlbumPage(
                     album?.let { album ->
                         AlbumHeader(
                             screenHeight = screenHeight,
-                            scrollState = scrollState,
+                            alpha = alpha,
                             album = album,
                             foregroundColor = onPrimaryColor.value,
                             backgroundColor = primaryColor.value,
@@ -146,13 +164,13 @@ fun AlbumPage(
                 album?.let { album ->
                     otherAlbums?.let { otherAlbums ->
                         AlbumContent(
-                            scrollState,
-                            primaryColor.value,
-                            album,
-                            infiniteTransition,
-                            onTrackClicked,
-                            otherAlbums,
-                            onAlbumClicked
+                            colorAlpha = colorAlpha,
+                            backgroundColor = primaryColor.value,
+                            album = album,
+                            infiniteTransition = infiniteTransition,
+                            onTrackClicked = onTrackClicked,
+                            otherAlbums = otherAlbums,
+                            onAlbumClicked = onAlbumClicked
                         )
                     }
                 }
@@ -164,7 +182,7 @@ fun AlbumPage(
 @Composable
 private fun AlbumHeader(
     screenHeight: Dp,
-    scrollState: State<ScrollState>,
+    alpha: FloatState,
     album: Album,
     foregroundColor: Color,
     backgroundColor: Color,
@@ -185,7 +203,7 @@ private fun AlbumHeader(
         ) {
             AlbumHeaderControls(
                 modifier = Modifier
-                    .alpha(scrollState.value.alpha)
+                    .alpha(alpha.floatValue)
                     .align(Alignment.BottomCenter),
                 album = album,
                 foregroundColor = foregroundColor,
@@ -202,7 +220,7 @@ private fun AlbumHeader(
 
 @Composable
 private fun AlbumContent(
-    scrollState: State<ScrollState>,
+    colorAlpha: FloatState,
     backgroundColor: Color,
     album: Album,
     infiniteTransition: InfiniteTransition,
@@ -216,7 +234,7 @@ private fun AlbumContent(
     ) {
         AlbumHeaderFadingGradientBottom(
             modifier = Modifier
-                .alpha(scrollState.value.colorAlpha),
+                .alpha(colorAlpha.floatValue),
             targetColor = backgroundColor
         )
 
@@ -454,16 +472,15 @@ private fun FlingScrollScaffoldState.calcScrollState(
     albumHeaderHeight: Dp,
     topPadding: Dp
 ) {
-    scrollState.value = ScrollState(isAvatarVisible = lazyListState.firstVisibleItemIndex == 0)
+    isHeaderVisible.value = lazyListState.firstVisibleItemIndex == 0
+    totalHeight.value = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
-    val totalHeight = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
+    if (isHeaderVisible.value) {
+        currentOffset.value = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
 
-    if (scrollState.value.isAvatarVisible) {
-        scrollState.value.currentOffset = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
+        alpha.floatValue = ((totalHeight.value - topPadding - currentOffset.value) / totalHeight.value).coerceIn(0f..1f)
+        colorAlpha.floatValue = ((totalHeight.value - topPadding - currentOffset.value) / 60.dp).coerceIn(0f..1f)
 
-        scrollState.value.alpha = ((totalHeight - topPadding - scrollState.value.currentOffset) / totalHeight).coerceIn(0f..1f)
-        scrollState.value.colorAlpha = ((totalHeight - topPadding - scrollState.value.currentOffset) / 60.dp).coerceIn(0f..1f)
-
-        imageAlpha.floatValue = (albumHeaderHeight - scrollState.value.currentOffset) / albumHeaderHeight
+        imageAlpha.floatValue = (albumHeaderHeight - currentOffset.value) / albumHeaderHeight
     }
 }

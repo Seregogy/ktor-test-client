@@ -18,6 +18,7 @@ fun ColoredScaffold(
     state.run {
         backgroundColor = remember {
             derivedStateOf {
+                println("set palette ${currentPalette.value}")
                 Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
             }
         }

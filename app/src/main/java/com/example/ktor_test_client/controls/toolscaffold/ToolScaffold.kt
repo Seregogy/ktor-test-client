@@ -1,16 +1,14 @@
 package com.example.ktor_test_client.controls.toolscaffold
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
@@ -20,12 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.ktor_test_client.R
 
 @Composable
 fun ToolScaffold(
@@ -40,8 +34,10 @@ fun ToolScaffold(
             content(PaddingValues(top = toolBarHeight))
 
             Box(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxWidth()
+                    .background(if (toolBarTitle.value != null) Color.Black.copy(0.92f) else Color.Transparent)
+                    .then(modifier)
                     .height(toolBarHeight)
                     .padding(horizontal = 15.dp)
                     .align(Alignment.TopCenter)
@@ -58,15 +54,13 @@ fun ToolScaffold(
                     )
                 }
 
-                toolBarTitle?.let {
-                    Text(
-                        text = it,
-                        fontWeight = FontWeight.W700,
-                        color = onPrimaryColor.value,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
-                }
+                Text(
+                    text = toolBarTitle.value ?: "",
+                    fontWeight = FontWeight.W700,
+                    color = onPrimaryColor.value,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
 
                 Row(
                     modifier = Modifier

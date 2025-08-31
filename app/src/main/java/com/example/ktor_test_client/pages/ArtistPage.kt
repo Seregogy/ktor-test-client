@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -57,7 +58,6 @@ import com.example.ktor_test_client.controls.flingscaffold.rememberFlingScaffold
 import com.example.ktor_test_client.controls.toolscaffold.ToolScaffold
 import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
-import com.example.ktor_test_client.state.ScrollState
 import com.example.ktor_test_client.viewmodels.ArtistViewModel
 import kotlinx.coroutines.delay
 
@@ -117,7 +117,7 @@ fun ArtistPage(
                             viewModel = viewModel,
                             color = animatedBackgroundColor,
                             pagerState = pagerState,
-                            scrollState = scrollState,
+                            currentOffset = currentOffset,
                             screenHeight = screenHeight,
                             artist = it
                         )
@@ -126,22 +126,23 @@ fun ArtistPage(
                 headingContent = {
                     artist?.let {
                         Header(
-                            screenHeight,
-                            scrollState,
-                            animatedBackgroundColor,
-                            it
+                            artist = it,
+                            screenHeight = screenHeight,
+                            alpha = alpha,
+                            colorAlpha = colorAlpha,
+                            color = animatedBackgroundColor
                         )
                     }
                 }
             ) {
                 artist?.let {
                     Content(
-                        it,
-                        scrollState,
-                        animatedBackgroundColor,
-                        primaryColor,
-                        topTracks ?: listOf(),
-                        albums ?: listOf(),
+                        artist = it,
+                        colorAlpha = colorAlpha,
+                        backgroundColorAnimated = animatedBackgroundColor,
+                        primaryColor = primaryColor,
+                        topTracks = topTracks ?: listOf(),
+                        albums = albums ?: listOf(),
                         onTrackClicked = onTrackClicked,
                         onAlbumClicked = onAlbumClicked
                     )
@@ -156,7 +157,7 @@ private fun ArtistAvatarPager(
     viewModel: ArtistViewModel,
     color: State<Color>,
     pagerState: PagerState,
-    scrollState: State<ScrollState>,
+    currentOffset: State<Dp>,
     screenHeight: Dp,
     artist: Artist
 ) {
@@ -178,7 +179,7 @@ private fun ArtistAvatarPager(
             modifier = Modifier
                 .fillMaxSize()
                 .offset {
-                    return@offset IntOffset(0, (-scrollState.value.currentOffset / 5).roundToPx())
+                    return@offset IntOffset(0, (-currentOffset.value / 5).roundToPx())
                 }
         ) { page ->
             AsyncImage(
@@ -194,10 +195,11 @@ private fun ArtistAvatarPager(
 
 @Composable
 private fun Header(
+    artist: Artist,
     screenHeight: Dp,
-    scrollState: State<ScrollState>,
-    color: State<Color>,
-    artist: Artist
+    alpha: FloatState,
+    colorAlpha: FloatState,
+    color: State<Color>
 ) {
     Box(
         modifier = Modifier
@@ -218,14 +220,14 @@ private fun Header(
         ) {
             ArtistHeaderFadingGradientTop(
                 modifier = Modifier
-                    .alpha(scrollState.value.colorAlpha)
+                    .alpha(colorAlpha.floatValue)
                     .align(Alignment.BottomCenter),
                 targetColor = color
             )
 
             ArtistHeader(
                 modifier = Modifier
-                    .alpha(scrollState.value.alpha)
+                    .alpha(alpha.floatValue)
                     .align(Alignment.BottomCenter),
                 artist = artist
             )
@@ -317,7 +319,7 @@ fun ArtistHeader(
 @Composable
 private fun Content(
     artist: Artist,
-    scrollState: State<ScrollState>,
+    colorAlpha: FloatState,
     backgroundColorAnimated: State<Color>,
     primaryColor: State<Color>,
     topTracks: List<BaseTrack>,
@@ -332,7 +334,7 @@ private fun Content(
     ) {
         ArtistHeaderFadingGradientBottom(
             modifier = Modifier
-                .alpha(scrollState.value.colorAlpha),
+                .alpha(colorAlpha.floatValue),
             targetColor = backgroundColorAnimated
         )
 
@@ -439,14 +441,13 @@ fun ArtistHeaderFadingGradientBottom(
 private fun FlingScrollScaffoldState.calcScrollState(
     topPadding: Dp
 ) {
-    scrollState.value = ScrollState(isAvatarVisible = lazyListState.firstVisibleItemIndex == 0)
+    isHeaderVisible.value = lazyListState.firstVisibleItemIndex == 0
+    totalHeight.value = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
 
-    val totalHeight = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
+    if (isHeaderVisible.value) {
+        currentOffset.value = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
 
-    if (scrollState.value.isAvatarVisible) {
-        scrollState.value.currentOffset = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
-
-        scrollState.value.alpha = (totalHeight - topPadding - scrollState.value.currentOffset) / totalHeight
-        scrollState.value.colorAlpha = (totalHeight - topPadding - scrollState.value.currentOffset) / 45.dp
+        alpha.floatValue = (totalHeight.value - topPadding - currentOffset.value) / totalHeight.value
+        colorAlpha.floatValue = (totalHeight.value - topPadding - currentOffset.value) / 45.dp
     }
 }
