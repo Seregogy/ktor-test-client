@@ -5,12 +5,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -44,6 +53,12 @@ class MainActivity : ComponentActivity() {
             KtortestclientTheme {
                 val context = LocalContext.current
 
+                val navEntries = listOf(
+                    "Home" to Icons.Rounded.Home,
+                    "Favorite" to Icons.Rounded.Favorite,
+                    "Profile" to Icons.Rounded.Person
+                )
+
                 KoinApplication(
                     application = {
                         modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, dataProviderDi, dataSourceDi, repositoryDi, viewModelDi))
@@ -52,7 +67,27 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
 
-                    Scaffold { innerPadding ->
+                    Scaffold(
+                        bottomBar = {
+                            NavigationBar(
+                                modifier = Modifier
+                                    .offset()
+                            ) {
+                                for (entry in navEntries) {
+                                    NavigationBarItem(
+                                        selected = false,
+                                        onClick = { },
+                                        icon = {
+                                            Icon(
+                                                imageVector = entry.second,
+                                                contentDescription = ""
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    ) { innerPadding ->
                         AudioPlayerScaffold(
                             innerPadding = innerPadding,
                             navController = navController

@@ -26,7 +26,7 @@ import com.example.ktor_test_client.api.dtos.Track
 @Composable
 fun TrackControl(
     modifier: Modifier = Modifier,
-    track: Track = Track(imageUrl = "https://compote.slate.com/images/b3748bbb-6659-478c-b830-af8cf2ca0885.jpeg?crop=3108%2C2560%2Cx0%2Cy0"),
+    track: Track,
     foregroundColor: Color = MaterialTheme.colorScheme.onBackground,
     onClick: (it: Track) -> Unit = { }
 ) {
