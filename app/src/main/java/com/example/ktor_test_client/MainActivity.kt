@@ -67,27 +67,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
 
-                    Scaffold(
-                        bottomBar = {
-                            NavigationBar(
-                                modifier = Modifier
-                                    .offset()
-                            ) {
-                                for (entry in navEntries) {
-                                    NavigationBarItem(
-                                        selected = false,
-                                        onClick = { },
-                                        icon = {
-                                            Icon(
-                                                imageVector = entry.second,
-                                                contentDescription = ""
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    ) { innerPadding ->
+                    Scaffold { innerPadding ->
                         AudioPlayerScaffold(
                             innerPadding = innerPadding,
                             navController = navController

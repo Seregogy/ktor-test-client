@@ -7,6 +7,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.example.ktor_test_client.helpers.contrast
 
 @Composable
 fun ColoredScaffold(
@@ -16,52 +17,67 @@ fun ColoredScaffold(
     val colorScheme = MaterialTheme.colorScheme
 
     state.run {
-        backgroundColor = remember {
-            derivedStateOf {
-                println("set palette ${currentPalette.value}")
-                Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
-            }
-        }
-
-        foregroundColor = remember {
-            derivedStateOf {
-                Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
-            }
-        }
-
         primaryColor = remember {
             derivedStateOf {
-                Color(currentPalette.value?.vibrantSwatch?.rgb ?: currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
+                if (currentPalette.value?.vibrantSwatch != null) {
+                    val colorValue = if (currentPalette.value?.vibrantSwatch?.rgb == currentPalette.value?.dominantSwatch?.rgb)
+                        currentPalette.value?.mutedSwatch?.rgb
+                    else
+                        currentPalette.value?.vibrantSwatch?.rgb
 
+                    Color(colorValue ?: Color.Black.toArgb())
+                } else {
+                    Color(colorScheme.tertiary.toArgb())
+                }
             }
         }
 
         onPrimaryColor = remember {
             derivedStateOf {
-                Color(currentPalette.value?.vibrantSwatch?.titleTextColor ?: currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
+                if (currentPalette.value?.vibrantSwatch != null) {
+                    val colorValue = if (currentPalette.value?.vibrantSwatch?.rgb == currentPalette.value?.dominantSwatch?.rgb)
+                        currentPalette.value?.mutedSwatch?.titleTextColor
+                    else
+                        currentPalette.value?.vibrantSwatch?.titleTextColor
 
+                    Color(colorValue ?: Color.White.toArgb())
+                } else {
+                    Color(colorScheme.onTertiary.toArgb())
+                }
             }
         }
 
-        animatedBackgroundColor = animateColorAsState(
+        backgroundColor = remember {
+            derivedStateOf {
+                Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
+            }
+        }
+
+        onBackgroundColor = remember {
+            derivedStateOf {
+                Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
+            }
+        }
+
+        backgroundColorAnimated = animateColorAsState(
             targetValue = backgroundColor.value,
             label = "animated background value",
             animationSpec = animationSpec
         )
 
-        animatedForegroundColor = animateColorAsState(
-            targetValue = foregroundColor.value,
+        onBackgroundColorAnimated = animateColorAsState(
+            targetValue = onBackgroundColor.value,
             label = "animated background value",
             animationSpec = animationSpec
         )
 
-        animatedPrimaryColor = animateColorAsState(
+        primaryColorAnimated = animateColorAsState(
             targetValue = primaryColor.value,
             label = "animated background value",
             animationSpec = animationSpec
         )
 
-        animatedOnPrimaryColor = animateColorAsState(
+        onPrimaryColorAnimated = animateColorAsState(
             targetValue = onPrimaryColor.value,
             label = "animated background value",
             animationSpec = animationSpec

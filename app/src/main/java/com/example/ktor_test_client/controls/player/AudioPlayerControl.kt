@@ -80,6 +80,9 @@ import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.controls.CircleButton
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
+import com.example.ktor_test_client.helpers.contrast
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
@@ -124,138 +127,94 @@ fun FullAudioPlayer(
         }
     }
 
-    val palette: MutableState<Palette?> = remember { mutableStateOf(null) }
-    val primaryColor by remember {
-        derivedStateOf {
-            Color(palette.value?.dominantSwatch?.rgb ?: Color.Transparent.toArgb())
-        }
-    }
-
-    val secondaryColor by remember {
-        derivedStateOf {
-
-            val colorValue: Int? = if (palette.value?.dominantSwatch?.rgb == palette.value?.vibrantSwatch?.rgb)
-                palette.value?.dominantSwatch?.titleTextColor
-            else
-                palette.value?.vibrantSwatch?.rgb
-
-            Color(colorValue ?: colorScheme.secondary.toArgb())
-        }
-    }
-
-    val textOnSecondaryColor by remember {
-        derivedStateOf {
-            Color(palette.value?.vibrantSwatch?.titleTextColor ?: colorScheme.onSecondary.toArgb())
-        }
-    }
-
-    val primaryColorAnimated = animateColorAsState(
-        targetValue = primaryColor,
-        animationSpec = tween(animationsSpeed),
-        label = "primary color animation"
-    )
-
-    val secondaryColorAnimated = animateColorAsState(
-        targetValue = secondaryColor,
-        animationSpec = tween(animationsSpeed),
-        label = "secondary color animation"
-    )
-
-    val textOnSecondaryColorAnimated = animateColorAsState(
-        targetValue = textOnSecondaryColor,
-        animationSpec = tween(animationsSpeed),
-        label = "secondary color animation"
-    )
-
-    LaunchedEffect(Unit) {
-        viewModel.palette.collect {
-            palette.value = it
-        }
-    }
-
     DisposableEffect(Unit) {
         onDispose {
             viewModel.releasePlayer()
         }
     }
 
-
-    Box {
-        bitmap?.let {
-            AnimatedContent(
-                targetState = it,
-                transitionSpec = { fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(
-                    animationsSpeed
-                )) },
-                label = "image animation"
-            ) { animatedBitmap ->
-                Image(
-                    bitmap = animatedBitmap.asImageBitmap(),
-                    contentDescription = "album image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height((screenHeight * TOP_PART_WEIGHT) + additionalHeight),
-                    contentScale = ContentScale.Crop
-                )
-            }
+    ColoredScaffold(
+        state = rememberColoredScaffoldState(tween(animationsSpeed)) {
+            viewModel.palette.collectAsStateWithLifecycle()
         }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(modifier)
-        ) {
-            TopBar(
-                textOnSecondaryColorAnimated,
-                currentTrack,
-                onCollapseRequest
-            )
-
-            PlayerPageHeaderFadingGradientTop(
-                modifier = Modifier
-                    .height(screenHeight * TOP_PART_WEIGHT + additionalPlayerHeight),
-                targetColor = primaryColorAnimated
-            )
+    ) {
+        Box {
+            bitmap?.let {
+                AnimatedContent(
+                    targetState = it,
+                    transitionSpec = {
+                        fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(animationsSpeed))
+                    },
+                    label = "image animation"
+                ) { animatedBitmap ->
+                    Image(
+                        bitmap = animatedBitmap.asImageBitmap(),
+                        contentDescription = "album image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height((screenHeight * TOP_PART_WEIGHT) + additionalHeight),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
 
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = screenHeight * TOP_PART_WEIGHT - bottomGap)
-                    .fillMaxHeight()
+                    .fillMaxSize()
+                    .then(modifier)
             ) {
-                Box(
-                    modifier = Modifier
-                        .padding(top = bottomGap)
-                        .fillMaxSize()
-                        .background(primaryColorAnimated.value)
+                TopBar(
+                    onPrimaryColorAnimated,
+                    currentTrack,
+                    onCollapseRequest
                 )
 
-                Column(
+                PlayerPageHeaderFadingGradientTop(
                     modifier = Modifier
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                        .height(screenHeight * TOP_PART_WEIGHT + additionalPlayerHeight),
+                    targetColor = backgroundColorAnimated
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = screenHeight * TOP_PART_WEIGHT - bottomGap)
+                        .fillMaxHeight()
                 ) {
-                    TrackInfo(
-                        currentTrack,
-                        secondaryColor,
-                        viewModel.isLoading,
-                        onAlbumClicked,
-                        onArtistClicked
+                    Box(
+                        modifier = Modifier
+                            .padding(top = bottomGap)
+                            .fillMaxSize()
+                            .background(backgroundColorAnimated.value)
                     )
 
-                    PlayerControls(
-                        currentPosition,
-                        currentTrackDuration,
-                        viewModel,
-                        isPlay,
-                        isSliding,
-                        primaryColorAnimated,
-                        secondaryColorAnimated,
-                        viewModel.isLoading,
-                        onNext = { viewModel.nextTrack() },
-                        onPrev = { viewModel.prevTrack() },
-                        onPlayPause = { viewModel.playPause() }
-                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        TrackInfo(
+                            currentTrack = currentTrack,
+                            secondaryColor = primaryColorAnimated,
+                            isTrackLoading = viewModel.isLoading,
+                            onAlbumClicked = onAlbumClicked,
+                            onArtistClicked = onArtistClicked
+                        )
+
+                        PlayerControls(
+                            currentPosition = currentPosition,
+                            currentTrackDuration = currentTrackDuration,
+                            viewModel = viewModel,
+                            isPlay = isPlay,
+                            isSliding = isSliding,
+                            backgroundColor = backgroundColorAnimated,
+                            secondaryColor = primaryColorAnimated,
+                            isTrackLoading = viewModel.isLoading,
+                            onNext = { viewModel.nextTrack() },
+                            onPrev = { viewModel.prevTrack() },
+                            onPlayPause = { viewModel.playPause() }
+                        )
+                    }
                 }
             }
         }
@@ -309,7 +268,7 @@ private fun TopBar(
 @Composable
 private fun TrackInfo(
     currentTrack: Track?,
-    secondaryColor: Color,
+    secondaryColor: State<Color>,
     isTrackLoading: State<Boolean>,
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
@@ -344,7 +303,7 @@ private fun TrackInfo(
                 }
                 .alpha(textAlpha)
                 .basicMarquee(),
-            color = secondaryColor
+            color = secondaryColor.value
         )
 
         Text(
@@ -359,7 +318,7 @@ private fun TrackInfo(
                 .padding(horizontal = 5.dp)
                 .alpha(textAlpha)
                 .basicMarquee(),
-            color = secondaryColor,
+            color = secondaryColor.value,
             lineHeight = 10.sp
         )
     }
@@ -373,7 +332,7 @@ private fun PlayerControls(
     viewModel: AudioPlayerViewModel,
     isPlay: Boolean,
     isSliding: MutableState<Boolean>,
-    primaryColor: State<Color>,
+    backgroundColor: State<Color>,
     secondaryColor: State<Color>,
     isTrackLoading: State<Boolean>,
     onNext: () -> Unit = { },
@@ -417,16 +376,16 @@ private fun PlayerControls(
                     .weight(1f)
                     .align(Alignment.CenterVertically),
                 colors = SliderColors(
-                    thumbColor = (primaryColor.value) * 2.5f,
-                    activeTrackColor = (primaryColor.value) * 2f,
-                    inactiveTrackColor = (primaryColor.value) * .7f,
-                    activeTickColor = primaryColor.value * 2.5f,
-                    inactiveTickColor = primaryColor.value * .7f,
-                    disabledThumbColor = primaryColor.value * .7f,
-                    disabledActiveTrackColor = primaryColor.value * .7f,
-                    disabledActiveTickColor = primaryColor.value * .7f,
-                    disabledInactiveTickColor = primaryColor.value * .7f,
-                    disabledInactiveTrackColor = primaryColor.value * .7f,
+                    thumbColor = (backgroundColor.value) * 2.5f,
+                    activeTrackColor = (backgroundColor.value) * 2f,
+                    inactiveTrackColor = (backgroundColor.value) * .7f,
+                    activeTickColor = backgroundColor.value * 2.5f,
+                    inactiveTickColor = backgroundColor.value * .7f,
+                    disabledThumbColor = backgroundColor.value * .7f,
+                    disabledActiveTrackColor = backgroundColor.value * .7f,
+                    disabledActiveTickColor = backgroundColor.value * .7f,
+                    disabledInactiveTickColor = backgroundColor.value * .7f,
+                    disabledInactiveTrackColor = backgroundColor.value * .7f,
                 ),
                 thumb = {
                     Box(
@@ -434,7 +393,7 @@ private fun PlayerControls(
                             .width(6.dp)
                             .height(30.dp)
                             .clip(MaterialTheme.shapes.small)
-                            .background(primaryColor.value * 2.5f)
+                            .background(backgroundColor.value * 2.5f)
                     )
                 },
                 enabled = isTrackLoading.value.not()
@@ -500,7 +459,7 @@ private fun PlayerControls(
             }
 
             CircleButton(
-                containerColor = primaryColor.value * 2f,
+                containerColor = backgroundColor.value * 2f,
                 size = 70.dp,
                 onClick = {
                     onPlayPause()

@@ -96,12 +96,6 @@ fun AlbumPage(
     }
     val toolBarScaffoldState = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
 
-    LaunchedEffect(Unit) {
-        viewModel.palette.collectLatest {
-            println("extracted: $it")
-        }
-    }
-
     ColoredScaffold(
         state = coloredScaffoldState
     ) {
@@ -120,8 +114,6 @@ fun AlbumPage(
                     yFlingOffset = toolBarInnerPadding.calculateTopPadding()
                 ) {
                     calcScrollState(imageAlpha, albumHeaderHeight, toolBarInnerPadding.calculateTopPadding())
-
-                    println(isHeaderSwiped.value)
 
                     toolBarScaffoldState.toolBarTitle.value = if (isHeaderSwiped.value.not()) {
                          album?.name

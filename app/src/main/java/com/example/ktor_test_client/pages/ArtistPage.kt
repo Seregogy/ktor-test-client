@@ -124,7 +124,7 @@ fun ArtistPage(
                     artist?.let {
                         ArtistAvatarPager(
                             viewModel = viewModel,
-                            color = animatedBackgroundColor,
+                            color = backgroundColorAnimated,
                             pagerState = pagerState,
                             currentOffset = currentOffset,
                             screenHeight = screenHeight,
@@ -139,7 +139,7 @@ fun ArtistPage(
                             screenHeight = screenHeight,
                             alpha = alpha,
                             colorAlpha = colorAlpha,
-                            color = animatedBackgroundColor
+                            color = backgroundColorAnimated
                         )
                     }
                 }
@@ -148,7 +148,7 @@ fun ArtistPage(
                     Content(
                         artist = it,
                         colorAlpha = colorAlpha,
-                        backgroundColorAnimated = animatedBackgroundColor,
+                        backgroundColorAnimated = backgroundColorAnimated,
                         primaryColor = primaryColor,
                         topTracks = topTracks ?: listOf(),
                         albums = albums ?: listOf(),
