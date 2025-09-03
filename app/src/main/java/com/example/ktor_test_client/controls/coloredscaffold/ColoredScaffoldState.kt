@@ -14,15 +14,19 @@ class ColoredScaffoldState(
     var currentPalette: State<Palette?> = mutableStateOf(null),
     var backgroundColor: State<Color> = mutableStateOf(Color.Black),
     var onBackgroundColor: State<Color> = mutableStateOf(Color.White),
-    var primaryColor: State<Color> = mutableStateOf(Color.Yellow),
-    var onPrimaryColor: State<Color> = mutableStateOf(Color.Black),
+    var primaryOrBackgroundColor: State<Color> = mutableStateOf(Color.Yellow),
+    var onPrimaryOrBackgroundColor: State<Color> = mutableStateOf(Color.Black),
+
+    var textOnPrimaryOrBackgroundColor: State<Color> = mutableStateOf(Color.White),
 
     val animationSpec: AnimationSpec<Color> = tween(durationMillis = 700, easing = LinearEasing),
 
     var backgroundColorAnimated: State<Color> = mutableStateOf(Color.Black),
     var onBackgroundColorAnimated: State<Color> = mutableStateOf(Color.White),
-    var primaryColorAnimated: State<Color> = mutableStateOf(Color.Yellow),
-    var onPrimaryColorAnimated: State<Color> = mutableStateOf(Color.Black)
+    var primaryOrBackgroundColorAnimated: State<Color> = mutableStateOf(Color.Yellow),
+    var onPrimaryOrBackgroundColorAnimated: State<Color> = mutableStateOf(Color.Black),
+
+    var textOnPrimaryOrBackgroundColorAnimated: State<Color> = mutableStateOf(Color.White),
 )
 
 @Composable

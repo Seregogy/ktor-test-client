@@ -34,7 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -69,7 +68,6 @@ import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldSt
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
-import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun AlbumPage(
@@ -126,7 +124,7 @@ fun AlbumPage(
                         modifier = Modifier
                             .alpha(colorAlpha.floatValue)
                             .fillMaxSize()
-                            .background(primaryColor.value)
+                            .background(primaryOrBackgroundColorAnimated.value)
                     ) {
                         AlbumHeaderImage(
                             modifier = Modifier
@@ -143,11 +141,11 @@ fun AlbumPage(
                             screenHeight = screenHeight,
                             alpha = alpha,
                             album = album,
-                            foregroundColor = onPrimaryColor.value,
-                            backgroundColor = primaryColor.value,
-                            iconsColor = primaryColor.value,
-                            primaryButtonColor = primaryColor.value,
-                            primaryIconColor = primaryColor.value,
+                            foregroundColor = onPrimaryOrBackgroundColorAnimated.value,
+                            backgroundColor = primaryOrBackgroundColorAnimated.value,
+                            iconsColor = primaryOrBackgroundColorAnimated.value,
+                            primaryButtonColor = primaryOrBackgroundColorAnimated.value,
+                            primaryIconColor = primaryOrBackgroundColorAnimated.value,
                             onArtistClicked = onArtistClicked
                         )
                     }
@@ -157,7 +155,7 @@ fun AlbumPage(
                     otherAlbums?.let { otherAlbums ->
                         AlbumContent(
                             colorAlpha = colorAlpha,
-                            backgroundColor = primaryColor.value,
+                            backgroundColor = primaryOrBackgroundColorAnimated.value,
                             album = album,
                             infiniteTransition = infiniteTransition,
                             onTrackClicked = onTrackClicked,

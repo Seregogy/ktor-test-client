@@ -149,7 +149,7 @@ fun ArtistPage(
                         artist = it,
                         colorAlpha = colorAlpha,
                         backgroundColorAnimated = backgroundColorAnimated,
-                        primaryColor = primaryColor,
+                        primaryColor = primaryOrBackgroundColor,
                         topTracks = topTracks ?: listOf(),
                         albums = albums ?: listOf(),
                         onTrackClicked = onTrackClicked,

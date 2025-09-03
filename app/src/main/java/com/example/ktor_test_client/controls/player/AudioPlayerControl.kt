@@ -99,7 +99,6 @@ fun FullAudioPlayer(
     onArtistClicked: (artistId: String) -> Unit
 ) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) {
         viewModel.initializePlayer()
@@ -164,7 +163,7 @@ fun FullAudioPlayer(
                     .then(modifier)
             ) {
                 TopBar(
-                    onPrimaryColorAnimated,
+                    onPrimaryOrBackgroundColorAnimated,
                     currentTrack,
                     onCollapseRequest
                 )
@@ -195,7 +194,7 @@ fun FullAudioPlayer(
                     ) {
                         TrackInfo(
                             currentTrack = currentTrack,
-                            secondaryColor = primaryColorAnimated,
+                            secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
                             isTrackLoading = viewModel.isLoading,
                             onAlbumClicked = onAlbumClicked,
                             onArtistClicked = onArtistClicked
@@ -208,7 +207,7 @@ fun FullAudioPlayer(
                             isPlay = isPlay,
                             isSliding = isSliding,
                             backgroundColor = backgroundColorAnimated,
-                            secondaryColor = primaryColorAnimated,
+                            secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
                             isTrackLoading = viewModel.isLoading,
                             onNext = { viewModel.nextTrack() },
                             onPrev = { viewModel.prevTrack() },

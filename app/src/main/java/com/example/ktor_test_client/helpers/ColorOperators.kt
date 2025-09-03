@@ -1,27 +1,28 @@
 package com.example.ktor_test_client.helpers
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 operator fun Color.times(multiplier: Float): Color {
     return Color(this.red * multiplier, this.green * multiplier, this.blue * multiplier, 1f)
 }
 
-fun Color.contrast(otherColor: Color): Double {
-    val lum1 = this.l() + 0.05f
-    val lum2 = otherColor.l() + 0.05f
+fun Color.contrast(otherColor: Color): Float {
+    val lum1 = this.luminance() + 0.05f
+    val lum2 = otherColor.luminance() + 0.05f
 
     return maxOf(lum1, lum2) / minOf(lum1, lum2)
 }
 
-fun Int.contrast(otherColorValue: Int?): Double {
+fun Int.contrast(otherColorValue: Int?): Float {
     otherColorValue?.let {
-        val lum1 = Color(this).l() + 0.05f
-        val lum2 = Color(otherColorValue).l() + 0.05f
+        val lum1 = Color(this).luminance() + 0.05f
+        val lum2 = Color(otherColorValue).luminance() + 0.05f
 
         return maxOf(lum1, lum2) / minOf(lum1, lum2)
     }
 
-    return .0
+    return .0f
 }
 
 fun Color.l(): Double {

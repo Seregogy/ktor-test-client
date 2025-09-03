@@ -17,32 +17,36 @@ fun ColoredScaffold(
     val colorScheme = MaterialTheme.colorScheme
 
     state.run {
-        primaryColor = remember {
+        primaryOrBackgroundColor = remember {
             derivedStateOf {
-                if (currentPalette.value?.vibrantSwatch != null) {
-                    val colorValue = if (currentPalette.value?.vibrantSwatch?.rgb == currentPalette.value?.dominantSwatch?.rgb)
-                        currentPalette.value?.mutedSwatch?.rgb
-                    else
-                        currentPalette.value?.vibrantSwatch?.rgb
-
-                    Color(colorValue ?: Color.Black.toArgb())
+                return@derivedStateOf if (currentPalette.value?.vibrantSwatch == null) {
+                    Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.tertiary.toArgb())
                 } else {
-                    Color(colorScheme.tertiary.toArgb())
+                    Color(currentPalette.value?.vibrantSwatch?.rgb!!)
                 }
             }
         }
 
-        onPrimaryColor = remember {
+        onPrimaryOrBackgroundColor = remember {
             derivedStateOf {
-                if (currentPalette.value?.vibrantSwatch != null) {
-                    val colorValue = if (currentPalette.value?.vibrantSwatch?.rgb == currentPalette.value?.dominantSwatch?.rgb)
-                        currentPalette.value?.mutedSwatch?.titleTextColor
-                    else
-                        currentPalette.value?.vibrantSwatch?.titleTextColor
-
-                    Color(colorValue ?: Color.White.toArgb())
+                return@derivedStateOf if (currentPalette.value?.vibrantSwatch == null) {
+                    Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.tertiary.toArgb())
                 } else {
-                    Color(colorScheme.onTertiary.toArgb())
+                    Color(currentPalette.value?.vibrantSwatch?.titleTextColor!!)
+                }
+            }
+        }
+
+        textOnPrimaryOrBackgroundColor = remember {
+            derivedStateOf {
+                return@derivedStateOf if (currentPalette.value?.vibrantSwatch != null) {
+                    if (currentPalette.value?.vibrantSwatch?.rgb!!.contrast(currentPalette.value?.dominantSwatch?.rgb) < 3f) {
+                        Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onTertiary.toArgb())
+                    } else {
+                        Color(currentPalette.value?.vibrantSwatch?.rgb ?: colorScheme.tertiary.toArgb())
+                    }
+                } else {
+                    Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onTertiary.toArgb())
                 }
             }
         }
@@ -55,7 +59,7 @@ fun ColoredScaffold(
 
         onBackgroundColor = remember {
             derivedStateOf {
-                Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
+                Color(currentPalette.value?.dominantSwatch?.bodyTextColor ?: colorScheme.onBackground.toArgb())
             }
         }
 
@@ -71,14 +75,20 @@ fun ColoredScaffold(
             animationSpec = animationSpec
         )
 
-        primaryColorAnimated = animateColorAsState(
-            targetValue = primaryColor.value,
+        primaryOrBackgroundColorAnimated = animateColorAsState(
+            targetValue = primaryOrBackgroundColor.value,
             label = "animated background value",
             animationSpec = animationSpec
         )
 
-        onPrimaryColorAnimated = animateColorAsState(
-            targetValue = onPrimaryColor.value,
+        onPrimaryOrBackgroundColorAnimated = animateColorAsState(
+            targetValue = onPrimaryOrBackgroundColor.value,
+            label = "animated background value",
+            animationSpec = animationSpec
+        )
+
+        textOnPrimaryOrBackgroundColorAnimated = animateColorAsState(
+            targetValue = textOnPrimaryOrBackgroundColor.value,
             label = "animated background value",
             animationSpec = animationSpec
         )
