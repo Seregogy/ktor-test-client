@@ -100,7 +100,6 @@ fun FlingScrollScaffold(
                 .background(Color.Black)
                 .fillMaxSize()
         ) {
-
             backgroundContent()
 
             Box(

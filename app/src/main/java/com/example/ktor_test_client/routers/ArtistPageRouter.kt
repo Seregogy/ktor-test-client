@@ -1,5 +1,7 @@
 package com.example.ktor_test_client.routers
 
+import android.util.Log
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -18,6 +20,9 @@ import com.example.ktor_test_client.controls.states.LoadingState
 import com.example.ktor_test_client.pages.ArtistPage
 import com.example.ktor_test_client.viewmodels.ArtistViewModel
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -28,6 +33,7 @@ fun ArtistPageRouter(
     playerViewModel: AudioPlayerViewModel,
     innerPadding: PaddingValues,
     bottomPadding: Dp,
+    hazeState: HazeState,
     onBackRequest: () -> Unit,
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
     onAlbumClicked: (albumId: String) -> Unit
@@ -35,11 +41,18 @@ fun ArtistPageRouter(
     val coroutineScope = rememberCoroutineScope()
     val viewModel: ArtistViewModel = koinViewModel()
 
+    var isError by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         artistId?.let {
-            viewModel.loadArtist(it)
-            viewModel.loadTopTracks(it, 9)
-            viewModel.loadAlbums(it)
+            runCatching {
+                viewModel.loadArtist(it)
+                viewModel.loadTopTracks(it, 9)
+                viewModel.loadAlbums(it)
+            }.onSuccess {
+                Log.d("API", "Artist page loaded")
+            }.onFailure {
+                isError = true
+            }
         }
     }
 
@@ -59,8 +72,8 @@ fun ArtistPageRouter(
         }
     ) {
         when {
-            artistId == null -> {
-                ErrorState()
+            artistId == null || isError -> {
+                ErrorState(onBackRequest)
             }
             viewModel.artist.value == null -> {
                 LoadingState()
@@ -70,6 +83,7 @@ fun ArtistPageRouter(
                     viewModel = viewModel,
                     innerPadding = innerPadding,
                     onTrackClicked = onTrackClicked,
+                    hazeState = hazeState,
                     bottomPadding = bottomPadding,
                     onBackRequest = onBackRequest,
                     onAlbumClicked = onAlbumClicked

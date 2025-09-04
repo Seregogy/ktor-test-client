@@ -1,7 +1,6 @@
 package com.example.ktor_test_client.controls.player
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -58,7 +57,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -70,19 +68,18 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.palette.graphics.Palette
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.helpers.formatMinuteTimer
-import com.example.ktor_test_client.helpers.times
-import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
-import com.example.ktor_test_client.pages.TopAppContentBar.TOP_PART_WEIGHT
-import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
-import kotlinx.coroutines.delay
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
-import com.example.ktor_test_client.helpers.contrast
+import com.example.ktor_test_client.helpers.formatMinuteTimer
+import com.example.ktor_test_client.helpers.times
+import com.example.ktor_test_client.pages.TopAppContentBar.TOP_PART_WEIGHT
+import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
+import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import dev.chrisbanes.haze.HazeState
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp

@@ -68,12 +68,16 @@ import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldSt
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 @Composable
 fun AlbumPage(
     viewModel: AlbumViewModel,
     innerPadding: PaddingValues,
     bottomPadding: Dp,
+    hazeState: HazeState,
     onBackRequest: () -> Unit = { },
     onAlbumClicked: (artistId: String) -> Unit = { },
     onArtistClicked: (albumId: String) -> Unit = { },
@@ -88,7 +92,6 @@ fun AlbumPage(
     val album by viewModel.album
     val otherAlbums by viewModel.otherAlbums
 
-
     val coloredScaffoldState = rememberColoredScaffoldState {
         viewModel.palette.collectAsStateWithLifecycle()
     }
@@ -100,14 +103,15 @@ fun AlbumPage(
         ToolScaffold(
             modifier = Modifier
                 .padding(innerPadding),
-            state = toolBarScaffoldState
+            state = toolBarScaffoldState,
+            hazeState = hazeState
         ) { toolBarInnerPadding ->
 
             FlingScrollScaffold(
                 modifier = Modifier
+                    .hazeSource(state = hazeState)
                     .background(Color.Black)
-                    .fillMaxSize()
-                    .padding(bottom = bottomPadding),
+                    .fillMaxSize(),
                 state = rememberFlingScaffoldState(
                     yFlingOffset = toolBarInnerPadding.calculateTopPadding()
                 ) {
@@ -152,17 +156,16 @@ fun AlbumPage(
                 }
             ) {
                 album?.let { album ->
-                    otherAlbums?.let { otherAlbums ->
-                        AlbumContent(
-                            colorAlpha = colorAlpha,
-                            backgroundColor = primaryOrBackgroundColorAnimated.value,
-                            album = album,
-                            infiniteTransition = infiniteTransition,
-                            onTrackClicked = onTrackClicked,
-                            otherAlbums = otherAlbums,
-                            onAlbumClicked = onAlbumClicked
-                        )
-                    }
+                    AlbumContent(
+                        colorAlpha = colorAlpha,
+                        backgroundColor = primaryOrBackgroundColorAnimated.value,
+                        bottomPadding = bottomPadding,
+                        album = album,
+                        infiniteTransition = infiniteTransition,
+                        onTrackClicked = onTrackClicked,
+                        otherAlbums = otherAlbums,
+                        onAlbumClicked = onAlbumClicked
+                    )
                 }
             }
         }
@@ -212,6 +215,7 @@ private fun AlbumHeader(
 private fun AlbumContent(
     colorAlpha: FloatState,
     backgroundColor: Color,
+    bottomPadding: Dp,
     album: Album,
     infiniteTransition: InfiniteTransition,
     onTrackClicked: (track: BaseTrack) -> Unit,
@@ -244,6 +248,8 @@ private fun AlbumContent(
             Spacer(Modifier.height(20.dp))
 
             OtherAlbums("Ещё от ${album.artists.first().name}", otherAlbums, onAlbumClicked)
+
+            Spacer(Modifier.height(bottomPadding))
         }
     }
 }

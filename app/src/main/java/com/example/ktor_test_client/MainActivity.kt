@@ -4,22 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -39,6 +36,9 @@ import com.example.ktor_test_client.routers.ArtistPageRouter
 import com.example.ktor_test_client.routers.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinApplication
@@ -53,12 +53,6 @@ class MainActivity : ComponentActivity() {
             KtortestclientTheme {
                 val context = LocalContext.current
 
-                val navEntries = listOf(
-                    "Home" to Icons.Rounded.Home,
-                    "Favorite" to Icons.Rounded.Favorite,
-                    "Profile" to Icons.Rounded.Person
-                )
-
                 KoinApplication(
                     application = {
                         modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, dataProviderDi, dataSourceDi, repositoryDi, viewModelDi))
@@ -66,16 +60,19 @@ class MainActivity : ComponentActivity() {
                     }
                 ) {
                     val navController = rememberNavController()
+                    val hazeState = rememberHazeState()
 
                     Scaffold { innerPadding ->
                         AudioPlayerScaffold(
                             innerPadding = innerPadding,
-                            navController = navController
+                            navController = navController,
+                            hazeState = hazeState,
                         ) { sheetPeekHeight, _ ->
                             NavRoutes(
                                 navController = navController,
                                 innerPadding = innerPadding,
-                                additionalBottomPadding = sheetPeekHeight
+                                additionalBottomPadding = sheetPeekHeight,
+                                hazeState = hazeState
                             )
                         }
                     }
@@ -89,7 +86,8 @@ class MainActivity : ComponentActivity() {
     fun NavRoutes(
         navController: NavHostController,
         innerPadding: PaddingValues,
-        additionalBottomPadding: Dp
+        additionalBottomPadding: Dp,
+        hazeState: HazeState
     ) {
         val audioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
 
@@ -102,11 +100,13 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("artistId") { type = NavType.StringType })
             ) {
                 val artistId = it.arguments?.getString("artistId")
+
                 ArtistPageRouter(
                     artistId = artistId,
                     playerViewModel = audioPlayerViewModel,
                     innerPadding = innerPadding,
                     bottomPadding = additionalBottomPadding,
+                    hazeState = hazeState,
                     onBackRequest = {
                         navController.popBackStack()
                     },
@@ -124,11 +124,13 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
                 val albumId = it.arguments?.getString("albumId")
+
                 AlbumPageRouter(
                     albumId = albumId,
                     playerViewModel = audioPlayerViewModel,
                     innerPadding = innerPadding,
                     bottomPadding = additionalBottomPadding,
+                    hazeState = hazeState,
                     onBackRequest = {
                         navController.popBackStack()
                     },

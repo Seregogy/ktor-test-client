@@ -35,7 +35,7 @@ fun ArtistsCardPageRouter(
 
     when {
         isError -> {
-            ErrorState()
+            ErrorState(onRequestReturn = {  })
         }
         artists.value == null -> {
             LoadingState()

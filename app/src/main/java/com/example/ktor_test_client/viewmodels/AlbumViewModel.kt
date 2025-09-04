@@ -1,6 +1,7 @@
 package com.example.ktor_test_client.viewmodels
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.example.ktor_test_client.api.MusicApiService
@@ -16,9 +17,11 @@ class AlbumViewModel(
     private val _album = mutableStateOf<Album?>(null)
     val album: State<Album?> = _album
 
-    private val _otherAlbums = mutableStateOf<List<BaseAlbum>?>(listOf())
-    val otherAlbums: State<List<BaseAlbum>?> = _otherAlbums
+    private val _otherAlbums = mutableStateOf<List<BaseAlbum>>(listOf())
+    val otherAlbums: State<List<BaseAlbum>> = _otherAlbums
 
+    private val _singles = mutableStateOf<List<BaseAlbum>>(listOf())
+    val singles: State<List<BaseAlbum>> = _singles
 
     suspend fun loadAlbum(context: Context, albumId: String) {
         apiService.getAlbum(albumId).onSuccess {
@@ -37,6 +40,16 @@ class AlbumViewModel(
                     track.id
                 }
             )
+        }
+    }
+
+    suspend fun loadSingles() {
+        album.value?.artists?.first()?.id?.let { artistId ->
+            apiService.getSinglesByArtist(artistId).onSuccess {
+                Log.d("API", "singles: $it")
+            }.onFailure {
+                Log.e("API", "throws: $it")
+            }
         }
     }
 

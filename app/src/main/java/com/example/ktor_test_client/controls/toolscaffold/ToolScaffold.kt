@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.controls.toolscaffold
 
+import androidx.compose.animation.core.EaseIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,23 +21,46 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeProgressive
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 
+private val toolBarHeight = 50.dp
+
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun ToolScaffold(
     modifier: Modifier = Modifier,
+    hazeState: HazeState?,
     state: ToolScaffoldState<*, *> ,
     content: @Composable (innerPadding: PaddingValues) -> Unit = { }
 ) {
-    val toolBarHeight = 50.dp
-
     state.run {
         Box {
             content(PaddingValues(top = toolBarHeight))
 
             Box(
                 modifier = Modifier
+                    .then(
+                        if (toolBarTitle.value != null) {
+                            if (hazeState != null) {
+                                Modifier
+                                    .hazeEffect(
+                                        state = hazeState,
+                                        style = HazeMaterials.ultraThin(Color.Black)
+                                    ) {
+                                        progressive = HazeProgressive.verticalGradient(startIntensity = 1f, endIntensity = 0f, easing = EaseIn)
+                                    }
+                            } else {
+                                Modifier.background(Color.Black.copy(.93f))
+                            }
+                        } else {
+                            Modifier
+                        }
+                    )
                     .fillMaxWidth()
-                    .background(if (toolBarTitle.value != null) Color.Black.copy(0.92f) else Color.Transparent)
                     .then(modifier)
                     .height(toolBarHeight)
                     .padding(horizontal = 15.dp)

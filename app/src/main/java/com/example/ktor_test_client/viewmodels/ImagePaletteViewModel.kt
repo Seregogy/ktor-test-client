@@ -37,7 +37,7 @@ open class ImagePaletteViewModel : ViewModel() {
                 ImageRequest.Builder(context)
                     .data(imageUrl)
                     .build()
-            ).image!!.toBitmap()
+            ).image?.toBitmap()
 
             tryExtractPaletteFromCurrentBitmap()
 

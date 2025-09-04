@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.routers
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -19,6 +20,9 @@ import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.pages.AlbumPage
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -29,6 +33,7 @@ fun AlbumPageRouter(
     playerViewModel: AudioPlayerViewModel,
     innerPadding: PaddingValues,
     bottomPadding: Dp,
+    hazeState: HazeState,
     onArtistClicked: (artistId: String) -> Unit,
     onAlbumClicked: (otherAlbumId: String) -> Unit,
     onBackRequest: () -> Unit
@@ -38,11 +43,19 @@ fun AlbumPageRouter(
     val context = LocalContext.current
     val albumViewModel: AlbumViewModel = koinViewModel()
 
+    var isError by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         albumId?.let { albumId ->
-            albumViewModel.loadAlbum(context, albumId)
+            runCatching {
+                albumViewModel.loadAlbum(context, albumId)
+            }.onSuccess {
+                albumViewModel.loadSingles()
+            }.onFailure {
+                isError = true
+            }
         }
     }
+
 
     var isRefreshing by remember { mutableStateOf(false) }
     PullToRefreshBox(
@@ -60,8 +73,8 @@ fun AlbumPageRouter(
         }
     ) {
         when {
-            albumId == null -> {
-                ErrorState()
+            albumId == null || isError -> {
+                ErrorState(onBackRequest)
             }
 
             albumViewModel.album.value == null -> {
@@ -73,6 +86,7 @@ fun AlbumPageRouter(
                     viewModel = albumViewModel,
                     innerPadding = innerPadding,
                     bottomPadding = bottomPadding,
+                    hazeState = hazeState,
                     onBackRequest = onBackRequest,
                     onArtistClicked = onArtistClicked,
                     onAlbumClicked = onAlbumClicked,

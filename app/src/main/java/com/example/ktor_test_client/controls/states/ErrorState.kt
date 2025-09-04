@@ -6,7 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Error
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ErrorState() {
+fun ErrorState(
+    onRequestReturn: () -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -26,16 +29,26 @@ fun ErrorState() {
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Icon(
-                imageVector = Icons.Rounded.ErrorOutline,
+                imageVector = Icons.Rounded.Error,
                 contentDescription = "something went wrong icon",
                 modifier = Modifier
                     .size(120.dp)
             )
 
             Text(
-                text = "Кажется что-то сломалось =(",
+                text = "Кажется что-то сломалось...",
                 fontWeight = FontWeight.W700
             )
+
+            Button(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally),
+                onClick = onRequestReturn
+            ) {
+                Text(
+                    text = "Вернуться"
+                )
+            }
         }
     }
 }

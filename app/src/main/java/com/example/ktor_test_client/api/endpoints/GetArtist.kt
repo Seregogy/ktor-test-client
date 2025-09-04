@@ -1,8 +1,8 @@
-package com.example.ktor_test_client.api.methods
+package com.example.ktor_test_client.api.endpoints
 
 import android.util.Log
 import com.example.ktor_test_client.api.ApiClient
-import com.example.ktor_test_client.api.dtos.BaseAlbum
+import com.example.ktor_test_client.api.dtos.Artist
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -10,12 +10,12 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GetAlbumsByArtistResponse(
-    val albums: List<BaseAlbum> = listOf()
+data class GetArtistResponse(
+    val artist: Artist = Artist()
 )
 
-suspend fun ApiClient.getAlbumsFromArtist(artistId: String): GetAlbumsByArtistResponse? {
-    val response = httpClient.get("api/v1/artists/$artistId/albums")
+suspend fun ApiClient.getArtist(artistId: String): GetArtistResponse? {
+    val response = httpClient.get("api/v1/artists/$artistId")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())

@@ -1,23 +1,24 @@
 package com.example.ktor_test_client.api
 
 import com.example.ktor_test_client.api.dtos.Album
-import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseArtist
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.Track
-import com.example.ktor_test_client.api.methods.GetAlbumsByArtistResponse
-import com.example.ktor_test_client.api.methods.GetArtistResponse
-import com.example.ktor_test_client.api.methods.GetArtistTopTracksResponse
-import com.example.ktor_test_client.api.methods.getAlbum
-import com.example.ktor_test_client.api.methods.getAlbumsFromArtist
-import com.example.ktor_test_client.api.methods.getArtist
-import com.example.ktor_test_client.api.methods.getArtistTopTracks
-import com.example.ktor_test_client.api.methods.getRandomTrack
-import com.example.ktor_test_client.api.methods.getRandomTrackId
-import com.example.ktor_test_client.api.methods.getTopArtists
-import com.example.ktor_test_client.api.methods.getTrack
-import com.example.ktor_test_client.api.methods.toggleLike
+import com.example.ktor_test_client.api.endpoints.GetArtistResponse
+import com.example.ktor_test_client.api.endpoints.getAlbum
+import com.example.ktor_test_client.api.endpoints.getAlbumsFromArtist
+import com.example.ktor_test_client.api.endpoints.getArtist
+import com.example.ktor_test_client.api.endpoints.getArtistTopTracks
+import com.example.ktor_test_client.api.endpoints.getRandomTrack
+import com.example.ktor_test_client.api.endpoints.getRandomTrackId
+import com.example.ktor_test_client.api.endpoints.getTopArtists
+import com.example.ktor_test_client.api.endpoints.getTrack
+import com.example.ktor_test_client.api.endpoints.toggleLike
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.request
+import io.ktor.client.request.url
 
 suspend fun <T> safeRequest(request: suspend () -> T): Result<T> {
     return try {
@@ -63,7 +64,15 @@ class MusicApiService(
         apiClient.getTopArtists()?.artists!!
     }
 
-    suspend fun like(trackId: String): Result<Boolean> = safeRequest {
+    suspend fun getSinglesByArtist(artistId: String): Result<List<BaseAlbum>> = safeRequest {
+        val response = apiClient.httpClient.get {
+            url("/api/v1/artists/$artistId/singles")
+        }
+
+        return@safeRequest response.body<List<BaseAlbum>>()
+    }
+
+    suspend fun postLike(trackId: String): Result<Boolean> = safeRequest {
         apiClient.toggleLike(trackId)?.liked!!
     }
 }

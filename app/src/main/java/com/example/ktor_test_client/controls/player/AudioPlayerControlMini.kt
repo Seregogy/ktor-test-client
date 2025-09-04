@@ -64,56 +64,61 @@ fun MiniAudioPlayer(
         modifier = Modifier
             .background(Color.Transparent)
     ) {
-        TrackControl(
+        Box(
             modifier = Modifier
-                .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
-                .height(miniPlayerHeight)
-                .fillMaxWidth()
-                .padding(15.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(backgroundColor),
-            onClick = { onExpandRequest() },
-            foregroundColor = foregroundColor,
-            track = currentTrack ?: Track()
-        )
 
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 30.dp),
-            horizontalArrangement = Arrangement.spacedBy(0.dp),
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = { }
-            ) {
-                Icon(
-                    imageVector = if (false)
-                        Icons.Rounded.Favorite
-                    else
-                        Icons.Rounded.FavoriteBorder,
-                    contentDescription = "favorite icon button",
-                    modifier = Modifier
-                        .size(24.dp),
-                    tint = foregroundColor
-                )
-            }
+            TrackControl(
+                modifier = Modifier
+                    .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
+                    .height(miniPlayerHeight)
+                    .fillMaxWidth()
+                    .padding(18.dp)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(backgroundColor),
+                onClick = { onExpandRequest() },
+                foregroundColor = foregroundColor,
+                track = currentTrack ?: Track()
+            )
 
-            IconButton(
-                onClick = {
-                    viewModel.playPause()
-                }
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 30.dp),
+                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = if (isPlay)
-                        Icons.Rounded.Pause
-                    else
-                        Icons.Rounded.PlayArrow,
-                    contentDescription = "play/pause icon",
-                    modifier = Modifier
-                        .size(26.dp),
-                    tint = foregroundColor
-                )
+                IconButton(
+                    onClick = { }
+                ) {
+                    Icon(
+                        imageVector = if (false)
+                            Icons.Rounded.Favorite
+                        else
+                            Icons.Rounded.FavoriteBorder,
+                        contentDescription = "favorite icon button",
+                        modifier = Modifier
+                            .size(24.dp),
+                        tint = foregroundColor
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        viewModel.playPause()
+                    }
+                ) {
+                    Icon(
+                        imageVector = if (isPlay)
+                            Icons.Rounded.Pause
+                        else
+                            Icons.Rounded.PlayArrow,
+                        contentDescription = "play/pause icon",
+                        modifier = Modifier
+                            .size(26.dp),
+                        tint = foregroundColor
+                    )
+                }
             }
         }
     }

@@ -59,6 +59,9 @@ import com.example.ktor_test_client.controls.toolscaffold.ToolScaffold
 import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldState
 import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.viewmodels.ArtistViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
 
 object TopAppContentBar {
@@ -71,6 +74,7 @@ fun ArtistPage(
     viewModel: ArtistViewModel,
     innerPadding: PaddingValues,
     bottomPadding: Dp,
+    hazeState: HazeState,
     onBackRequest: () -> Unit = { },
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit = { },
     onAlbumClicked: (albumId: String) -> Unit = { }
@@ -100,14 +104,15 @@ fun ArtistPage(
     ) {
         ToolScaffold(
             modifier = Modifier
-                .padding(innerPadding),
-            state = toolScaffoldState
+                .padding(top = innerPadding.calculateTopPadding()),
+            state = toolScaffoldState,
+            hazeState = hazeState
         ) { toolScaffoldInnerPadding ->
 
             FlingScrollScaffold(
                 modifier = Modifier
+                    .hazeSource(state = hazeState)
                     .fillMaxSize()
-                    .padding(bottom = bottomPadding)
                     .background(Color.Black),
                 state = rememberFlingScaffoldState(
                     yFlingOffset = toolScaffoldInnerPadding.calculateTopPadding()
@@ -150,6 +155,7 @@ fun ArtistPage(
                         colorAlpha = colorAlpha,
                         backgroundColorAnimated = backgroundColorAnimated,
                         primaryColor = primaryOrBackgroundColor,
+                        bottomPadding = bottomPadding,
                         topTracks = topTracks ?: listOf(),
                         albums = albums ?: listOf(),
                         onTrackClicked = onTrackClicked,
@@ -331,6 +337,7 @@ private fun Content(
     colorAlpha: FloatState,
     backgroundColorAnimated: State<Color>,
     primaryColor: State<Color>,
+    bottomPadding: Dp,
     topTracks: List<BaseTrack>,
     albums: List<BaseAlbum>,
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
@@ -360,6 +367,8 @@ private fun Content(
                 otherAlbums = albums,
                 onAlbumClicked = onAlbumClicked
             )
+
+            Spacer(Modifier.height(bottomPadding))
         }
     }
 }
