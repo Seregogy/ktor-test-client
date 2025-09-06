@@ -6,9 +6,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -16,7 +18,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,39 +29,55 @@ import androidx.compose.ui.unit.sp
 import com.example.ktor_test_client.controls.ArtistCardState
 import com.example.ktor_test_client.controls.card.SwipeableCardStack
 import com.example.ktor_test_client.controls.card.SwipeableCard
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 
 @Composable
 fun ArtistsCardPage(
     currentCardState: MutableState<ArtistCardState>,
     cards: MutableList<SwipeableCard>,
     cardStates: List<MutableState<ArtistCardState>>,
+    hazeState: HazeState,
     modifier: Modifier
 ) {
     Box(
         modifier = Modifier
+            .hazeSource(state = hazeState)
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         currentCardState.value.imageBitmap.value?.let {
             AnimatedContent(
-                targetState = currentCardState.value.imageBitmap,
+                targetState = currentCardState.value.palette.value,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(1000)) togetherWith fadeOut(
-                        animationSpec = tween(
-                            1000
-                        )
-                    )
+                    fadeIn(tween(1000)) togetherWith fadeOut(tween(1000))
                 },
                 label = "image crossfade"
             ) {
-                Image(
-                    bitmap = it.value!!.asImageBitmap(),
-                    contentDescription = "backgroundImage",
-                    modifier = Modifier
+                Box(
+                    Modifier
                         .fillMaxSize()
-                        .scale(2f)
-                        .blur(200.dp),
-                    contentScale = ContentScale.Crop
+                        .background(
+                            brush = Brush.verticalGradient(
+                                it?.swatches?.take(3)?.map { swatch ->
+                                    Color(swatch.rgb)
+                                } ?: listOf(
+                                    Color.Black
+                                )
+                            )
+                        )
+                )
+
+                Text(
+                    text = "Подборка исполнителей",
+                    modifier = modifier
+                        .align(Alignment.TopStart)
+                        .padding(10.dp),
+                    color = Color(it?.dominantSwatch?.titleTextColor ?: MaterialTheme.colorScheme.onBackground.toArgb()),
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.W700,
+                    lineHeight = 36.sp
                 )
             }
         }
@@ -69,16 +90,6 @@ fun ArtistsCardPage(
             onCardSelected = {
                 currentCardState.value = cardStates[it.cardState.value.initialIndex].value
             }
-        )
-
-        Text(
-            text = "Подборка исполнителей",
-            modifier = modifier
-                .align(Alignment.TopStart)
-                .padding(10.dp),
-            fontSize = 48.sp,
-            fontWeight = FontWeight.W700,
-            lineHeight = 32.sp
         )
     }
 }

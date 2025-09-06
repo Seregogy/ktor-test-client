@@ -3,6 +3,7 @@ package com.example.ktor_test_client.controls
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -29,7 +30,8 @@ fun TrackControl(
     modifier: Modifier = Modifier,
     track: Track,
     foregroundColor: Color = MaterialTheme.colorScheme.onBackground,
-    onClick: (it: Track) -> Unit = { }
+    onClick: (it: Track) -> Unit = { },
+    controls: @Composable () -> Unit
 ) {
     val artistsNames = track.album.artists.joinToString(",") { it.name }
 
@@ -40,36 +42,42 @@ fun TrackControl(
             }
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(15.dp)
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        AsyncImage(
-            model = track.imageUrl,
-            modifier = Modifier
-                .aspectRatio(1f)
-                .fillMaxHeight()
-                .clip(RoundedCornerShape(5.dp)),
-            contentDescription = "mini track image",
-            contentScale = ContentScale.Crop
-        )
-
-        Column {
-            Text(
-                text = track.name,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.W700,
-                color = foregroundColor,
-                maxLines = 1,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(15.dp)
+        ) {
+            AsyncImage(
+                model = track.imageUrl,
                 modifier = Modifier
-                    .width(180.dp)
-                    .basicMarquee(),
-                lineHeight = 18.sp
+                    .aspectRatio(1f)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(5.dp)),
+                contentDescription = "mini track image",
+                contentScale = ContentScale.Crop
             )
-            Text(
-                text = artistsNames,
-                fontSize = 13.sp,
-                color = foregroundColor,
-                lineHeight = 13.sp
-            )
+
+            Column {
+                Text(
+                    text = track.name,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.W700,
+                    color = foregroundColor,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .basicMarquee(),
+                    lineHeight = 18.sp
+                )
+                Text(
+                    text = artistsNames,
+                    fontSize = 13.sp,
+                    color = foregroundColor,
+                    lineHeight = 13.sp
+                )
+            }
         }
+
+        controls()
     }
 }

@@ -15,11 +15,13 @@ import com.example.ktor_test_client.controls.artistSwipeableCard
 import com.example.ktor_test_client.controls.states.ErrorState
 import com.example.ktor_test_client.controls.states.LoadingState
 import com.example.ktor_test_client.pages.ArtistsCardPage
+import dev.chrisbanes.haze.HazeState
 
 @Composable
 fun ArtistsCardPageRouter(
     modifier: Modifier = Modifier,
     musicApiService: MusicApiService,
+    hazeState: HazeState,
     onCardClicked: (artist: BaseArtist) -> Unit
 ) {
     val artists: MutableState<List<BaseArtist>?> = remember { mutableStateOf(null) }
@@ -50,7 +52,7 @@ fun ArtistsCardPageRouter(
 
             val currentCardState = cardStates.first()
 
-            ArtistsCardPage(currentCardState, cards, cardStates, modifier)
+            ArtistsCardPage(currentCardState, cards, cardStates, hazeState, modifier)
         }
     }
 }

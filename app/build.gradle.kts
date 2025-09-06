@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.runner)
     implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.media3.session)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -97,6 +98,7 @@ dependencies {
 
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.common)
     implementation(libs.androidx.media3.ui)
 
     implementation(libs.androidx.palette.ktx)

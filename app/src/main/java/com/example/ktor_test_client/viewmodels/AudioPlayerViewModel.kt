@@ -3,7 +3,6 @@ package com.example.ktor_test_client.viewmodels
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.annotation.OptIn
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableLongStateOf
@@ -12,9 +11,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,9 +19,6 @@ import kotlinx.coroutines.launch
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.repositories.Repository
 import com.example.ktor_test_client.data.sources.DataSource
-import com.example.ktor_test_client.data.sources.PlaylistDataSource
-import com.example.ktor_test_client.di.dataSourceDi
-import kotlinx.coroutines.delay
 
 object DefaultPlayerConfig {
     var timeToPreviousTrack = 3000
@@ -42,15 +36,13 @@ object DefaultPlayerConfig {
 
 class AudioPlayerViewModel(
     private val repository: Repository,
+    val mediaController: MediaController,
     private val context: Context
 ) : ImagePaletteViewModel() {
     companion object {
         private val _currentlyPlayTrackId: MutableState<String?> = mutableStateOf(null)
         val currentlyPlayTrackId: State<String?> = _currentlyPlayTrackId
     }
-
-    var exoPlayer: ExoPlayer? = null
-        private set
 
     private val currentPlaybackState: MutableStateFlow<Int> = MutableStateFlow(Player.STATE_IDLE)
 
@@ -82,32 +74,13 @@ class AudioPlayerViewModel(
             }
         }
 
-        initExoPlayer()
-        exoPlayer!!.addListener(eventListener)
+        mediaController.addListener(eventListener)
 
         viewModelScope.launch {
             repository.currentTrack()?.let {
                 setTrack(it)
             }
         }
-    }
-
-    @OptIn(UnstableApi::class)
-    private fun initExoPlayer() {
-        val audioLoadControl = DefaultLoadControl.Builder()
-            .setBackBuffer(DefaultPlayerConfig.backBufferMs, true)
-            .setBufferDurationsMs(
-                DefaultPlayerConfig.minBufferMs,
-                DefaultPlayerConfig.maxBufferMs,
-                DefaultPlayerConfig.bufferForPlaybackMs,
-                DefaultPlayerConfig.bufferForPlaybackAfterRebuffedMs
-            )
-            .setTargetBufferBytes(DefaultPlayerConfig.targetBufferBytesSize)
-            .build()
-
-        exoPlayer = ExoPlayer.Builder(context)
-            .setLoadControl(audioLoadControl)
-            .build()
     }
 
     fun injectDataSource(dataSource: DataSource) {
@@ -121,8 +94,8 @@ class AudioPlayerViewModel(
     }
 
     fun prevTrack() {
-        if ((exoPlayer?.currentPosition ?: 0L) > DefaultPlayerConfig.timeToPreviousTrack) {
-            exoPlayer?.seekTo(0)
+        if ((mediaController.currentPosition) > DefaultPlayerConfig.timeToPreviousTrack) {
+            mediaController.seekTo(0)
 
             return
         }
@@ -150,15 +123,15 @@ class AudioPlayerViewModel(
 
         setMediaFromUri(track.audioUrl)
 
-        exoPlayer?.prepare()
+        mediaController.prepare()
     }
 
     private fun setMediaFromUri(uri: String) {
-        exoPlayer?.setMediaItem(MediaItem.fromUri(Uri.parse(uri)))
+        mediaController.setMediaItem(MediaItem.fromUri(Uri.parse(uri)))
     }
 
     fun playPause() {
-        exoPlayer?.let {
+        mediaController.let {
             if (it.isPlaying) {
                 it.pause()
             } else {
@@ -168,7 +141,7 @@ class AudioPlayerViewModel(
     }
 
     fun seekTo(position: Long) {
-        exoPlayer?.seekTo(position)
+        mediaController.seekTo(position)
     }
 
     override fun onCleared() {
@@ -178,14 +151,12 @@ class AudioPlayerViewModel(
     }
 
     fun releasePlayer() {
-        exoPlayer?.let {
-            exoPlayer?.removeListener(eventListener)
+        mediaController.let {
+            mediaController.removeListener(eventListener)
 
-            exoPlayer?.stop()
-            exoPlayer?.release()
+            mediaController.stop()
+            mediaController.release()
         }
-
-        exoPlayer = null
     }
 
     private fun getPlayerEventListener(): Player.Listener {
@@ -203,11 +174,11 @@ class AudioPlayerViewModel(
                     Player.STATE_READY -> {
                         Log.d("Player", "STATE_READY")
 
-                        _currentTrackDuration.value = exoPlayer?.duration ?: 1L
-                        exoPlayer?.prepare()
+                        _currentTrackDuration.value = mediaController.duration
+                        mediaController.prepare()
 
                         if (DefaultPlayerConfig.isAutoplay)
-                            exoPlayer?.play()
+                            mediaController.play()
 
                         _isLoading.value = false
                     }
@@ -250,15 +221,15 @@ class AudioPlayerViewModel(
                 }
 
                 Log.e("Player", errorMessage)
-                exoPlayer?.currentMediaItem?.let {
-                    val currentPosition = exoPlayer?.currentPosition
+                mediaController.currentMediaItem?.let {
+                    val currentPosition = mediaController.currentPosition
 
-                    exoPlayer!!.setMediaItem(it)
+                    mediaController.setMediaItem(it)
 
-                    exoPlayer!!.prepare()
-                    exoPlayer!!.seekTo(currentPosition ?: 0L)
-                    exoPlayer!!.play()
-                    exoPlayer!!.playWhenReady = true
+                    mediaController.prepare()
+                    mediaController.seekTo(currentPosition ?: 0L)
+                    mediaController.play()
+                    mediaController.playWhenReady = true
                 }
             }
 

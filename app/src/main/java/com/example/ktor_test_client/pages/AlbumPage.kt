@@ -97,6 +97,7 @@ fun AlbumPage(
     }
     val toolBarScaffoldState = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
 
+    val topBarHazeState = rememberHazeState()
     ColoredScaffold(
         state = coloredScaffoldState
     ) {
@@ -104,12 +105,13 @@ fun AlbumPage(
             modifier = Modifier
                 .padding(innerPadding),
             state = toolBarScaffoldState,
-            hazeState = hazeState
+            hazeState = topBarHazeState
         ) { toolBarInnerPadding ->
 
             FlingScrollScaffold(
                 modifier = Modifier
                     .hazeSource(state = hazeState)
+                    .hazeSource(state = topBarHazeState)
                     .background(Color.Black)
                     .fillMaxSize(),
                 state = rememberFlingScaffoldState(

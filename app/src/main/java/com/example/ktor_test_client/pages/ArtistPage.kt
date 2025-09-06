@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.pages
 
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +44,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.common.util.NotificationUtil.createNotificationChannel
+import androidx.media3.common.util.UnstableApi
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.api.dtos.BaseAlbum
@@ -99,6 +103,7 @@ fun ArtistPage(
     }
     val toolScaffoldState = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
 
+    val topBarHazeState = rememberHazeState()
     ColoredScaffold(
         state = coloredScaffoldState
     ) {
@@ -106,11 +111,12 @@ fun ArtistPage(
             modifier = Modifier
                 .padding(top = innerPadding.calculateTopPadding()),
             state = toolScaffoldState,
-            hazeState = hazeState
+            hazeState = topBarHazeState
         ) { toolScaffoldInnerPadding ->
 
             FlingScrollScaffold(
                 modifier = Modifier
+                    .hazeSource(state = topBarHazeState)
                     .hazeSource(state = hazeState)
                     .fillMaxSize()
                     .background(Color.Black),
@@ -250,6 +256,7 @@ private fun Header(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 fun ArtistHeader(
     modifier: Modifier = Modifier,
@@ -317,7 +324,8 @@ fun ArtistHeader(
 
             CircleButton(
                 containerColor = MaterialTheme.colorScheme.primary,
-                onClick = { },
+                onClick = {
+                },
                 underscoreText = "Слушать"
             ) {
                 Icon(

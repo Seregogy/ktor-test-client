@@ -1,22 +1,29 @@
 package com.example.ktor_test_client
 
+import android.content.ComponentName
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -36,15 +43,19 @@ import com.example.ktor_test_client.routers.ArtistPageRouter
 import com.example.ktor_test_client.routers.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.KtortestclientTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodels.MediaNotificationService
+import com.google.common.util.concurrent.MoreExecutors
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.KoinApplication
 import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 
 class MainActivity : ComponentActivity() {
+    private val mediaController: MutableState<MediaController?> = mutableStateOf(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -62,18 +73,25 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     val hazeState = rememberHazeState()
 
-                    Scaffold { innerPadding ->
-                        AudioPlayerScaffold(
-                            innerPadding = innerPadding,
-                            navController = navController,
-                            hazeState = hazeState,
-                        ) { sheetPeekHeight, _ ->
-                            NavRoutes(
-                                navController = navController,
-                                innerPadding = innerPadding,
-                                additionalBottomPadding = sheetPeekHeight,
-                                hazeState = hazeState
-                            )
+                    when {
+                        mediaController.value != null -> {
+                            val audioPlayer = koinInject<AudioPlayerViewModel>(parameters = { parametersOf(mediaController.value) })
+
+                            Scaffold { innerPadding ->
+                                AudioPlayerScaffold(
+                                    viewModel = audioPlayer,
+                                    innerPadding = innerPadding,
+                                    navController = navController,
+                                    hazeState = hazeState,
+                                ) { sheetPeekHeight, _ ->
+                                    NavRoutes(
+                                        navController = navController,
+                                        innerPadding = innerPadding,
+                                        additionalBottomPadding = sheetPeekHeight,
+                                        hazeState = hazeState
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -81,6 +99,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+
+        val sessionToken = SessionToken(this, ComponentName(this, MediaNotificationService::class.java))
+        val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
+
+        controllerFuture.addListener({
+            mediaController.value = controllerFuture.get()
+        }, MoreExecutors.directExecutor())
+    }
 
     @Composable
     fun NavRoutes(
@@ -89,7 +117,7 @@ class MainActivity : ComponentActivity() {
         additionalBottomPadding: Dp,
         hazeState: HazeState
     ) {
-        val audioPlayerViewModel: AudioPlayerViewModel = koinViewModel()
+        val audioPlayerViewModel: AudioPlayerViewModel = koinInject()
 
         NavHost(
             navController = navController,
@@ -146,7 +174,7 @@ class MainActivity : ComponentActivity() {
             composable(
                 route = "ArtistsCardSwipeables"
             ) {
-                ArtistsCardPageRouter(Modifier.padding(innerPadding), koinInject()) {
+                ArtistsCardPageRouter(Modifier.padding(innerPadding), koinInject(), hazeState) {
                     navController.navigate("ArtistPage?id=${it.id}")
                 }
             }

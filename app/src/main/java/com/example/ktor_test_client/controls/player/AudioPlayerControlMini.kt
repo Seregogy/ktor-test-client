@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -64,27 +65,19 @@ fun MiniAudioPlayer(
         modifier = Modifier
             .background(Color.Transparent)
     ) {
-        Box(
+        TrackControl(
             modifier = Modifier
-
+                .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
+                .height(miniPlayerHeight)
+                .fillMaxWidth()
+                .padding(18.dp)
+                .clip(RoundedCornerShape(15.dp))
+                .background(backgroundColor),
+            onClick = { onExpandRequest() },
+            foregroundColor = foregroundColor,
+            track = currentTrack ?: Track()
         ) {
-            TrackControl(
-                modifier = Modifier
-                    .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
-                    .height(miniPlayerHeight)
-                    .fillMaxWidth()
-                    .padding(18.dp)
-                    .clip(RoundedCornerShape(15.dp))
-                    .background(backgroundColor),
-                onClick = { onExpandRequest() },
-                foregroundColor = foregroundColor,
-                track = currentTrack ?: Track()
-            )
-
             Row(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 30.dp),
                 horizontalArrangement = Arrangement.spacedBy(0.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {

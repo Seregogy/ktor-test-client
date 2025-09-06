@@ -1,6 +1,5 @@
 package com.example.ktor_test_client.routers
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -21,11 +20,9 @@ import com.example.ktor_test_client.pages.AlbumPage
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @Composable
 fun AlbumPageRouter(
@@ -41,7 +38,7 @@ fun AlbumPageRouter(
     val coroutineScope = rememberCoroutineScope()
 
     val context = LocalContext.current
-    val albumViewModel: AlbumViewModel = koinViewModel()
+    val albumViewModel: AlbumViewModel = koinInject()
 
     var isError by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -99,7 +96,7 @@ fun AlbumPageRouter(
                             )
                         )
 
-                        playerViewModel.exoPlayer?.prepare()
+                        playerViewModel.mediaController.prepare()
                     }
                 }
             }

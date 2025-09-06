@@ -78,7 +78,6 @@ import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.pages.TopAppContentBar.TOP_PART_WEIGHT
 import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
-import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -114,12 +113,12 @@ fun FullAudioPlayer(
     val isSliding = remember { mutableStateOf(false) }
     val currentPosition = remember { mutableLongStateOf(0L) }
 
-    LaunchedEffect(viewModel.exoPlayer) {
+    LaunchedEffect(viewModel.mediaController) {
         while (true) {
             delay(300)
 
             if (isSliding.value) continue
-            currentPosition.longValue = viewModel.exoPlayer?.currentPosition ?: 0L
+            currentPosition.longValue = viewModel.mediaController.currentPosition
         }
     }
 
