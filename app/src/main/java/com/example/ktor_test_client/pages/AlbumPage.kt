@@ -59,6 +59,7 @@ import com.example.ktor_test_client.controls.AlbumMiniPreview
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.TrackMini
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffoldState
@@ -147,11 +148,6 @@ fun AlbumPage(
                             screenHeight = screenHeight,
                             alpha = alpha,
                             album = album,
-                            foregroundColor = onPrimaryOrBackgroundColorAnimated.value,
-                            backgroundColor = primaryOrBackgroundColorAnimated.value,
-                            iconsColor = primaryOrBackgroundColorAnimated.value,
-                            primaryButtonColor = primaryOrBackgroundColorAnimated.value,
-                            primaryIconColor = primaryOrBackgroundColorAnimated.value,
                             onArtistClicked = onArtistClicked
                         )
                     }
@@ -160,7 +156,6 @@ fun AlbumPage(
                 album?.let { album ->
                     AlbumContent(
                         colorAlpha = colorAlpha,
-                        backgroundColor = primaryOrBackgroundColorAnimated.value,
                         bottomPadding = bottomPadding,
                         album = album,
                         infiniteTransition = infiniteTransition,
@@ -175,15 +170,10 @@ fun AlbumPage(
 }
 
 @Composable
-private fun AlbumHeader(
+private fun ColoredScaffoldState.AlbumHeader(
     screenHeight: Dp,
     alpha: FloatState,
     album: Album,
-    foregroundColor: Color,
-    backgroundColor: Color,
-    iconsColor: Color,
-    primaryButtonColor: Color,
-    primaryIconColor: Color,
     onArtistClicked: (albumId: String) -> Unit
 ) {
     Box(
@@ -200,12 +190,7 @@ private fun AlbumHeader(
                 modifier = Modifier
                     .alpha(alpha.floatValue)
                     .align(Alignment.BottomCenter),
-                album = album,
-                foregroundColor = foregroundColor,
-                backgroundColor = backgroundColor,
-                iconsColor = iconsColor,
-                primaryButtonColor = primaryButtonColor,
-                primaryIconColor = primaryIconColor
+                album = album
             ) {
                 onArtistClicked(album.artists.first().id)
             }
@@ -214,9 +199,8 @@ private fun AlbumHeader(
 }
 
 @Composable
-private fun AlbumContent(
+private fun ColoredScaffoldState.AlbumContent(
     colorAlpha: FloatState,
-    backgroundColor: Color,
     bottomPadding: Dp,
     album: Album,
     infiniteTransition: InfiniteTransition,
@@ -231,7 +215,7 @@ private fun AlbumContent(
         AlbumHeaderFadingGradientBottom(
             modifier = Modifier
                 .alpha(colorAlpha.floatValue),
-            targetColor = backgroundColor
+            targetColor = primaryOrBackgroundColorAnimated.value
         )
 
         Column {
@@ -242,7 +226,7 @@ private fun AlbumContent(
                     track = track,
                     infiniteTransition = infiniteTransition,
                     onClick = onTrackClicked,
-                    primaryColor = backgroundColor,
+                    primaryColor = primaryOrBackgroundColorAnimated.value,
                     onPrimaryColor = Color.White
                 )
             }
@@ -325,14 +309,9 @@ private fun BoxScope.AlbumHeaderImage(
 }
 
 @Composable
-fun AlbumHeaderControls(
+fun ColoredScaffoldState.AlbumHeaderControls(
     modifier: Modifier = Modifier,
     album: Album,
-    foregroundColor: Color,
-    backgroundColor: Color,
-    iconsColor: Color,
-    primaryButtonColor: Color,
-    primaryIconColor: Color,
     onArtistClick: () -> Unit = { }
 ) {
     Column(
@@ -346,7 +325,7 @@ fun AlbumHeaderControls(
             fontWeight = FontWeight.W800,
             fontSize = 28.sp,
             lineHeight = 10.sp,
-            color = foregroundColor
+            color = onPrimaryOrBackgroundColorAnimated.value
         )
 
         Row(
@@ -371,7 +350,7 @@ fun AlbumHeaderControls(
             Text(
                 text = album.artists.first().name,
                 fontWeight = FontWeight.W700,
-                color = foregroundColor
+                color = onPrimaryOrBackgroundColorAnimated.value
             )
         }
 
@@ -382,59 +361,62 @@ fun AlbumHeaderControls(
                 .fillMaxWidth(.85f)
         ) {
             CircleButton(
+                containerColor = onPrimaryOrBackgroundColorAnimated.value,
                 onClick = { },
                 underscoreText = "Скачать",
-                underscoreTextColor = foregroundColor
+                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Downloading,
                     modifier = Modifier
                         .size(28.dp),
                     contentDescription = "",
-                    tint = iconsColor
+                    tint = primaryOrBackgroundColorAnimated.value
                 )
             }
 
             CircleButton(
+                containerColor = onPrimaryOrBackgroundColorAnimated.value,
                 onClick = { },
                 underscoreText = formatNumber(album.likes),
-                underscoreTextColor = foregroundColor
+                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
             ) {
                 Icon(
                     imageVector = Icons.Rounded.FavoriteBorder,
                     modifier = Modifier
                         .size(28.dp),
                     contentDescription = "",
-                    tint = iconsColor
+                    tint = primaryOrBackgroundColorAnimated.value
                 )
             }
 
             CircleButton(
+                containerColor = onPrimaryOrBackgroundColorAnimated.value,
                 onClick = { },
                 underscoreText = "Трейлер",
-                underscoreTextColor = foregroundColor
+                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
                     modifier = Modifier
                         .size(28.dp),
                     contentDescription = "",
-                    tint = iconsColor
+                    tint = primaryOrBackgroundColorAnimated.value
                 )
             }
 
             CircleButton(
-                containerColor = backgroundColor.times(1.5f),
+                containerColor = textOnPrimaryOrBackgroundColorAnimated.value.times(1.2f),
                 onClick = { },
                 underscoreText = "Слушать",
-                underscoreTextColor = foregroundColor
+                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
             ) {
                 Icon(
                     imageVector = Icons.Rounded.PlayArrow,
                     modifier = Modifier
                         .size(30.dp),
                     contentDescription = "",
-                    tint = iconsColor
+                    tint = primaryOrBackgroundColorAnimated.value
                 )
             }
         }

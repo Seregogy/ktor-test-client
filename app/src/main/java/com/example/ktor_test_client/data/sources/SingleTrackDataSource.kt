@@ -6,6 +6,8 @@ import com.example.ktor_test_client.data.providers.DataProvider
 class SingleTrackDataSource(
     private val id: String
 ) : DataSource() {
+    override var currentIndex: Int = 0
+
     private var track: Track? = null
 
     override suspend fun nextTrack(dataProvider: DataProvider): Track? {

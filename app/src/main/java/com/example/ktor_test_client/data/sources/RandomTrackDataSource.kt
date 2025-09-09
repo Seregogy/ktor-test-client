@@ -7,22 +7,23 @@ import com.example.ktor_test_client.data.providers.DataProvider
 class RandomTrackDataSource(
     private val apiService: MusicApiService
 ) : DataSource() {
-    private var currentTrack = 0
+
+    override var currentIndex: Int = 0
     private val tracks: MutableList<Track> = mutableListOf()
 
     override suspend fun nextTrack(dataProvider: DataProvider): Track {
-        if (currentTrack < tracks.indices.last) {
-            currentTrack++
+        if (currentIndex < tracks.indices.last) {
+            currentIndex++
         } else {
             val track = loadNextTrack()
 
             track?.let {
                 tracks.add(it)
-                currentTrack = tracks.indices.last
+                currentIndex = tracks.indices.last
             }
         }
 
-        return tracks[currentTrack]
+        return tracks[currentIndex]
     }
 
     override suspend fun currentTrack(dataProvider: DataProvider): Track {
@@ -30,17 +31,17 @@ class RandomTrackDataSource(
             loadNextTrack()?.let {
                 tracks.add(it)
 
-                currentTrack = tracks.indices.last
+                currentIndex = tracks.indices.last
             }
         }
 
-        return tracks[currentTrack]
+        return tracks[currentIndex]
     }
 
     override suspend fun previousTrack(dataProvider: DataProvider): Track {
-        currentTrack = (currentTrack - 1).coerceIn(tracks.indices)
+        currentIndex = (currentIndex - 1).coerceIn(tracks.indices)
 
-        return tracks[currentTrack]
+        return tracks[currentIndex]
     }
 
     private suspend fun loadNextTrack(): Track? {

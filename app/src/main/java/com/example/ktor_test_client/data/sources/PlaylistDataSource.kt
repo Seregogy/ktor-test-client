@@ -7,46 +7,46 @@ class PlaylistDataSource(
     var tracksId: List<String>,
     firstTrack: Int = 0
 ) : DataSource() {
-    var tracks: MutableList<Track?> = MutableList(tracksId.size) { null }
-
-    var currentTrack: Int = firstTrack
+    override var currentIndex: Int = firstTrack
         set(value) {
             if (value in tracks.indices)
                 field = value
         }
 
-    override suspend fun nextTrack(dataProvider: DataProvider): Track? {
-        currentTrack = (currentTrack + 1) % tracks.size
+    var tracks: MutableList<Track?> = MutableList(tracksId.size) { null }
 
-        tracks[currentTrack]?.let {
+    override suspend fun nextTrack(dataProvider: DataProvider): Track? {
+        currentIndex = (currentIndex + 1) % tracks.size
+
+        tracks[currentIndex]?.let {
             return it
         }
 
-        tracks[currentTrack] = (loadTrack(tracksId[currentTrack], dataProvider))
+        tracks[currentIndex] = (loadTrack(tracksId[currentIndex], dataProvider))
 
-        return tracks[currentTrack]
+        return tracks[currentIndex]
     }
 
     override suspend fun currentTrack(dataProvider: DataProvider): Track? {
-        tracks[currentTrack]?.let {
+        tracks[currentIndex]?.let {
             return it
         }
 
-        tracks[currentTrack] = (loadTrack(tracksId[currentTrack], dataProvider))
+        tracks[currentIndex] = (loadTrack(tracksId[currentIndex], dataProvider))
 
-        return tracks[currentTrack]
+        return tracks[currentIndex]
     }
 
     override suspend fun previousTrack(dataProvider: DataProvider): Track? {
-        currentTrack = (currentTrack - 1).coerceIn(tracks.indices)
+        currentIndex = (currentIndex - 1).coerceIn(tracks.indices)
 
-        tracks[currentTrack]?.let {
+        tracks[currentIndex]?.let {
             return it
         }
 
-        tracks[currentTrack] = (loadTrack(tracksId[currentTrack], dataProvider))
+        tracks[currentIndex] = (loadTrack(tracksId[currentIndex], dataProvider))
 
-        return tracks[currentTrack]
+        return tracks[currentIndex]
     }
 
     private suspend fun loadTrack(id: String, dataProvider: DataProvider): Track? {

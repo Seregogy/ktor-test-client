@@ -3,12 +3,16 @@ package com.example.ktor_test_client.viewmodels
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.IntState
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -44,11 +48,6 @@ class AudioPlayerViewModel(
         val currentlyPlayTrackId: State<String?> = _currentlyPlayTrackId
     }
 
-    private val currentPlaybackState: MutableStateFlow<Int> = MutableStateFlow(Player.STATE_IDLE)
-
-    private val _isInit: MutableState<Boolean> = mutableStateOf(false)
-    val isInit: State<Boolean> = _isInit
-
     private val _isLoading: MutableState<Boolean> = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
@@ -59,7 +58,15 @@ class AudioPlayerViewModel(
     val isPlay: State<Boolean> = _isPlay
 
     private var _currentTrack: MutableStateFlow<Track?> = MutableStateFlow(null)
+
     val currentTrack: StateFlow<Track?> = _currentTrack.asStateFlow()
+
+    private val _currentPlaylist: MutableMap<MediaItem, Track> = mutableMapOf()
+    val currentPlaylist: Map<MediaItem, Track> = _currentPlaylist
+
+    private var _currentIndexInPlaylist: MutableIntState = mutableIntStateOf(0)
+    val currentIndexInPlaylist: IntState = _currentIndexInPlaylist
+
 
     var onTrackEnd: () -> Unit = { }
 
@@ -77,57 +84,72 @@ class AudioPlayerViewModel(
         mediaController.addListener(eventListener)
 
         viewModelScope.launch {
-            repository.currentTrack()?.let {
-                setTrack(it)
-            }
+            prepareCurrentTrack()
+            prepareNextTrack()
         }
     }
 
     fun injectDataSource(dataSource: DataSource) {
+        mediaController.clearMediaItems()
+        _currentPlaylist.clear()
+        _currentIndexInPlaylist.intValue = 0
+
         repository.injectDataSource(dataSource)
 
         viewModelScope.launch {
-            repository.currentTrack()?.let {
-                setTrack(it)
-            }
+            prepareCurrentTrack()
+            prepareNextTrack()
         }
     }
 
     fun prevTrack() {
         if ((mediaController.currentPosition) > DefaultPlayerConfig.timeToPreviousTrack) {
             mediaController.seekTo(0)
-
-            return
-        }
-
-        viewModelScope.launch {
-            repository.previousTrack()?.let {
-                setTrack(it)
+        } else {
+            viewModelScope.launch {
+                mediaController.seekToPrevious()
+                _currentIndexInPlaylist.intValue--
             }
         }
     }
 
     fun nextTrack() {
         viewModelScope.launch {
-            repository.nextTrack()?.let {
-                setTrack(it)
-            }
+            prepareNextTrack()
+            mediaController.seekToNext()
+            _currentIndexInPlaylist.intValue++
         }
     }
 
-    private suspend fun setTrack(track: Track) {
-        fetchImageByUrl(context, track.album.imageUrl)
-
-        _currentTrack.value = track
-        _currentlyPlayTrackId.value = _currentTrack.value?.id
-
-        setMediaFromUri(track.audioUrl)
-
-        mediaController.prepare()
+    private suspend fun prepareCurrentTrack() {
+        repository.currentTrack()?.let {
+            mediaController.addMediaItem(prepareTrack(it))
+            mediaController.prepare()
+        }
     }
 
-    private fun setMediaFromUri(uri: String) {
-        mediaController.setMediaItem(MediaItem.fromUri(Uri.parse(uri)))
+    private suspend fun prepareNextTrack() {
+        repository.nextTrack()?.let {
+            mediaController.addMediaItem(prepareTrack(it))
+            mediaController.prepare()
+        }
+    }
+
+    private fun prepareTrack(track: Track): MediaItem {
+        return MediaItem.Builder()
+            .setUri(Uri.parse(track.audioUrl))
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(track.name)
+                    .setAlbumTitle(track.album.name)
+                    .setTrackNumber(track.indexInAlbum)
+                    .setArtworkUri(Uri.parse(track.imageUrl))
+                    .setArtist(track.album.artists.joinToString(",") { it.name })
+                    .build()
+            )
+            .build().also {
+                _currentPlaylist[it] = track
+            }
     }
 
     fun playPause() {
@@ -145,37 +167,34 @@ class AudioPlayerViewModel(
     }
 
     override fun onCleared() {
-        releasePlayer()
-
         super.onCleared()
+
+        releasePlayer()
     }
 
     fun releasePlayer() {
-        mediaController.let {
-            mediaController.removeListener(eventListener)
+        mediaController.removeListener(eventListener)
 
-            mediaController.stop()
-            mediaController.release()
-        }
+        mediaController.stop()
+        mediaController.release()
     }
 
     private fun getPlayerEventListener(): Player.Listener {
         return object : Player.Listener {
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) { }
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
+
+                _currentTrack.value = _currentPlaylist[mediaItem]
+                viewModelScope.launch {
+                    fetchImageByUrl(context, _currentTrack.value?.album?.imageUrl ?: "")
+                    prepareNextTrack()
+                }
+            }
 
             override fun onPlaybackStateChanged(state: Int) {
-                _isInit.value = true
-
-                if (state != currentPlaybackState.value)
-                    currentPlaybackState.value = state
-
-
                 when (state) {
                     Player.STATE_READY -> {
-                        Log.d("Player", "STATE_READY")
-
                         _currentTrackDuration.value = mediaController.duration
-                        mediaController.prepare()
 
                         if (DefaultPlayerConfig.isAutoplay)
                             mediaController.play()
@@ -184,19 +203,13 @@ class AudioPlayerViewModel(
                     }
 
                     Player.STATE_ENDED -> {
-                        Log.d("Player", "STATE_ENDED")
-
                         onTrackEnd()
                     }
-
                     Player.STATE_BUFFERING -> {
-                        Log.d("Player", "STATE_BUFFERING")
-
                         _isLoading.value = true
                     }
-                    Player.STATE_IDLE -> {
-                        Log.d("Player", "STATE_IDLE")
-                    }
+
+                    Player.STATE_IDLE -> { }
                 }
             }
 
@@ -221,13 +234,13 @@ class AudioPlayerViewModel(
                 }
 
                 Log.e("Player", errorMessage)
-                mediaController.currentMediaItem?.let {
-                    val currentPosition = mediaController.currentPosition
 
+                //TODO: сомнительно, нужно рассмотреть смысл этой конструкции
+                mediaController.currentMediaItem?.let {
                     mediaController.setMediaItem(it)
 
                     mediaController.prepare()
-                    mediaController.seekTo(currentPosition ?: 0L)
+                    mediaController.seekTo(mediaController.currentPosition)
                     mediaController.play()
                     mediaController.playWhenReady = true
                 }
@@ -235,10 +248,6 @@ class AudioPlayerViewModel(
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _isPlay.value = isPlaying
-            }
-
-            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                Log.d("Player","playWhenReady changed ($playWhenReady)")
             }
         }
     }

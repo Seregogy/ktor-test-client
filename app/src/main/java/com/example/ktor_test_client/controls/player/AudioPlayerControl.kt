@@ -80,6 +80,7 @@ import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
+import androidx.compose.runtime.collectAsState
 
 val bottomGap = 110.dp
 val additionalPlayerHeight = 3.dp
@@ -98,10 +99,6 @@ fun FullAudioPlayer(
 
     LaunchedEffect(Unit) {
         viewModel.initializePlayer()
-
-        viewModel.onTrackEnd = {
-            viewModel.nextTrack()
-        }
     }
 
     val currentTrack by viewModel.currentTrack.collectAsStateWithLifecycle()
@@ -337,7 +334,23 @@ private fun PlayerControls(
     val secondaryColorWithLoadingState by remember {
         derivedStateOf {
             if (isTrackLoading.value) {
-                secondaryColor.value.copy(.7f)
+                secondaryColor.value.copy(.5f)
+            } else {
+                secondaryColor.value
+            }
+        }
+    }
+
+    val nextTrackExists by remember {
+        derivedStateOf {
+            viewModel.currentIndexInPlaylist.intValue < viewModel.currentPlaylist.entries.indices.last - 1
+        }
+    }
+
+    val nextTrackLoadedColorState by remember {
+        derivedStateOf {
+            if (nextTrackExists) {
+                secondaryColor.value.copy(.3f)
             } else {
                 secondaryColor.value
             }
@@ -390,8 +403,7 @@ private fun PlayerControls(
                             .clip(MaterialTheme.shapes.small)
                             .background(backgroundColor.value * 2.5f)
                     )
-                },
-                enabled = isTrackLoading.value.not()
+                }
             )
 
             IconButton(
@@ -441,8 +453,7 @@ private fun PlayerControls(
         ) {
 
             IconButton(
-                onClick = { onPrev() },
-                enabled = isTrackLoading.value.not()
+                onClick = { onPrev() }
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipPrevious,
@@ -475,12 +486,12 @@ private fun PlayerControls(
 
             IconButton(
                 onClick = { onNext() },
-                enabled = isTrackLoading.value.not()
+                enabled = true/*nextTrackExists*/
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,
                     contentDescription = "next icon",
-                    tint = secondaryColorWithLoadingState,
+                    tint = nextTrackLoadedColorState,
                     modifier = Modifier
                         .size(34.dp)
                 )

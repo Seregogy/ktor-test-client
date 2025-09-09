@@ -1,6 +1,5 @@
 package com.example.ktor_test_client.controls.player
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

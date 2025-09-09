@@ -55,6 +55,7 @@ import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.TrackMiniWithImage
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffoldState
@@ -135,7 +136,6 @@ fun ArtistPage(
                     artist?.let {
                         ArtistAvatarPager(
                             viewModel = viewModel,
-                            color = backgroundColorAnimated,
                             pagerState = pagerState,
                             currentOffset = currentOffset,
                             screenHeight = screenHeight,
@@ -174,9 +174,8 @@ fun ArtistPage(
 }
 
 @Composable
-private fun ArtistAvatarPager(
+private fun ColoredScaffoldState.ArtistAvatarPager(
     viewModel: ArtistViewModel,
-    color: State<Color>,
     pagerState: PagerState,
     currentOffset: State<Dp>,
     screenHeight: Dp,
@@ -191,7 +190,7 @@ private fun ArtistAvatarPager(
 
     Box(
         modifier = Modifier
-            .background(color.value)
+            .background(backgroundColorAnimated.value)
             .fillMaxWidth()
             .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT)
     ) {
@@ -215,7 +214,7 @@ private fun ArtistAvatarPager(
 }
 
 @Composable
-private fun Header(
+private fun ColoredScaffoldState.Header(
     artist: Artist,
     screenHeight: Dp,
     alpha: FloatState,
@@ -258,7 +257,7 @@ private fun Header(
 
 @OptIn(UnstableApi::class)
 @Composable
-fun ArtistHeader(
+fun ColoredScaffoldState.ArtistHeader(
     modifier: Modifier = Modifier,
     artist: Artist
 ) {
@@ -271,7 +270,8 @@ fun ArtistHeader(
         Text(
             text = artist.name,
             fontWeight = FontWeight.W800,
-            fontSize = 38.sp
+            fontSize = 38.sp,
+            color = onBackgroundColorAnimated.value
         )
 
         Row(
@@ -282,13 +282,15 @@ fun ArtistHeader(
                 imageVector = Icons.Rounded.Headset,
                 contentDescription = "headphones icon",
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(24.dp),
+                tint = onBackgroundColorAnimated.value
             )
 
             Text(
                 text = "${formatNumber(artist.listeningInMonth)} за месяц",
                 fontSize = 16.sp,
-                fontWeight = FontWeight.W600
+                fontWeight = FontWeight.W600,
+                color = onBackgroundColorAnimated.value
             )
         }
 
@@ -299,40 +301,47 @@ fun ArtistHeader(
                 .fillMaxWidth(.85f)
         ) {
             CircleButton(
+                containerColor = onBackgroundColorAnimated.value,
                 onClick = { },
                 underscoreText = formatNumber(artist.likes),
+                underscoreTextColor = onBackgroundColorAnimated.value
             ) {
                 Icon(
                     imageVector = Icons.Rounded.FavoriteBorder,
                     modifier = Modifier
                         .size(24.dp),
-                    contentDescription = ""
+                    contentDescription = "",
+                    tint = backgroundColorAnimated.value
                 )
             }
 
             CircleButton(
+                containerColor = onBackgroundColorAnimated.value,
                 onClick = { },
                 underscoreText = "Трейлер",
+                underscoreTextColor = onBackgroundColorAnimated.value
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
                     modifier = Modifier
                         .size(24.dp),
-                    contentDescription = ""
+                    contentDescription = "",
+                    tint = backgroundColorAnimated.value
                 )
             }
 
             CircleButton(
-                containerColor = MaterialTheme.colorScheme.primary,
-                onClick = {
-                },
-                underscoreText = "Слушать"
+                containerColor = textOnPrimaryOrBackgroundColorAnimated.value,
+                onClick = { },
+                underscoreText = "Слушать",
+                underscoreTextColor = onBackgroundColorAnimated.value
             ) {
                 Icon(
                     imageVector = Icons.Rounded.PlayArrow,
                     modifier = Modifier
                         .size(28.dp),
-                    contentDescription = ""
+                    contentDescription = "",
+                    tint = backgroundColorAnimated.value
                 )
             }
         }
