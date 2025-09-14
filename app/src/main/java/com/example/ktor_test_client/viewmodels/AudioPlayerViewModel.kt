@@ -15,14 +15,17 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.source.preload.PreloadManagerListener
 import androidx.media3.session.MediaController
+import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.data.repositories.Repository
+import com.example.ktor_test_client.data.sources.DataSource
+import com.example.ktor_test_client.data.sources.LazyPlaylistDataSource
+import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import com.example.ktor_test_client.api.dtos.Track
-import com.example.ktor_test_client.data.repositories.Repository
-import com.example.ktor_test_client.data.sources.DataSource
 
 object DefaultPlayerConfig {
     var timeToPreviousTrack = 3000
@@ -41,7 +44,7 @@ object DefaultPlayerConfig {
 class AudioPlayerViewModel(
     private val repository: Repository,
     val mediaController: MediaController,
-    private val context: Context
+    val context: Context
 ) : ImagePaletteViewModel() {
     companion object {
         private val _currentlyPlayTrackId: MutableState<String?> = mutableStateOf(null)
@@ -90,13 +93,16 @@ class AudioPlayerViewModel(
     }
 
     fun injectDataSource(dataSource: DataSource) {
-        mediaController.clearMediaItems()
-        _currentPlaylist.clear()
-        _currentIndexInPlaylist.intValue = 0
-
-        repository.injectDataSource(dataSource)
-
         viewModelScope.launch {
+            repository.injectDataSource(dataSource)
+
+            if (dataSource is LazyPlaylistDataSource) {
+                mediaController.setMediaItems(dataSource.tracksId.map { MediaItem.Builder()
+                    .setUri(Uri.parse(it))
+                    .build()
+                })
+            }
+
             prepareCurrentTrack()
             prepareNextTrack()
         }
@@ -110,20 +116,27 @@ class AudioPlayerViewModel(
                 mediaController.seekToPrevious()
                 _currentIndexInPlaylist.intValue--
             }
+
         }
     }
 
     fun nextTrack() {
         viewModelScope.launch {
-            prepareNextTrack()
-            mediaController.seekToNext()
-            _currentIndexInPlaylist.intValue++
+            if (repository.dataSource is LazyPlaylistDataSource) {
+                mediaController.seekToNext()
+
+                _currentIndexInPlaylist.intValue++
+            } else {
+                prepareNextTrack()
+                mediaController.seekToNext()
+                _currentIndexInPlaylist.intValue++
+            }
         }
     }
 
     private suspend fun prepareCurrentTrack() {
         repository.currentTrack()?.let {
-            mediaController.addMediaItem(prepareTrack(it))
+            mediaController.setMediaItem(prepareTrack(it))
             mediaController.prepare()
         }
     }
@@ -131,7 +144,6 @@ class AudioPlayerViewModel(
     private suspend fun prepareNextTrack() {
         repository.nextTrack()?.let {
             mediaController.addMediaItem(prepareTrack(it))
-            mediaController.prepare()
         }
     }
 
@@ -185,9 +197,11 @@ class AudioPlayerViewModel(
                 super.onMediaItemTransition(mediaItem, reason)
 
                 _currentTrack.value = _currentPlaylist[mediaItem]
+                _currentTrackDuration.value = mediaController.contentDuration.coerceIn(1..Long.MAX_VALUE)
+
                 viewModelScope.launch {
-                    fetchImageByUrl(context, _currentTrack.value?.album?.imageUrl ?: "")
                     prepareNextTrack()
+                    fetchImageByUrl(context, mediaItem?.mediaMetadata?.artworkUri.toString())
                 }
             }
 

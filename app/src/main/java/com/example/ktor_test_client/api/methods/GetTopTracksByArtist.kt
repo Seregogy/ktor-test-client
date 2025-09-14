@@ -1,8 +1,8 @@
-package com.example.ktor_test_client.api.endpoints
+package com.example.ktor_test_client.api.methods
 
 import android.util.Log
 import com.example.ktor_test_client.api.ApiClient
-import com.example.ktor_test_client.api.dtos.BaseTrack
+import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -11,10 +11,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GetArtistTopTracksResponse(
-    val tracks: List<BaseTrack> = listOf()
+    val tracks: List<BaseTrackWithArtists> = listOf()
 )
 
-suspend fun ApiClient.getArtistTopTracks(artistId: String, limit: Int = 9): GetArtistTopTracksResponse? {
+suspend fun ApiClient.getTopTracksByArtist(artistId: String, limit: Int = 9): GetArtistTopTracksResponse? {
     val response = httpClient.get("api/v1/artists/$artistId/tracks/top?limit=$limit")
 
     Log.d("API", response.status.toString())

@@ -13,8 +13,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
+import androidx.media3.exoplayer.ExoPlayer
 import com.example.ktor_test_client.controls.states.ErrorState
 import com.example.ktor_test_client.controls.states.LoadingState
+import com.example.ktor_test_client.data.sources.LazyPlaylistDataSource
 import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.pages.AlbumPage
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
@@ -90,7 +92,7 @@ fun AlbumPageRouter(
                 ) { clickedTrack ->
                     albumViewModel.album.value?.let { album ->
                         playerViewModel.injectDataSource(
-                            PlaylistDataSource(
+                            LazyPlaylistDataSource(
                                 tracksId = album.tracks.map { it.id },
                                 firstTrack = clickedTrack.indexInAlbum
                             )

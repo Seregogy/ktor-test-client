@@ -4,20 +4,23 @@ import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseArtist
 import com.example.ktor_test_client.api.dtos.BaseTrack
+import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
 import com.example.ktor_test_client.api.dtos.Track
-import com.example.ktor_test_client.api.endpoints.GetArtistResponse
-import com.example.ktor_test_client.api.endpoints.getAlbum
-import com.example.ktor_test_client.api.endpoints.getAlbumsFromArtist
-import com.example.ktor_test_client.api.endpoints.getArtist
-import com.example.ktor_test_client.api.endpoints.getArtistTopTracks
-import com.example.ktor_test_client.api.endpoints.getRandomTrack
-import com.example.ktor_test_client.api.endpoints.getRandomTrackId
-import com.example.ktor_test_client.api.endpoints.getTopArtists
-import com.example.ktor_test_client.api.endpoints.getTrack
-import com.example.ktor_test_client.api.endpoints.toggleLike
+import com.example.ktor_test_client.api.methods.GetArtistResponse
+import com.example.ktor_test_client.api.methods.GetLastReleaseByArtistResponse
+import com.example.ktor_test_client.api.methods.GetReleasesByArtistsResponse
+import com.example.ktor_test_client.api.methods.GetSinglesByArtistsResponse
+import com.example.ktor_test_client.api.methods.getAlbum
+import com.example.ktor_test_client.api.methods.getAlbumsByArtist
+import com.example.ktor_test_client.api.methods.getArtist
+import com.example.ktor_test_client.api.methods.getTopTracksByArtist
+import com.example.ktor_test_client.api.methods.getRandomTrack
+import com.example.ktor_test_client.api.methods.getRandomTrackId
+import com.example.ktor_test_client.api.methods.getTopArtists
+import com.example.ktor_test_client.api.methods.getTrack
+import com.example.ktor_test_client.api.methods.toggleLike
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.request.request
 import io.ktor.client.request.url
 
 suspend fun <T> safeRequest(request: suspend () -> T): Result<T> {
@@ -41,7 +44,7 @@ class MusicApiService(
 
     suspend fun getAlbumsByArtist(artistId: String): Result<List<BaseAlbum>> =
         safeRequest {
-            apiClient.getAlbumsFromArtist(artistId)!!.albums
+            apiClient.getAlbumsByArtist(artistId)!!.albums
         }
 
     suspend fun getRandomTrackId(): Result<String> = safeRequest {
@@ -56,8 +59,8 @@ class MusicApiService(
         apiClient.getArtist(artistId)!!
     }
 
-    suspend fun getArtistTopTracks(artistId: String, limit: Int = 9): Result<List<BaseTrack>> = safeRequest {
-        apiClient.getArtistTopTracks(artistId, limit)!!.tracks
+    suspend fun getArtistTopTracks(artistId: String, limit: Int = 9): Result<List<BaseTrackWithArtists>> = safeRequest {
+        apiClient.getTopTracksByArtist(artistId, limit)!!.tracks
     }
 
     suspend fun getTopArtists(): Result<List<BaseArtist>> = safeRequest {
@@ -69,7 +72,24 @@ class MusicApiService(
             url("/api/v1/artists/$artistId/singles")
         }
 
-        return@safeRequest response.body<List<BaseAlbum>>()
+        return@safeRequest response.body<GetSinglesByArtistsResponse>().singles
+    }
+
+    suspend fun getReleasesByArtist(artistId: String): Result<List<BaseAlbum>> = safeRequest {
+        val response = apiClient.httpClient.get {
+            url("/api/v1/artists/$artistId/releases")
+        }
+
+        return@safeRequest response.body<GetReleasesByArtistsResponse>().releases
+    }
+
+    suspend fun getLastReleaseByArtist(artistId: String): Result<Pair<BaseAlbum, Long>> = safeRequest {
+        val response = apiClient.httpClient.get {
+            url("/api/v1/artists/$artistId/albums/latest")
+        }
+
+        val lastRelease = response.body<GetLastReleaseByArtistResponse>()
+        return@safeRequest lastRelease.lastAlbum to lastRelease.releaseDate
     }
 
     suspend fun postLike(trackId: String): Result<Boolean> = safeRequest {

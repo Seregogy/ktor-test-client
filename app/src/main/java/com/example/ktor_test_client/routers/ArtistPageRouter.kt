@@ -26,6 +26,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ArtistPageRouter(
@@ -39,15 +40,17 @@ fun ArtistPageRouter(
     onAlbumClicked: (albumId: String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val viewModel: ArtistViewModel = koinViewModel()
+    val viewModel: ArtistViewModel = koinViewModel(parameters = { parametersOf(artistId) })
 
     var isError by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         artistId?.let {
             runCatching {
-                viewModel.loadArtist(it)
-                viewModel.loadTopTracks(it, 9)
-                viewModel.loadAlbums(it)
+                viewModel.loadArtist()
+                viewModel.loadTopTracks(8)
+                viewModel.loadAlbums()
+                viewModel.loadSingles()
+                viewModel.loadLatestRelease()
             }.onSuccess {
                 Log.d("API", "Artist page loaded")
             }.onFailure {

@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.palette.graphics.Palette
 import coil3.ImageLoader
 import coil3.request.ImageRequest
-import coil3.request.crossfade
 import coil3.toBitmap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

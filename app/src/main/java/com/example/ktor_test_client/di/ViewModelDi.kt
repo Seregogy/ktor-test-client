@@ -46,7 +46,10 @@ val viewModelDi = module {
         AlbumViewModel(apiService = get())
     }
 
-    factory<ArtistViewModel> {
-        ArtistViewModel(apiService = get())
+    factory<ArtistViewModel> { (artistId: String) ->
+        ArtistViewModel(
+            artistId = artistId,
+            apiService = get()
+        )
     }
 }

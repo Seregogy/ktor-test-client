@@ -6,8 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,7 +33,7 @@ fun TrackControl(
     track: Track,
     foregroundColor: Color = MaterialTheme.colorScheme.onBackground,
     onClick: (it: Track) -> Unit = { },
-    controls: @Composable () -> Unit
+    controls: @Composable RowScope.() -> Unit
 ) {
     val artistsNames = track.album.artists.joinToString(",") { it.name }
 
@@ -45,6 +47,8 @@ fun TrackControl(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
+            modifier = Modifier
+                .weight(5f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(15.dp)
         ) {

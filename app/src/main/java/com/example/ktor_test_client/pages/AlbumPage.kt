@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -324,8 +325,10 @@ fun ColoredScaffoldState.AlbumHeaderControls(
             text = album.name,
             fontWeight = FontWeight.W800,
             fontSize = 28.sp,
-            lineHeight = 10.sp,
-            color = onPrimaryOrBackgroundColorAnimated.value
+            lineHeight = 28.sp,
+            color = onPrimaryOrBackgroundColorAnimated.value,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
         )
 
         Row(

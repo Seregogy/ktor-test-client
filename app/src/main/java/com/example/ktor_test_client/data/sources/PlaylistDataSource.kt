@@ -1,5 +1,8 @@
 package com.example.ktor_test_client.data.sources
 
+import android.net.Uri
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import com.example.ktor_test_client.api.dtos.Track
 import com.example.ktor_test_client.data.providers.DataProvider
 

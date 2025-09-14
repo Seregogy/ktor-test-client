@@ -7,7 +7,10 @@ import org.koin.dsl.module
 
 val dataSourceDi = module {
     factory<PlaylistDataSource> { (tracksId: List<String>, firstTrack: Int) ->
-        PlaylistDataSource(tracksId = tracksId, firstTrack = firstTrack)
+        PlaylistDataSource(
+            tracksId = tracksId,
+            firstTrack = firstTrack
+        )
     }
 
     factory<SingleTrackDataSource> { (id: String) ->

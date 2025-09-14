@@ -24,6 +24,5 @@ data class Artist(
     val listeningInMonth: Int = 0,
     val likes: Int = 0,
     val images: List<String> = listOf(),
-    val socialMedias: List<SocialMedia> = listOf(),
-    val albums: List<BaseAlbum> = listOf()
+    val socialMedias: List<SocialMedia> = listOf()
 )

@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.api.endpoints
+package com.example.ktor_test_client.api.methods
 
 import android.util.Log
 import com.example.ktor_test_client.api.ApiClient
@@ -8,8 +8,8 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 
-suspend fun ApiClient.getRandomTrack(): Track? {
-    val response = httpClient.get("api/v1/tracks/random")
+suspend fun ApiClient.getTrack(id: String): Track? {
+    val response = httpClient.get("api/v1/tracks/$id")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())

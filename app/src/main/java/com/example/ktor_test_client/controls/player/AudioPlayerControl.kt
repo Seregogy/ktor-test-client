@@ -81,6 +81,7 @@ import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import androidx.compose.runtime.collectAsState
+import coil3.compose.AsyncImage
 
 val bottomGap = 110.dp
 val additionalPlayerHeight = 3.dp

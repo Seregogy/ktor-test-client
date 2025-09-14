@@ -11,6 +11,15 @@ open class BaseTrack(
 )
 
 @Serializable
+open class BaseTrackWithArtists(
+    val id: String = "",
+    val name: String = "",
+    val imageUrl: String? = "",
+    val indexInAlbum: Int = 0,
+    val artists: List<BaseArtist> = listOf()
+)
+
+@Serializable
 class Track(
     val id: String = "",
     val name: String = "",

@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.BaseTrack
+import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.launch
@@ -59,9 +60,6 @@ fun TrackMini(
     infiniteTransition: InfiniteTransition = rememberInfiniteTransition("infinity transition animation"),
     onClick: (it: BaseTrack) -> Unit = { }
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val coroutineScope = rememberCoroutineScope()
-
     val isCurrentlyPlay by remember {
         derivedStateOf {
             AudioPlayerViewModel.currentlyPlayTrackId.value == track.id
@@ -83,9 +81,6 @@ fun TrackMini(
             .fillMaxWidth()
             .clickable {
                 onClick(track)
-                coroutineScope.launch {
-                    interactionSource.emit(PressInteraction.Press(Offset.Zero))
-                }
             }
             .then(
                 if (isCurrentlyPlay)
@@ -153,14 +148,11 @@ fun TrackMini(
 @Composable
 fun TrackMiniWithImage(
     modifier: Modifier = Modifier,
-    track: BaseTrack = BaseTrack(),
+    track: BaseTrackWithArtists = BaseTrackWithArtists(),
     primaryColor: Color,
     onPrimaryColor: Color = Color.White,
     onClick: (it: BaseTrack) -> Unit = { }
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val coroutineScope = rememberCoroutineScope()
-
     val isCurrentlyPlay by remember {
         derivedStateOf {
             AudioPlayerViewModel.currentlyPlayTrackId.value == track.id
@@ -171,14 +163,18 @@ fun TrackMiniWithImage(
         modifier = modifier
             .fillMaxWidth()
             .clickable {
-                onClick(track)
-                coroutineScope.launch {
-                    interactionSource.emit(PressInteraction.Press(Offset.Zero))
-                }
+                onClick(track.run {
+                    BaseTrack(
+                        id = id,
+                        name = name,
+                        imageUrl = imageUrl,
+                        indexInAlbum = indexInAlbum
+                    )
+                })
             }
             .then(
                 if (isCurrentlyPlay)
-                    Modifier.background(primaryColor.copy(.3f))
+                    Modifier.background(primaryColor.copy(.2f))
                 else
                     Modifier
             )
@@ -203,8 +199,8 @@ fun TrackMiniWithImage(
             Column {
                 Text(
                     text = track.name,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.W600,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.W700,
                     maxLines = 1,
                     color = onPrimaryColor,
                     modifier = Modifier
@@ -212,12 +208,12 @@ fun TrackMiniWithImage(
                 )
 
                 Text(
-                    text = "unknown",
+                    text = track.artists.joinToString(",") { it.name },
                     maxLines = 1,
-                    fontWeight = FontWeight.W300,
                     color = onPrimaryColor,
                     modifier = Modifier
-                        .basicMarquee()
+                        .basicMarquee(),
+                    fontSize = 14.sp
                 )
             }
         }

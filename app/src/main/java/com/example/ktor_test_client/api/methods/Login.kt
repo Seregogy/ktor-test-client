@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.api.endpoints
+package com.example.ktor_test_client.api.methods
 
 import android.util.Log
 import com.example.ktor_test_client.api.ApiClient

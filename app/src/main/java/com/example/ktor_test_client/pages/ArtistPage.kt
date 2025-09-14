@@ -2,12 +2,15 @@ package com.example.ktor_test_client.pages
 
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -44,14 +48,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.NotificationCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.media3.common.util.NotificationUtil.createNotificationChannel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
+import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.TrackMiniWithImage
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
@@ -68,6 +72,9 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 object TopAppContentBar {
     const val TOP_PART_WEIGHT = .55f
@@ -87,8 +94,10 @@ fun ArtistPage(
     val pagerState = rememberPagerState(0) { viewModel.artist.value?.images?.size ?: 0 }
 
     val artist by viewModel.artist
+    val latestRelease by viewModel.latestRelease
     val topTracks by viewModel.topTracks
     val albums by viewModel.albums
+    val singles by viewModel.singles
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -159,11 +168,11 @@ fun ArtistPage(
                     Content(
                         artist = it,
                         colorAlpha = colorAlpha,
-                        backgroundColorAnimated = backgroundColorAnimated,
-                        primaryColor = primaryOrBackgroundColor,
                         bottomPadding = bottomPadding,
-                        topTracks = topTracks ?: listOf(),
-                        albums = albums ?: listOf(),
+                        latestRelease = latestRelease,
+                        topTracks = topTracks,
+                        albums = albums,
+                        singles = singles,
                         onTrackClicked = onTrackClicked,
                         onAlbumClicked = onAlbumClicked
                     )
@@ -349,14 +358,14 @@ fun ColoredScaffoldState.ArtistHeader(
 }
 
 @Composable
-private fun Content(
+private fun ColoredScaffoldState.Content(
     artist: Artist,
     colorAlpha: FloatState,
-    backgroundColorAnimated: State<Color>,
-    primaryColor: State<Color>,
     bottomPadding: Dp,
-    topTracks: List<BaseTrack>,
-    albums: List<BaseAlbum>,
+    latestRelease: Pair<BaseAlbum, Long>?,
+    topTracks: List<BaseTrackWithArtists>?,
+    albums: List<BaseAlbum>?,
+    singles: List<BaseAlbum>?,
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
     onAlbumClicked: (albumId: String) -> Unit
 ) {
@@ -372,18 +381,49 @@ private fun Content(
         )
 
         Column {
-            TopTracks(
-                message = "Популярные треки",
-                primaryColor = primaryColor.value,
-                tracks = topTracks,
-                onTrackClicked = onTrackClicked
-            )
+            Spacer(Modifier.height(40.dp))
 
-            OtherAlbums(
-                message = "Альбомы ${artist.name}",
-                otherAlbums = albums,
-                onAlbumClicked = onAlbumClicked
-            )
+            latestRelease?.let {
+                LatestRelease(
+                    latestAlbum = it,
+                    onAlbumClicked
+                )
+            }
+
+            Spacer(Modifier.height(15.dp))
+
+            topTracks?.let {
+                if (it.isNotEmpty()) {
+                    TopTracks(
+                        tracks = it,
+                        onTrackClicked = onTrackClicked
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(15.dp))
+
+            albums?.let {
+                if (it.isNotEmpty()) {
+                    OtherAlbums(
+                        message = "Альбомы ${artist.name}",
+                        otherAlbums = it,
+                        onAlbumClicked = onAlbumClicked
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(15.dp))
+
+            singles?.let {
+                if (it.isNotEmpty()) {
+                    OtherAlbums(
+                        message = "Синглы ${artist.name}",
+                        otherAlbums = it,
+                        onAlbumClicked = onAlbumClicked
+                    )
+                }
+            }
 
             Spacer(Modifier.height(bottomPadding))
         }
@@ -391,37 +431,82 @@ private fun Content(
 }
 
 @Composable
+fun LatestRelease(
+    latestAlbum: Pair<BaseAlbum, Long>,
+    onAlbumClicked: (albumId: String) -> Unit
+) {
+    Column {
+        Text(
+            text = "Последний релиз",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.W700,
+            modifier = Modifier
+                .padding(start = 25.dp)
+        )
+
+        Spacer(Modifier.height(15.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable {
+                    onAlbumClicked(latestAlbum.first.id)
+                }
+                .padding(start = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            AsyncImage(
+                model = latestAlbum.first.imageUrl,
+                contentDescription = "latest release image",
+                modifier = Modifier
+                    .padding(vertical = 5.dp)
+                    .height(80.dp)
+                    .aspectRatio(1f)
+                    .clip(MaterialTheme.shapes.small),
+                contentScale = ContentScale.Crop
+            )
+
+            Column {
+                Text(
+                    text = latestAlbum.first.name,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.W700
+                )
+
+                Text(
+                    text = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date(latestAlbum.second * 1000)),
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun TopTracks(
-    message: String?,
-    primaryColor: Color,
-    tracks: List<BaseTrack>,
+    tracks: List<BaseTrackWithArtists>,
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit
 ) {
     Column {
-        Spacer(Modifier.height(50.dp))
-
-        message?.let {
-            Text(
-                text = message,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.W700,
-                modifier = Modifier
-                    .padding(start = 25.dp)
-            )
-        }
+        Text(
+            text = "Популярные треки",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.W700,
+            modifier = Modifier
+                .padding(start = 25.dp)
+        )
 
         Spacer(Modifier.height(15.dp))
 
         for (track in tracks) {
             TrackMiniWithImage(
                 track = track,
-                primaryColor = primaryColor,
+                primaryColor = Color.White,
                 onPrimaryColor = Color.White,
                 onClick = onTrackClicked
             )
         }
-
-        Spacer(Modifier.height(15.dp))
     }
 }
 

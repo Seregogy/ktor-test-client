@@ -1,15 +1,21 @@
-package com.example.ktor_test_client.api.endpoints
+package com.example.ktor_test_client.api.methods
 
 import android.util.Log
 import com.example.ktor_test_client.api.ApiClient
-import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.api.dtos.BaseArtist
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
+import kotlinx.serialization.Serializable
 
-suspend fun ApiClient.getTrack(id: String): Track? {
-    val response = httpClient.get("api/v1/tracks/$id")
+@Serializable
+data class GetTopArtistsResponse(
+    val artists: List<BaseArtist>
+)
+
+suspend fun ApiClient.getTopArtists(): GetTopArtistsResponse? {
+    val response = httpClient.get("api/v1/artists/top")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())
