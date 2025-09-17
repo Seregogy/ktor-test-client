@@ -1,11 +1,11 @@
-package com.example.ktor_test_client.data
+package com.example.ktor_test_client.player
 
 import android.content.Context
 import android.net.Uri
 import android.util.Log
-import androidx.collection.LruCache
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -43,7 +43,7 @@ object DefaultPlayerConfig {
 
 class AudioPlayer(
     private val mediaController: MediaController,
-    private val tracksCache: TracksCache,
+    private val mediaCache: MediaCache,
     private val repository: Repository,
     private val context: Context
 ) {
@@ -55,16 +55,21 @@ class AudioPlayer(
     private val _playlist = MutableStateFlow<MutableList<Track>>(mutableListOf())
     val playlist: StateFlow<List<Track>> = _playlist
 
+    private val _isLastTrack = mutableStateOf(false)
+    val isLastTrack: State<Boolean> = _isLastTrack
+
     private val _currentTrack = MutableStateFlow<Track?>(null)
     val currentTrack: StateFlow<Track?> = _currentTrack
 
     private val _currentTrackDuration = MutableStateFlow(1L)
     val currentTrackDuration: StateFlow<Long> = _currentTrackDuration
 
-    private val _currentState: MutableStateFlow<AudioPlayerState> = MutableStateFlow(AudioPlayerState.Idle)
+    private val _currentState: MutableStateFlow<AudioPlayerState> = MutableStateFlow(
+        AudioPlayerState.Idle
+    )
     val currentState: StateFlow<AudioPlayerState> = _currentState
 
-    val currentPosition = MutableStateFlow<Long>(0)
+    val currentPosition: MutableState<Long> = mutableLongStateOf(0L)
 
     private val listener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -72,6 +77,7 @@ class AudioPlayer(
 
             _currentTrack.value = _playlist.value.first { it.mediaItem == mediaItem }.also {
                 _currentlyPlayTrackId.value = it.data.id
+                _isLastTrack.value = _playlist.value.indexOf(it) == _playlist.value.indices.last
             }
         }
 
@@ -155,43 +161,66 @@ class AudioPlayer(
         mediaController.pause()
     }
 
-    suspend fun loadPlaylist(trackIds: List<String>) {
-        val cachedTracks = tracksCache.loadFromCache(trackIds)
-        val newTracks = trackIds - cachedTracks.map { it.data.id }.toSet()
+    suspend fun loadPlaylist(tracks: List<String>) {
+        val cachedTracks = preparePlaylistTracks(tracks)
 
-        tracksCache.putAll(
+        _playlist.value.addAll(cachedTracks)
+
+        mediaController.apply {
+            addMediaItems(cachedTracks.map { it.mediaItem })
+            prepare()
+            play()
+        }
+    }
+
+    suspend fun setPlaylist(tracks: List<String>, startTrackIndex: Int = 0) {
+        val cachedTracks = preparePlaylistTracks(tracks)
+
+        _playlist.value.clear()
+        _playlist.value.addAll(cachedTracks)
+
+        mediaController.apply {
+            stop()
+            setMediaItems(cachedTracks.map { it.mediaItem })
+            prepare()
+            seekToDefaultPosition(startTrackIndex)
+            play()
+        }
+    }
+
+    private suspend fun preparePlaylistTracks(tracks: List<String>): List<Track> {
+        val cachedTracks = mediaCache.loadFromCache(tracks)
+        val newTracks = tracks - cachedTracks.map { it.data.id }.toSet()
+
+        mediaCache.putAll(
             newTracks.mapNotNull { trackId ->
-            repository.getTrack(trackId)?.let { track ->
-                Track(
-                    data = track,
-                    mediaItem = MediaItem.Builder()
-                        .setMediaId(trackId)
-                        .setUri(track.audioUrl)
-                        .build().apply {
-                            mediaMetadata.buildUpon()
-                                .setTitle(track.name)
-                                .setAlbumTitle(track.album.name)
-                                .setDisplayTitle(track.name)
-                                .setArtist(track.album.artists.joinToString(",") { track.name })
-                                .setArtworkUri(Uri.parse(track.imageUrl))
-                                .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                                .build()
-                        }
-                )
-            }
-        })
-        val newCachedTracks = tracksCache.loadFromCache(trackIds)
+                repository.getTrack(trackId)?.let { track ->
+                    Track(
+                        data = track,
+                        mediaItem = MediaItem.Builder()
+                            .setMediaId(trackId)
+                            .setUri(track.audioUrl)
+                            .build().apply {
+                                mediaMetadata.buildUpon()
+                                    .setTitle(track.name)
+                                    .setAlbumTitle(track.album.name)
+                                    .setDisplayTitle(track.name)
+                                    .setArtist(track.album.artists.joinToString(",") { track.name })
+                                    .setArtworkUri(Uri.parse(track.imageUrl))
+                                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                                    .build()
+                            }
+                    )
+                }
+            })
 
-        _playlist.value.addAll(newCachedTracks)
-
-        mediaController.addMediaItems(newCachedTracks.map { it.mediaItem }.toMutableList())
-        mediaController.prepare()
-        mediaController.play()
+        return mediaCache.loadFromCache(tracks)
     }
 
     suspend fun lazyClearPlaylist() {
         _currentState.first { it != AudioPlayerState.Play }
 
+        mediaController.stop()
         mediaController.clearMediaItems()
         _playlist.value.clear()
     }
@@ -214,26 +243,3 @@ class AudioPlayer(
         Released
     }
 }
-
-class TracksCache {
-    private companion object {
-        val lruCache: LruCache<String, Track> = LruCache(maxSize = 100)
-    }
-
-    fun putAll(tracks: List<Track>) {
-        tracks.forEach {
-            put(it)
-        }
-
-        Log.d("Cache", tracks.joinToString { it.data.name })
-    }
-
-    fun put(track: Track) {
-        lruCache.put(track.data.id, track)
-    }
-
-    fun loadFromCache(trackIds: List<String>): List<Track> = trackIds.mapNotNull {
-        lruCache[it]
-    }
-}
-

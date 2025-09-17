@@ -22,10 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.ktor_test_client.controls.player.AudioPlayerScaffold
-import com.example.ktor_test_client.data.AudioPlayer
-import com.example.ktor_test_client.data.TracksCache
-import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
+import com.example.ktor_test_client.player.ui.AudioPlayerScaffold
 import com.example.ktor_test_client.di.apiClientDi
 import com.example.ktor_test_client.di.apiServiceDi
 import com.example.ktor_test_client.di.dataProviderDi

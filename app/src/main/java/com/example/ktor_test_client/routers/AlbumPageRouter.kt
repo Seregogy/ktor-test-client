@@ -89,7 +89,10 @@ fun AlbumPageRouter(
                 ) { clickedTrack ->
                     albumViewModel.album.value?.let { album ->
                         coroutineScope.launch {
-                            playerViewModel.audioPlayer.loadPlaylist(album.tracks.map { it.id })
+                            playerViewModel.audioPlayer.setPlaylist(
+                                tracks = album.tracks.map { it.id },
+                                startTrackIndex = clickedTrack.indexInAlbum
+                            )
                         }
                     }
                 }

@@ -1,11 +1,8 @@
 package com.example.ktor_test_client.viewmodels
 
 import android.content.Context
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
-import com.example.ktor_test_client.data.AudioPlayer
+import com.example.ktor_test_client.player.AudioPlayer
 import kotlinx.coroutines.launch
 
 class AudioPlayerViewModel(
@@ -23,8 +20,6 @@ class AudioPlayerViewModel(
     }
 
     override fun onCleared() {
-        super.onCleared()
-
         audioPlayer.release()
     }
 }

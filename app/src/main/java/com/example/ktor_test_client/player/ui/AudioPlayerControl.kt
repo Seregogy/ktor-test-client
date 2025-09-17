@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.controls.player
+package com.example.ktor_test_client.player.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
@@ -41,12 +41,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -72,13 +70,12 @@ import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
-import com.example.ktor_test_client.data.AudioPlayer
+import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.pages.TopAppContentBar.TOP_PART_WEIGHT
 import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
-import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 val bottomGap = 110.dp
@@ -100,9 +97,9 @@ fun FullAudioPlayer(
     val bitmap by viewModel.bitmap.collectAsStateWithLifecycle()
     val currentTrackDuration by viewModel.audioPlayer.currentTrackDuration.collectAsStateWithLifecycle()
     val state by viewModel.audioPlayer.currentState.collectAsStateWithLifecycle()
-    val currentPosition by viewModel.audioPlayer.currentPosition.collectAsStateWithLifecycle()
+    val currentPosition = viewModel.audioPlayer.currentPosition
 
-    val currentPositionMutableState = remember { mutableLongStateOf(currentPosition) }
+    val isLastTrack = viewModel.audioPlayer.isLastTrack
 
     val isPlay = remember {
         derivedStateOf {
@@ -185,7 +182,7 @@ fun FullAudioPlayer(
                         )
 
                         PlayerControls(
-                            currentPosition = currentPositionMutableState,
+                            currentPosition = currentPosition,
                             currentTrackDuration = currentTrackDuration,
                             viewModel = viewModel,
                             isPlay = isPlay,
@@ -193,6 +190,7 @@ fun FullAudioPlayer(
                             backgroundColor = backgroundColorAnimated,
                             secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
                             isTrackLoading = isLoading,
+                            isLastTrack = isLastTrack,
                             onNext = { viewModel.audioPlayer.seekToNext() },
                             onPrev = { viewModel.audioPlayer.seekToPrev() },
                             onPlayPause = { viewModel.audioPlayer.playPause() }
@@ -318,6 +316,7 @@ private fun PlayerControls(
     backgroundColor: State<Color>,
     secondaryColor: State<Color>,
     isTrackLoading: State<Boolean>,
+    isLastTrack: State<Boolean>,
     onNext: () -> Unit = { },
     onPrev: () -> Unit = { },
     onPlayPause: () -> Unit = { }
@@ -332,15 +331,9 @@ private fun PlayerControls(
         }
     }
 
-    val nextTrackExists by remember {
-        derivedStateOf {
-            true
-        }
-    }
-
     val nextTrackLoadedColorState by remember {
         derivedStateOf {
-            if (nextTrackExists) {
+            if (isLastTrack.value) {
                 secondaryColor.value.copy(.3f)
             } else {
                 secondaryColor.value
@@ -477,7 +470,7 @@ private fun PlayerControls(
 
             IconButton(
                 onClick = { onNext() },
-                enabled = true/*nextTrackExists*/
+                enabled = isLastTrack.value.not()
             ) {
                 Icon(
                     imageVector = Icons.Rounded.SkipNext,

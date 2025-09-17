@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.controls.player
+package com.example.ktor_test_client.player.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.TrackControl
-import com.example.ktor_test_client.data.AudioPlayer
+import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 
 @Composable

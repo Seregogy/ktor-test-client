@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.controls.player
+package com.example.ktor_test_client.player.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -68,6 +69,12 @@ fun AudioPlayerScaffold(
     LaunchedEffect(Unit) {
         delay(300)
         allInit = true
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.audioPlayer.release()
+        }
     }
 
     if (bottomSheetState.bottomSheetState.currentValue == SheetValue.Expanded) {
