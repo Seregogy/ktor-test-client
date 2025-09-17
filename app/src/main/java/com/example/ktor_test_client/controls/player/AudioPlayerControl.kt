@@ -41,7 +41,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -69,10 +68,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.R
-import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
+import com.example.ktor_test_client.data.AudioPlayer
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.pages.TopAppContentBar.TOP_PART_WEIGHT
@@ -80,8 +80,6 @@ import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
-import androidx.compose.runtime.collectAsState
-import coil3.compose.AsyncImage
 
 val bottomGap = 110.dp
 val additionalPlayerHeight = 3.dp
@@ -98,33 +96,25 @@ fun FullAudioPlayer(
 ) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
-    LaunchedEffect(Unit) {
-        viewModel.initializePlayer()
-    }
-
-    val currentTrack by viewModel.currentTrack.collectAsStateWithLifecycle()
+    val currentTrack by viewModel.audioPlayer.currentTrack.collectAsStateWithLifecycle()
     val bitmap by viewModel.bitmap.collectAsStateWithLifecycle()
-    val currentTrackDuration by viewModel.currentTrackDuration
+    val currentTrackDuration by viewModel.audioPlayer.currentTrackDuration.collectAsStateWithLifecycle()
+    val state by viewModel.audioPlayer.currentState.collectAsStateWithLifecycle()
+    val currentPosition by viewModel.audioPlayer.currentPosition.collectAsStateWithLifecycle()
 
-    val isPlay by remember { viewModel.isPlay }
+    val currentPositionMutableState = remember { mutableLongStateOf(currentPosition) }
 
+    val isPlay = remember {
+        derivedStateOf {
+            state == AudioPlayer.AudioPlayerState.Play
+        }
+    }
+    val isLoading = remember {
+        derivedStateOf {
+            state == AudioPlayer.AudioPlayerState.Loading
+        }
+    }
     val isSliding = remember { mutableStateOf(false) }
-    val currentPosition = remember { mutableLongStateOf(0L) }
-
-    LaunchedEffect(viewModel.mediaController) {
-        while (true) {
-            delay(300)
-
-            if (isSliding.value) continue
-            currentPosition.longValue = viewModel.mediaController.currentPosition
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.releasePlayer()
-        }
-    }
 
     ColoredScaffold(
         state = rememberColoredScaffoldState(tween(animationsSpeed)) {
@@ -158,7 +148,7 @@ fun FullAudioPlayer(
             ) {
                 TopBar(
                     onPrimaryOrBackgroundColorAnimated,
-                    currentTrack,
+                    currentTrack?.data,
                     onCollapseRequest
                 )
 
@@ -187,25 +177,25 @@ fun FullAudioPlayer(
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
                         TrackInfo(
-                            currentTrack = currentTrack,
+                            currentTrackFullDto = currentTrack?.data,
                             secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
-                            isTrackLoading = viewModel.isLoading,
+                            isTrackLoading = isLoading,
                             onAlbumClicked = onAlbumClicked,
                             onArtistClicked = onArtistClicked
                         )
 
                         PlayerControls(
-                            currentPosition = currentPosition,
+                            currentPosition = currentPositionMutableState,
                             currentTrackDuration = currentTrackDuration,
                             viewModel = viewModel,
                             isPlay = isPlay,
                             isSliding = isSliding,
                             backgroundColor = backgroundColorAnimated,
                             secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
-                            isTrackLoading = viewModel.isLoading,
-                            onNext = { viewModel.nextTrack() },
-                            onPrev = { viewModel.prevTrack() },
-                            onPlayPause = { viewModel.playPause() }
+                            isTrackLoading = isLoading,
+                            onNext = { viewModel.audioPlayer.seekToNext() },
+                            onPrev = { viewModel.audioPlayer.seekToPrev() },
+                            onPlayPause = { viewModel.audioPlayer.playPause() }
                         )
                     }
                 }
@@ -217,7 +207,7 @@ fun FullAudioPlayer(
 @Composable
 private fun TopBar(
     textOnSecondaryColorAnimated: State<Color>,
-    currentTrack: Track?,
+    currentTrackFullDto: TrackFullDto?,
     onCollapseRequest: () -> Unit
 ) {
     Row(
@@ -241,7 +231,7 @@ private fun TopBar(
         }
 
         Text(
-            text = "Плейлист \"${currentTrack?.album?.name ?: "unknown"}\"",
+            text = "Плейлист \"${currentTrackFullDto?.album?.name ?: "unknown"}\"",
             fontWeight = FontWeight.W700,
             color = textOnSecondaryColorAnimated.value
         )
@@ -260,7 +250,7 @@ private fun TopBar(
 
 @Composable
 private fun TrackInfo(
-    currentTrack: Track?,
+    currentTrackFullDto: TrackFullDto?,
     secondaryColor: State<Color>,
     isTrackLoading: State<Boolean>,
     onAlbumClicked: (albumId: String) -> Unit,
@@ -285,14 +275,14 @@ private fun TrackInfo(
 
     Column {
         Text(
-            text = currentTrack?.name ?: "",
+            text = currentTrackFullDto?.name ?: "",
             fontSize = 80.sp,
             fontWeight = FontWeight.W800,
             lineHeight = 10.sp,
             modifier = Modifier
                 .clip(MaterialTheme.shapes.small)
                 .clickable {
-                    onAlbumClicked(currentTrack?.album?.id ?: "")
+                    onAlbumClicked(currentTrackFullDto?.album?.id ?: "")
                 }
                 .alpha(textAlpha)
                 .basicMarquee(),
@@ -300,13 +290,13 @@ private fun TrackInfo(
         )
 
         Text(
-            text = currentTrack?.album?.artists?.firstOrNull()?.name ?: "",
+            text = currentTrackFullDto?.album?.artists?.firstOrNull()?.name ?: "",
             fontSize = 24.sp,
             fontWeight = FontWeight.W800,
             modifier = Modifier
                 .clip(MaterialTheme.shapes.small)
                 .clickable {
-                    onArtistClicked(currentTrack?.album?.artists?.first()?.id ?: "")
+                    onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
                 }
                 .padding(horizontal = 5.dp)
                 .alpha(textAlpha)
@@ -323,7 +313,7 @@ private fun PlayerControls(
     currentPosition: MutableState<Long>,
     currentTrackDuration: Long,
     viewModel: AudioPlayerViewModel,
-    isPlay: Boolean,
+    isPlay: State<Boolean>,
     isSliding: MutableState<Boolean>,
     backgroundColor: State<Color>,
     secondaryColor: State<Color>,
@@ -344,7 +334,7 @@ private fun PlayerControls(
 
     val nextTrackExists by remember {
         derivedStateOf {
-            viewModel.currentIndexInPlaylist.intValue < viewModel.currentPlaylist.entries.indices.last - 1
+            true
         }
     }
 
@@ -379,7 +369,7 @@ private fun PlayerControls(
                 onValueChangeFinished = {
                     isSliding.value = false
 
-                    viewModel.seekTo(currentPosition.value)
+                    viewModel.audioPlayer.seek(currentPosition.value)
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -473,7 +463,7 @@ private fun PlayerControls(
                 },
                 content = {
                     Icon(
-                        imageVector = if (isPlay)
+                        imageVector = if (isPlay.value)
                             Icons.Rounded.Pause
                         else
                             Icons.Rounded.PlayArrow,

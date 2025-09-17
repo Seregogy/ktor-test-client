@@ -3,9 +3,8 @@ package com.example.ktor_test_client.api
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseArtist
-import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
-import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.api.methods.GetArtistResponse
 import com.example.ktor_test_client.api.methods.GetLastReleaseByArtistResponse
 import com.example.ktor_test_client.api.methods.GetReleasesByArtistsResponse
@@ -34,7 +33,7 @@ suspend fun <T> safeRequest(request: suspend () -> T): Result<T> {
 class MusicApiService(
     private val apiClient: ApiClient
 ) {
-    suspend fun getRandomTrack(): Result<Track> = safeRequest {
+    suspend fun getRandomTrack(): Result<TrackFullDto> = safeRequest {
         apiClient.getRandomTrack()!!
     }
 
@@ -51,7 +50,7 @@ class MusicApiService(
         apiClient.getRandomTrackId()?.id!!
     }
 
-    suspend fun getTrack(trackId: String): Result<Track> = safeRequest {
+    suspend fun getTrack(trackId: String): Result<TrackFullDto> = safeRequest {
         apiClient.getTrack(trackId)!!
     }
 

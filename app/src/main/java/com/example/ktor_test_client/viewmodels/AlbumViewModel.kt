@@ -7,12 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import com.example.ktor_test_client.api.MusicApiService
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
-import com.example.ktor_test_client.data.sources.PlaylistDataSource
 
 class AlbumViewModel(
     private val apiService: MusicApiService
 ) : ImagePaletteViewModel() {
-    private lateinit var albumsPlaylist: PlaylistDataSource
 
     private val _album = mutableStateOf<Album?>(null)
     val album: State<Album?> = _album
@@ -32,14 +30,6 @@ class AlbumViewModel(
             }
 
             fetchImageByUrl(context, album.value?.imageUrl ?: "")
-        }
-
-        album.value?.let {
-            albumsPlaylist = PlaylistDataSource(
-                tracksId = album.value!!.tracks.map { track ->
-                    track.id
-                }
-            )
         }
     }
 

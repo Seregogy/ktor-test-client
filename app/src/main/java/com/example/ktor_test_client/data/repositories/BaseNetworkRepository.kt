@@ -1,31 +1,16 @@
 package com.example.ktor_test_client.data.repositories
 
-import com.example.ktor_test_client.api.dtos.Track
-import com.example.ktor_test_client.data.providers.DataProvider
-import com.example.ktor_test_client.data.sources.DataSource
+import com.example.ktor_test_client.api.MusicApiService
+import com.example.ktor_test_client.api.dtos.TrackFullDto
 
 class BaseNetworkRepository(
-    private val dataProvider: DataProvider,
+    private val service: MusicApiService,
 ) : Repository() {
-    override lateinit var dataSource: DataSource
+    override suspend fun getTrack(id: String): TrackFullDto? {
+        service.getTrack(id).onSuccess {
+            return it
+        }
 
-    override suspend fun getTrack(id: String): Track? {
-        return dataProvider.getTrack(id)
-    }
-
-    override suspend fun searchTracks(query: String): List<Track> {
-        return dataProvider.searchTracks(query)
-    }
-
-    override suspend fun nextTrack(): Track? {
-        return dataSource.nextTrack(dataProvider)
-    }
-
-    override suspend fun currentTrack(): Track? {
-        return dataSource.currentTrack(dataProvider)
-    }
-
-    override suspend fun previousTrack(): Track? {
-        return dataSource.previousTrack(dataProvider)
+        return null
     }
 }

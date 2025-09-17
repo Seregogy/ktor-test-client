@@ -20,7 +20,7 @@ open class BaseTrackWithArtists(
 )
 
 @Serializable
-class Track(
+class TrackFullDto(
     val id: String = "",
     val name: String = "",
     val imageUrl: String? = "",

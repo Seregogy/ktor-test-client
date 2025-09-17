@@ -1,6 +1,6 @@
 package com.example.ktor_test_client.data
 
-import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.data.providers.DataProvider
 import kotlinx.coroutines.runBlocking
 
@@ -9,16 +9,16 @@ class PlaylistContainer(
     private val dataProvider: DataProvider,
     private var currentIndex: Int = 0
 ) {
-    val tracks = MutableList<Track?>(tracksId.size) { null }
-    private lateinit var currentLinkedList: DoubleLinkedList<Lazy<Track>>
+    val trackFullDtos = MutableList<TrackFullDto?>(tracksId.size) { null }
+    private lateinit var currentLinkedList: DoubleLinkedList<Lazy<TrackFullDto>>
 
     fun addTracks(tracksId: List<String>) {
-        tracks.addAll(List(tracksId.size) { null })
+        trackFullDtos.addAll(List(tracksId.size) { null })
         currentLinkedList.append(tracksId.mapIndexed { index, item ->
             lazy {
                 runBlocking {
                     dataProvider.getTrack(item)!!.also {
-                        tracks[index] = it
+                        trackFullDtos[index] = it
                     }
                 }
             }
@@ -29,7 +29,7 @@ class PlaylistContainer(
         lazy {
             runBlocking {
                 dataProvider.getTrack(item)!!.also {
-                    tracks[index] = it
+                    trackFullDtos[index] = it
                 }
             }
         }

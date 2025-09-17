@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
+import com.example.ktor_test_client.data.AudioPlayer
 import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlinx.coroutines.launch
@@ -62,7 +63,7 @@ fun TrackMini(
 ) {
     val isCurrentlyPlay by remember {
         derivedStateOf {
-            AudioPlayerViewModel.currentlyPlayTrackId.value == track.id
+            AudioPlayer.currentlyPlayTrackId.value == track.id
         }
     }
 
@@ -155,7 +156,7 @@ fun TrackMiniWithImage(
 ) {
     val isCurrentlyPlay by remember {
         derivedStateOf {
-            AudioPlayerViewModel.currentlyPlayTrackId.value == track.id
+            AudioPlayer.currentlyPlayTrackId.value == track.id
         }
     }
 

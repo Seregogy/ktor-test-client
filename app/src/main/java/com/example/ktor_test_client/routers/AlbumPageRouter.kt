@@ -13,11 +13,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
-import androidx.media3.exoplayer.ExoPlayer
 import com.example.ktor_test_client.controls.states.ErrorState
 import com.example.ktor_test_client.controls.states.LoadingState
-import com.example.ktor_test_client.data.sources.LazyPlaylistDataSource
-import com.example.ktor_test_client.data.sources.PlaylistDataSource
 import com.example.ktor_test_client.pages.AlbumPage
 import com.example.ktor_test_client.viewmodels.AlbumViewModel
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
@@ -91,14 +88,9 @@ fun AlbumPageRouter(
                     onAlbumClicked = onAlbumClicked,
                 ) { clickedTrack ->
                     albumViewModel.album.value?.let { album ->
-                        playerViewModel.injectDataSource(
-                            LazyPlaylistDataSource(
-                                tracksId = album.tracks.map { it.id },
-                                firstTrack = clickedTrack.indexInAlbum
-                            )
-                        )
-
-                        playerViewModel.mediaController.prepare()
+                        coroutineScope.launch {
+                            playerViewModel.audioPlayer.loadPlaylist(album.tracks.map { it.id })
+                        }
                     }
                 }
             }

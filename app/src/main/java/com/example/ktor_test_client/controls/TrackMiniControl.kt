@@ -3,15 +3,12 @@ package com.example.ktor_test_client.controls
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,22 +22,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.api.dtos.TrackFullDto
 
 @Composable
 fun TrackControl(
     modifier: Modifier = Modifier,
-    track: Track,
+    trackFullDto: TrackFullDto,
     foregroundColor: Color = MaterialTheme.colorScheme.onBackground,
-    onClick: (it: Track) -> Unit = { },
+    onClick: (it: TrackFullDto) -> Unit = { },
     controls: @Composable RowScope.() -> Unit
 ) {
-    val artistsNames = track.album.artists.joinToString(",") { it.name }
+    val artistsNames = trackFullDto.album.artists.joinToString(",") { it.name }
 
     Row(
         modifier = modifier
             .clickable {
-                onClick(track)
+                onClick(trackFullDto)
             }
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -53,7 +50,7 @@ fun TrackControl(
             horizontalArrangement = Arrangement.spacedBy(15.dp)
         ) {
             AsyncImage(
-                model = track.imageUrl,
+                model = trackFullDto.imageUrl,
                 modifier = Modifier
                     .aspectRatio(1f)
                     .fillMaxHeight()
@@ -64,7 +61,7 @@ fun TrackControl(
 
             Column {
                 Text(
-                    text = track.name,
+                    text = trackFullDto.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.W700,
                     color = foregroundColor,

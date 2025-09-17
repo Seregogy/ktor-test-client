@@ -30,8 +30,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.ktor_test_client.api.dtos.Track
+import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.TrackControl
+import com.example.ktor_test_client.data.AudioPlayer
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 
 @Composable
@@ -43,8 +44,15 @@ fun MiniAudioPlayer(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
-    val currentTrack by viewModel.currentTrack.collectAsStateWithLifecycle()
+    val currentTrack by viewModel.audioPlayer.currentTrack.collectAsStateWithLifecycle()
+    val currentState by viewModel.audioPlayer.currentState.collectAsStateWithLifecycle()
     val palette by viewModel.palette.collectAsStateWithLifecycle()
+
+    val isPlay by remember {
+        derivedStateOf {
+            currentState == AudioPlayer.AudioPlayerState.Play
+        }
+    }
 
     val backgroundColor by remember {
         derivedStateOf {
@@ -57,8 +65,6 @@ fun MiniAudioPlayer(
             Color(palette?.vibrantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
         }
     }
-
-    val isPlay by remember { viewModel.isPlay }
 
     Box(
         modifier = Modifier
@@ -74,7 +80,7 @@ fun MiniAudioPlayer(
                 .background(backgroundColor),
             onClick = { onExpandRequest() },
             foregroundColor = foregroundColor,
-            track = currentTrack ?: Track()
+            trackFullDto = currentTrack?.data ?: TrackFullDto()
         ) {
             Row(
                 modifier = Modifier
@@ -100,7 +106,7 @@ fun MiniAudioPlayer(
 
                 IconButton(
                     onClick = {
-                        viewModel.playPause()
+                        viewModel.audioPlayer.playPause()
                     }
                 ) {
                     Icon(

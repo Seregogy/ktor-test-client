@@ -23,10 +23,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.ktor_test_client.controls.player.AudioPlayerScaffold
+import com.example.ktor_test_client.data.AudioPlayer
+import com.example.ktor_test_client.data.TracksCache
+import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
 import com.example.ktor_test_client.di.apiClientDi
 import com.example.ktor_test_client.di.apiServiceDi
 import com.example.ktor_test_client.di.dataProviderDi
-import com.example.ktor_test_client.di.dataSourceDi
 import com.example.ktor_test_client.di.repositoryDi
 import com.example.ktor_test_client.di.tokenHandlerDi
 import com.example.ktor_test_client.di.viewModelDi
@@ -57,7 +59,7 @@ class MainActivity : ComponentActivity() {
 
                 KoinApplication(
                     application = {
-                        modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, dataProviderDi, dataSourceDi, repositoryDi, viewModelDi))
+                        modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, dataProviderDi, repositoryDi, viewModelDi))
                         androidContext(context)
                     }
                 ) {
@@ -66,11 +68,9 @@ class MainActivity : ComponentActivity() {
 
                     when {
                         mediaController.value != null -> {
-                            val audioPlayer = koinInject<AudioPlayerViewModel>(parameters = { parametersOf(mediaController.value) })
-
                             Scaffold { innerPadding ->
                                 AudioPlayerScaffold(
-                                    viewModel = audioPlayer,
+                                    viewModel = koinInject<AudioPlayerViewModel>(parameters = { parametersOf(mediaController.value) }),
                                     innerPadding = innerPadding,
                                     navController = navController,
                                     hazeState = hazeState,

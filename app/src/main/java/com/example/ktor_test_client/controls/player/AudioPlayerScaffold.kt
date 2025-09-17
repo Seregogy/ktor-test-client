@@ -56,6 +56,16 @@ fun AudioPlayerScaffold(
     var allInit by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        viewModel.audioPlayer.loadPlaylist(
+            listOf(
+                "96b9bc56-f2bc-4deb-a651-bd42d3e44d1c",
+                "845a328a-1ba4-4c17-80ae-dd3378712f63",
+                "05c2bb03-960a-4dbe-a529-8d537ec49fa1"
+            )
+        )
+    }
+
+    LaunchedEffect(Unit) {
         delay(300)
         allInit = true
     }
