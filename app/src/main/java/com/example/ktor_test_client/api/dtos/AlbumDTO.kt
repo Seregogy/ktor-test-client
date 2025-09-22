@@ -12,12 +12,13 @@ data class BaseAlbum(
 
 @Serializable
 data class Album(
+    val id: String = "",
     val name: String = "",
+    val imageUrl: String? = null,
+    val artists: List<BaseArtist> = listOf(),
     val likes: Int = 0,
     val listening: Int = 0,
     val releaseDate: Long = 0,
-    val imageUrl: String? = null,
     val label: String? = null,
-    val tracks: List<BaseTrack> = listOf(),
-    val artists: List<BaseArtist> = listOf()
+    val tracks: List<BaseTrack> = listOf()
 )

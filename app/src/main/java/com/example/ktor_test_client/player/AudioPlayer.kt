@@ -121,7 +121,6 @@ class AudioPlayer(
             do {
                 currentPosition.value = mediaController.currentPosition
 
-                Log.d("Player", "${currentPosition.value.toString().padStart(6, '0')}/${currentTrackDuration.value}")
                 delay(350)
             } while (_currentState.value != AudioPlayerState.Released)
         }

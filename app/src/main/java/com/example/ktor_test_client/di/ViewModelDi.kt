@@ -16,19 +16,19 @@ import org.koin.dsl.module
 @SuppressLint("UnsafeOptInUsageError")
 val viewModelDi = module {
     single<ExoPlayer> {
-        val audioLoadControl = DefaultLoadControl.Builder()
-            .setBackBuffer(DefaultPlayerConfig.backBufferMs, true)
-            .setBufferDurationsMs(
-                DefaultPlayerConfig.minBufferMs,
-                DefaultPlayerConfig.maxBufferMs,
-                DefaultPlayerConfig.bufferForPlaybackMs,
-                DefaultPlayerConfig.bufferForPlaybackAfterRebuffedMs
-            )
-            .setTargetBufferBytes(DefaultPlayerConfig.targetBufferBytesSize)
-            .build()
-
         return@single ExoPlayer.Builder(get())
-            .setLoadControl(audioLoadControl)
+            .setLoadControl(
+                DefaultLoadControl.Builder()
+                    .setBackBuffer(DefaultPlayerConfig.backBufferMs, true)
+                    .setBufferDurationsMs(
+                        DefaultPlayerConfig.minBufferMs,
+                        DefaultPlayerConfig.maxBufferMs,
+                        DefaultPlayerConfig.bufferForPlaybackMs,
+                        DefaultPlayerConfig.bufferForPlaybackAfterRebuffedMs
+                    )
+                    .setTargetBufferBytes(DefaultPlayerConfig.targetBufferBytesSize)
+                    .build()
+            )
             .build()
     }
 

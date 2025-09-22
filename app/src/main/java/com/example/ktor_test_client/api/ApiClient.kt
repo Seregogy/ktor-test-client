@@ -20,9 +20,9 @@ import kotlinx.serialization.json.Json
 
 open class ApiClient(
     private val context: Context,
-    private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTP,
-    private val defaultHost: String = "95.31.212.185",
-    private val defaultPort: Int = 7777,
+    private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTPS,
+    private val defaultHost: String = "seregogy-music.duckdns.org",
+    private val defaultPort: Int = 443,
     private val tokenHandler: TokenHandler
 ) {
     private val connectionChecker = InternetConnectionChecker(context)
@@ -61,7 +61,10 @@ open class ApiClient(
         }
 
         defaultRequest {
-            url { host("") }
+            url {
+                host = defaultHost
+                protocol = defaultProtocol
+            }
             header("Authorization", "Bearer $accessToken")
         }
 
@@ -72,13 +75,5 @@ open class ApiClient(
                 Log.e("API", "${request.url}, ${cause.message}")
             }
         }
-    }
-
-    private fun URLBuilder.host(endpointPath: String) {
-        host = defaultHost
-        protocol = defaultProtocol
-        port = defaultPort
-
-        path(endpointPath)
     }
 }
