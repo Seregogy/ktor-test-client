@@ -61,6 +61,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -118,7 +119,10 @@ fun FullAudioPlayer(
             viewModel.palette.collectAsStateWithLifecycle()
         }
     ) {
-        Box {
+        Box(
+            modifier = Modifier
+                .background(backgroundColorAnimated.value)
+        ) {
             bitmap?.let {
                 AnimatedContent(
                     targetState = it,
@@ -210,7 +214,8 @@ private fun TopBar(
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -229,9 +234,14 @@ private fun TopBar(
         }
 
         Text(
+            modifier = Modifier
+                .weight(.6f)
+                .basicMarquee(),
             text = "Плейлист \"${currentTrackFullDto?.album?.name ?: "unknown"}\"",
             fontWeight = FontWeight.W700,
-            color = textOnSecondaryColorAnimated.value
+            color = textOnSecondaryColorAnimated.value,
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
 
         IconButton(
