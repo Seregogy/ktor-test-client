@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.example.ktor_test_client.api.MusicApiService
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
+import com.example.ktor_test_client.api.dtos.BaseTrack
 
 class AlbumViewModel(
     private val apiService: MusicApiService
@@ -14,6 +15,9 @@ class AlbumViewModel(
 
     private val _album = mutableStateOf<Album?>(null)
     val album: State<Album?> = _album
+
+    private val _tracks = mutableStateOf<List<BaseTrack>?>(null)
+    val tracks: State<List<BaseTrack>?> = _tracks
 
     private val _otherAlbums = mutableStateOf<List<BaseAlbum>>(listOf())
     val otherAlbums: State<List<BaseAlbum>> = _otherAlbums
@@ -30,6 +34,14 @@ class AlbumViewModel(
             }
 
             fetchImageByUrl(context, album.value?.imageUrl ?: "")
+        }
+    }
+
+    suspend fun loadTracks() {
+        album.value?.id?.let { albumId ->
+            apiService.getTracksByAlbum(albumId).onSuccess {
+                _tracks.value = it
+            }
         }
     }
 

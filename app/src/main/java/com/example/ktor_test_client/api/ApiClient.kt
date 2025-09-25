@@ -39,7 +39,7 @@ open class ApiClient(
     internal val httpClient = HttpClient {
         install(HttpCache)
 
-        install(ContentNegotiation.Plugin) {
+        install(ContentNegotiation) {
             json(
                 Json {
                     prettyPrint = true

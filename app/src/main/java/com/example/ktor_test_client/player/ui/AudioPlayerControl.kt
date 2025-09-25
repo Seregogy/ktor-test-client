@@ -15,17 +15,23 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -40,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -47,15 +54,23 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -63,23 +78,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
-import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
-import com.example.ktor_test_client.pages.TopAppContentBar.TOP_PART_WEIGHT
-import com.example.ktor_test_client.pages.TopAppContentBar.additionalHeight
+import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlin.math.roundToInt
-
-val bottomGap = 110.dp
-val additionalPlayerHeight = 3.dp
 
 const val animationsSpeed = 1200
 
@@ -91,7 +103,7 @@ fun FullAudioPlayer(
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
 
     val currentTrack by viewModel.audioPlayer.currentTrack.collectAsStateWithLifecycle()
     val bitmap by viewModel.bitmap.collectAsStateWithLifecycle()
@@ -118,87 +130,144 @@ fun FullAudioPlayer(
             viewModel.palette.collectAsStateWithLifecycle()
         }
     ) {
-        Box {
-            bitmap?.let {
-                AnimatedContent(
-                    targetState = it,
-                    transitionSpec = {
-                        fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(animationsSpeed))
-                    },
-                    label = "image animation"
-                ) { animatedBitmap ->
-                    Image(
-                        bitmap = animatedBitmap.asImageBitmap(),
-                        contentDescription = "album image",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height((screenHeight * TOP_PART_WEIGHT) + additionalHeight),
-                        contentScale = ContentScale.Crop
-                    )
+        Column(
+            modifier = Modifier
+                .background(backgroundColorAnimated.value)
+                .then(modifier)
+        ) {
+            TopBar(
+                textOnSecondaryColorAnimated = textOnPrimaryOrBackgroundColorAnimated,
+                currentTrackFullDto = currentTrack?.data,
+                onCollapseRequest = onCollapseRequest
+            )
+
+            Box(
+                modifier = Modifier
+                    .heightIn(min = screenWidth)
+                    .offset(y = (-20).dp)
+            ) {
+                bitmap?.let {
+                    AnimatedContent(
+                        targetState = it,
+                        transitionSpec = {
+                            fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
+                                tween(
+                                    animationsSpeed
+                                )
+                            )
+                        },
+                        label = "image animation"
+                    ) { animatedBitmap ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                                .drawWithContent {
+                                    drawContent()
+
+                                    drawRect(
+                                        brush = Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.White,
+                                                Color.Transparent,
+                                            )
+                                        ),
+                                        blendMode = BlendMode.DstIn
+                                    )
+                                }
+                        ) {
+                            Image(
+                                bitmap = animatedBitmap.asImageBitmap(),
+                                contentDescription = "album image",
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
                 }
             }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .then(modifier)
+                    .offset(y = (-50).dp)
             ) {
-                TopBar(
-                    onPrimaryOrBackgroundColorAnimated,
-                    currentTrack?.data,
-                    onCollapseRequest
-                )
-
-                PlayerPageHeaderFadingGradientTop(
+                Column(
                     modifier = Modifier
-                        .height(screenHeight * TOP_PART_WEIGHT + additionalPlayerHeight),
-                    targetColor = backgroundColorAnimated
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = screenHeight * TOP_PART_WEIGHT - bottomGap)
-                        .fillMaxHeight()
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = bottomGap)
-                            .fillMaxSize()
-                            .background(backgroundColorAnimated.value)
+                    TrackInfo(
+                        currentTrackFullDto = currentTrack?.data,
+                        secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
+                        isTrackLoading = isLoading,
+                        onAlbumClicked = onAlbumClicked,
+                        onArtistClicked = onArtistClicked
                     )
 
-                    Column(
-                        modifier = Modifier
-                            .padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
-                        TrackInfo(
-                            currentTrackFullDto = currentTrack?.data,
-                            secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
-                            isTrackLoading = isLoading,
-                            onAlbumClicked = onAlbumClicked,
-                            onArtistClicked = onArtistClicked
-                        )
-
-                        PlayerControls(
-                            currentPosition = currentPosition,
-                            currentTrackDuration = currentTrackDuration,
-                            viewModel = viewModel,
-                            isPlay = isPlay,
-                            isSliding = isSliding,
-                            backgroundColor = backgroundColorAnimated,
-                            secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
-                            isTrackLoading = isLoading,
-                            isLastTrack = isLastTrack,
-                            onNext = { viewModel.audioPlayer.seekToNext() },
-                            onPrev = { viewModel.audioPlayer.seekToPrev() },
-                            onPlayPause = { viewModel.audioPlayer.playPause() }
-                        )
-                    }
+                    PlayerControls(
+                        currentPosition = currentPosition,
+                        currentTrackDuration = currentTrackDuration,
+                        viewModel = viewModel,
+                        isPlay = isPlay,
+                        isSliding = isSliding,
+                        backgroundColor = backgroundColorAnimated,
+                        secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
+                        isTrackLoading = isLoading,
+                        isLastTrack = isLastTrack,
+                        onNext = { viewModel.audioPlayer.seekToNext() },
+                        onPrev = { viewModel.audioPlayer.seekToPrev() },
+                        onPlayPause = { viewModel.audioPlayer.playPause() }
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DoubleTapGestures(
+    audioPlayerViewModel: AudioPlayerViewModel,
+    secondaryColor: State<Color>
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        val modifier = Modifier
+            .background(secondaryColor.value)
+            .fillMaxHeight()
+            .width(100.dp)
+            .weight(.4f)
+
+        val ripple = ripple()
+
+        Box(
+            modifier = modifier
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = { offset ->
+                            audioPlayerViewModel.audioPlayer.seek(audioPlayerViewModel.audioPlayer.currentPosition.value - 5000)
+                        }
+                    )
+
+                }
+        )
+
+        Box(
+            modifier = modifier
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = { offset ->
+                            audioPlayerViewModel.audioPlayer.seek(audioPlayerViewModel.audioPlayer.currentPosition.value + 5000)
+                        }
+                    )
+                }
+        )
     }
 }
 
@@ -210,7 +279,8 @@ private fun TopBar(
 ) {
     Row(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(horizontal = 15.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -229,9 +299,14 @@ private fun TopBar(
         }
 
         Text(
+            modifier = Modifier
+                .weight(.6f)
+                .basicMarquee(),
             text = "Плейлист \"${currentTrackFullDto?.album?.name ?: "unknown"}\"",
             fontWeight = FontWeight.W700,
-            color = textOnSecondaryColorAnimated.value
+            color = textOnSecondaryColorAnimated.value,
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
 
         IconButton(
@@ -254,6 +329,8 @@ private fun TrackInfo(
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
+    val density = LocalDensity.current
+
     val infiniteTransition = rememberInfiniteTransition("cycling animation transition")
     val textAlphaAnimated by infiniteTransition.animateFloat(
         initialValue = .3f,
@@ -271,37 +348,60 @@ private fun TrackInfo(
         }
     }
 
-    Column {
-        Text(
-            text = currentTrackFullDto?.name ?: "",
-            fontSize = 80.sp,
-            fontWeight = FontWeight.W800,
-            lineHeight = 10.sp,
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
-                .clickable {
-                    onAlbumClicked(currentTrackFullDto?.album?.id ?: "")
-                }
-                .alpha(textAlpha)
-                .basicMarquee(),
-            color = secondaryColor.value
-        )
+    var columnHeight by remember { mutableStateOf(0.dp) }
 
-        Text(
-            text = currentTrackFullDto?.album?.artists?.firstOrNull()?.name ?: "",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.W800,
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        AsyncImage(
+            model = currentTrackFullDto?.album?.artists?.first()?.imageUrl,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
+                .heightIn(max = columnHeight - 5.dp)
+                .aspectRatio(1f)
+                .clip(CircleShape)
                 .clickable {
                     onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
-                }
-                .padding(horizontal = 5.dp)
-                .alpha(textAlpha)
-                .basicMarquee(),
-            color = secondaryColor.value,
-            lineHeight = 10.sp
+                },
+            contentDescription = "mini avatar"
         )
+
+        Column(
+            modifier = Modifier
+                .onSizeChanged {
+                    with(density) {
+                        columnHeight = it.height.toDp()
+                    }
+                }
+        ) {
+            Text(
+                text = currentTrackFullDto?.name ?: "",
+                fontSize = 30.sp,
+                fontWeight = FontWeight.W800,
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable {
+                        onAlbumClicked(currentTrackFullDto?.album?.id ?: "")
+                    }
+                    .alpha(textAlpha)
+                    .basicMarquee(),
+                color = secondaryColor.value
+            )
+
+            Text(
+                text = currentTrackFullDto?.album?.artists?.firstOrNull()?.name ?: "",
+                fontWeight = FontWeight.W600,
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable {
+                        onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
+                    }
+                    .alpha(textAlpha)
+                    .basicMarquee(),
+                color = secondaryColor.value
+            )
+        }
     }
 }
 

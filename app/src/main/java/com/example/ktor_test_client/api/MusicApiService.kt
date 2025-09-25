@@ -3,6 +3,7 @@ package com.example.ktor_test_client.api
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseArtist
+import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.api.methods.GetArtistResponse
@@ -18,9 +19,15 @@ import com.example.ktor_test_client.api.methods.getRandomTrackId
 import com.example.ktor_test_client.api.methods.getTopArtists
 import com.example.ktor_test_client.api.methods.getTrack
 import com.example.ktor_test_client.api.methods.toggleLike
+import com.example.ktor_test_client.player.Track
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.request.url
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.serialization.Serializable
 
 suspend fun <T> safeRequest(request: suspend () -> T): Result<T> {
     return try {
@@ -41,6 +48,11 @@ class MusicApiService(
         apiClient.getAlbum(albumId)!!
     }
 
+    suspend fun getTracksByAlbum(albumId: String): Result<List<BaseTrack>> = safeRequest {
+        apiClient.httpClient
+            .get("/api/v1/albums/$albumId/tracks").call.body<Map<String, List<BaseTrack>>>()["tracks"]!!
+    }
+
     suspend fun getAlbumsByArtist(artistId: String): Result<List<BaseAlbum>> =
         safeRequest {
             apiClient.getAlbumsByArtist(artistId)!!.albums
@@ -52,6 +64,24 @@ class MusicApiService(
 
     suspend fun getTrack(trackId: String): Result<TrackFullDto> = safeRequest {
         apiClient.getTrack(trackId)!!
+    }
+
+    @Serializable
+    data class GetTracksRequest(
+        val tracks: List<String>
+    )
+
+    @Serializable
+    data class GetTracksResponse(
+        val tracks: List<TrackFullDto>
+    )
+
+    suspend fun getTracks(tracksId: List<String>): Result<List<TrackFullDto>> = safeRequest {
+        apiClient.httpClient
+            .post("/api/v1/tracks") {
+                contentType(ContentType.Application.Json)
+                setBody(GetTracksRequest(tracksId))
+            }.call.body<GetTracksResponse>().tracks
     }
 
     suspend fun getArtist(artistId: String): Result<GetArtistResponse> = safeRequest {
@@ -91,7 +121,7 @@ class MusicApiService(
         return@safeRequest lastRelease.lastAlbum to lastRelease.releaseDate
     }
 
-    suspend fun postLike(trackId: String): Result<Boolean> = safeRequest {
+    suspend fun like(trackId: String): Result<Boolean> = safeRequest {
         apiClient.toggleLike(trackId)?.liked!!
     }
 }

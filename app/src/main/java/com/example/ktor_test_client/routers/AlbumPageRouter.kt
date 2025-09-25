@@ -46,6 +46,7 @@ fun AlbumPageRouter(
                 albumViewModel.loadAlbum(context, albumId)
             }.onSuccess {
                 albumViewModel.loadSingles()
+                albumViewModel.loadTracks()
             }.onFailure {
                 isError = true
             }
@@ -87,10 +88,10 @@ fun AlbumPageRouter(
                     onArtistClicked = onArtistClicked,
                     onAlbumClicked = onAlbumClicked,
                 ) { clickedTrack ->
-                    albumViewModel.album.value?.let { album ->
+                    albumViewModel.tracks.value?.let { tracks ->
                         coroutineScope.launch {
                             playerViewModel.audioPlayer.setPlaylist(
-                                tracks = album.tracks.map { it.id },
+                                tracks = tracks.map { it.id },
                                 startTrackIndex = clickedTrack.indexInAlbum
                             )
                         }

@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,15 +36,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
-import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.helpers.times
+import com.example.ktor_test_client.player.AudioPlayer
 
 @Composable
 fun TrackMini(
@@ -53,8 +56,11 @@ fun TrackMini(
     onPrimaryColor: Color = Color.White,
     indexPlusOne: Boolean = true,
     infiniteTransition: InfiniteTransition = rememberInfiniteTransition("infinity transition animation"),
-    onClick: (it: BaseTrack) -> Unit = { }
+    onClick: (it: BaseTrack) -> Unit = { },
+    onContextAction: (it: BaseTrack) -> Unit = { }
 ) {
+    val haptic = LocalHapticFeedback.current
+
     val isCurrentlyPlay by remember {
         derivedStateOf {
             AudioPlayer.currentlyPlayTrackId.value == track.id
@@ -74,9 +80,15 @@ fun TrackMini(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
-                onClick(track)
-            }
+            .combinedClickable(
+                onClick = {
+                    onClick(track)
+                },
+                onLongClick = {
+                    onContextAction(track)
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            )
             .then(
                 if (isCurrentlyPlay)
                     Modifier.background(primaryColor.copy(.3f))
@@ -127,7 +139,7 @@ fun TrackMini(
             modifier = Modifier
                 .align(Alignment.CenterEnd),
             onClick = {
-                //TODO: контекстный bottom sheet
+                onContextAction(track)
             }
         ) {
             Icon(

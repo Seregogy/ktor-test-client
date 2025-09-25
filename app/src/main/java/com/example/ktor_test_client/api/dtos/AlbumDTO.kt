@@ -19,6 +19,5 @@ data class Album(
     val likes: Int = 0,
     val listening: Int = 0,
     val releaseDate: Long = 0,
-    val label: String? = null,
-    val tracks: List<BaseTrack> = listOf()
+    val label: String? = null
 )
