@@ -7,7 +7,8 @@ open class BaseTrack(
     val id: String = "",
     val name: String = "",
     val imageUrl: String? = "",
-    val indexInAlbum: Int = 0
+    val indexInAlbum: Int = 0,
+    val audioUrl: String = ""
 )
 
 @Serializable
@@ -16,7 +17,8 @@ open class BaseTrackWithArtists(
     val name: String = "",
     val imageUrl: String? = "",
     val indexInAlbum: Int = 0,
-    val artists: List<BaseArtist> = listOf()
+    val artists: List<BaseArtist> = listOf(),
+    val audioUrl: String = ""
 )
 
 @Serializable

@@ -111,7 +111,7 @@ fun ArtistPage(
     val coloredScaffoldState = rememberColoredScaffoldState {
         viewModel.palette.collectAsStateWithLifecycle()
     }
-    val toolScaffoldState = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+    val toolScaffoldState = rememberToolScaffoldState(onBackRequest = onBackRequest)
 
     val topBarHazeState = rememberHazeState()
     ColoredScaffold(

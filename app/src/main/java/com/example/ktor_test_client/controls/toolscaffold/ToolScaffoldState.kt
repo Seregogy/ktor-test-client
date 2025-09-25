@@ -8,39 +8,39 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 
-class ToolScaffoldState<ToolAction, ContextAction>(
+class ToolScaffoldState(
     var onBackRequest: () -> Unit,
     var onSearchRequest: () -> Unit,
-    var toolAction: @Composable ToolAction.() -> Unit,
-    var contextAction: @Composable ContextAction.() -> Unit,
-
-    var primaryColor: State<Color> = mutableStateOf(Color.Black),
-    var onPrimaryColor: State<Color> = mutableStateOf(Color.White),
-
-    var toolBarTitle: MutableState<String?> = mutableStateOf(null)
-)
-
-@Composable
-fun <T, C> rememberToolScaffoldState(
-    onBackRequest: () -> Unit = { },
-    onSearchRequest: () -> Unit = { },
-    toolAction: @Composable T.() -> Unit = { },
-    contextAction: @Composable C.() -> Unit = { },
-    primaryColor: State<Color> = mutableStateOf(Color.Black),
-    onPrimaryColor: State<Color> = mutableStateOf(Color.White),
-    toolBarTitle: String? = null
-): ToolScaffoldState<T, C> {
-    val toolBarTitleState = rememberSaveable {
-        mutableStateOf(toolBarTitle)
-    }
-    return remember {
-        ToolScaffoldState(onBackRequest, onSearchRequest, toolAction, contextAction, primaryColor, onPrimaryColor, toolBarTitleState)
+    var foregroundColor: State<Color> = mutableStateOf(Color.White),
+    var toolBarTitle: MutableState<String?> = mutableStateOf(null),
+    var onLaunchContextAction: (content: @Composable () -> Unit) -> Unit = { }
+) {
+    fun launchContextAction(
+        content: @Composable () -> Unit = { }
+    ) {
+        onLaunchContextAction(content)
     }
 }
 
 @Composable
-fun rememberToolScaffoldState(): ToolScaffoldState<Nothing, Nothing> {
+fun rememberToolScaffoldState(
+    onBackRequest: () -> Unit = { },
+    onSearchRequest: () -> Unit = { },
+    foregroundColor: State<Color> = mutableStateOf(Color.White),
+    toolBarTitle: String? = null
+): ToolScaffoldState {
+    val toolBarTitleState = rememberSaveable {
+        mutableStateOf(toolBarTitle)
+    }
+
     return remember {
-        ToolScaffoldState({  }, { }, { }, { }, mutableStateOf(Color.Black), mutableStateOf(Color.White))
+        ToolScaffoldState(onBackRequest, onSearchRequest, foregroundColor, toolBarTitleState)
+    }
+}
+
+@Composable
+fun rememberToolScaffoldState(): ToolScaffoldState {
+    return remember {
+        ToolScaffoldState({ }, { }, mutableStateOf(Color.White))
     }
 }

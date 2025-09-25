@@ -8,4 +8,5 @@ import com.example.ktor_test_client.api.dtos.TrackFullDto
  **/
 abstract class Repository {
     abstract suspend fun getTrack(id: String): TrackFullDto?
+    abstract suspend fun getTracks(tracksId: List<String>): List<TrackFullDto>?
 }

@@ -92,12 +92,13 @@ fun AlbumPage(
 
     val imageBitmap: Bitmap? by viewModel.bitmap.collectAsStateWithLifecycle()
     val album by viewModel.album
+    val tracks by viewModel.tracks
     val otherAlbums by viewModel.otherAlbums
 
     val coloredScaffoldState = rememberColoredScaffoldState {
         viewModel.palette.collectAsStateWithLifecycle()
     }
-    val toolBarScaffoldState = rememberToolScaffoldState<Nothing, Nothing>(onBackRequest = onBackRequest)
+    val toolBarScaffoldState = rememberToolScaffoldState(onBackRequest = onBackRequest)
 
     val topBarHazeState = rememberHazeState()
     ColoredScaffold(
@@ -155,15 +156,25 @@ fun AlbumPage(
                 }
             ) {
                 album?.let { album ->
-                    AlbumContent(
-                        colorAlpha = colorAlpha,
-                        bottomPadding = bottomPadding,
-                        album = album,
-                        infiniteTransition = infiniteTransition,
-                        onTrackClicked = onTrackClicked,
-                        otherAlbums = otherAlbums,
-                        onAlbumClicked = onAlbumClicked
-                    )
+                    tracks?.let { tracks ->
+                        AlbumContent(
+                            colorAlpha = colorAlpha,
+                            bottomPadding = bottomPadding,
+                            album = album,
+                            tracks = tracks,
+                            infiniteTransition = infiniteTransition,
+                            onTrackClicked = onTrackClicked,
+                            otherAlbums = otherAlbums,
+                            onAlbumClicked = onAlbumClicked,
+                            onTrackHold = {
+                                toolBarScaffoldState.launchContextAction {
+                                    Text(
+                                        text = "ASSSSS"
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -204,8 +215,10 @@ private fun ColoredScaffoldState.AlbumContent(
     colorAlpha: FloatState,
     bottomPadding: Dp,
     album: Album,
+    tracks: List<BaseTrack>,
     infiniteTransition: InfiniteTransition,
     onTrackClicked: (track: BaseTrack) -> Unit,
+    onTrackHold: (track: BaseTrack) -> Unit,
     otherAlbums: List<BaseAlbum>,
     onAlbumClicked: (artistId: String) -> Unit
 ) {
@@ -222,13 +235,14 @@ private fun ColoredScaffoldState.AlbumContent(
         Column {
             Spacer(Modifier.height(30.dp))
 
-            for (track in album.tracks) {
+            for (track in tracks) {
                 TrackMini(
                     track = track,
                     infiniteTransition = infiniteTransition,
-                    onClick = onTrackClicked,
                     primaryColor = primaryOrBackgroundColorAnimated.value,
-                    onPrimaryColor = Color.White
+                    onPrimaryColor = Color.White,
+                    onClick = onTrackClicked,
+                    onContextAction = onTrackHold
                 )
             }
 

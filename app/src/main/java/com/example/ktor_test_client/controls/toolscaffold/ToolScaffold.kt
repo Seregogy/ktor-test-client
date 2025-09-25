@@ -12,10 +12,19 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +35,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
+import kotlinx.coroutines.launch
 
 private val toolBarHeight = 50.dp
 
@@ -34,11 +44,24 @@ private val toolBarHeight = 50.dp
 fun ToolScaffold(
     modifier: Modifier = Modifier,
     hazeState: HazeState?,
-    state: ToolScaffoldState<*, *> ,
+    state: ToolScaffoldState,
     content: @Composable (innerPadding: PaddingValues) -> Unit = { }
 ) {
+    val expanded = remember { mutableStateOf(false) }
+    var contentState: @Composable () -> Unit by remember { mutableStateOf({ }) }
+
     state.run {
         Box {
+            onLaunchContextAction = {
+                contentState = it
+                expanded.value = true
+            }
+
+            ContextMenu(
+                expanded = expanded,
+                content = contentState
+            )
+
             content(PaddingValues(top = toolBarHeight))
 
             Box(
@@ -51,7 +74,11 @@ fun ToolScaffold(
                                         state = hazeState,
                                         style = HazeMaterials.ultraThin(Color.Black)
                                     ) {
-                                        progressive = HazeProgressive.verticalGradient(startIntensity = 1f, endIntensity = 0f, easing = EaseIn)
+                                        progressive = HazeProgressive.verticalGradient(
+                                            startIntensity = 1f,
+                                            endIntensity = 0f,
+                                            easing = EaseIn
+                                        )
                                     }
                             } else {
                                 Modifier.background(Color.Black.copy(.93f))
@@ -74,14 +101,14 @@ fun ToolScaffold(
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = "",
-                        tint = onPrimaryColor.value
+                        tint = foregroundColor.value
                     )
                 }
 
                 Text(
                     text = toolBarTitle.value ?: "",
                     fontWeight = FontWeight.W700,
-                    color = onPrimaryColor.value,
+                    color = foregroundColor.value,
                     modifier = Modifier
                         .align(Alignment.Center)
                 )
@@ -96,21 +123,46 @@ fun ToolScaffold(
                         Icon(
                             imageVector = Icons.Rounded.Search,
                             contentDescription = "",
-                            tint = onPrimaryColor.value
+                            tint = foregroundColor.value
                         )
                     }
 
                     IconButton(
-                        onClick = { /*toolAction*/ }
+                        onClick = {  }
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
                             contentDescription = "",
-                            tint = onPrimaryColor.value
+                            tint = foregroundColor.value
                         )
                     }
                 }
             }
+        }
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContextMenu(
+    expanded: MutableState<Boolean>,
+    content: @Composable () -> Unit
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState()
+
+    if (expanded.value) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                coroutineScope.launch {
+                    sheetState.hide()
+                }.invokeOnCompletion {
+                    expanded.value = false
+                }
+            }
+        ) {
+            content()
         }
     }
 }

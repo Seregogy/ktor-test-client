@@ -189,29 +189,29 @@ class AudioPlayer(
 
     private suspend fun preparePlaylistTracks(tracks: List<String>): List<Track> {
         val cachedTracks = mediaCache.loadFromCache(tracks)
-        val newTracks = tracks - cachedTracks.map { it.data.id }.toSet()
+        val uncachedTracks = tracks - cachedTracks.map { it.data.id }.toSet()
 
-        mediaCache.putAll(
-            newTracks.mapNotNull { trackId ->
-                repository.getTrack(trackId)?.let { track ->
-                    Track(
-                        data = track,
-                        mediaItem = MediaItem.Builder()
-                            .setMediaId(trackId)
-                            .setUri(track.audioUrl)
-                            .build().apply {
-                                mediaMetadata.buildUpon()
-                                    .setTitle(track.name)
-                                    .setAlbumTitle(track.album.name)
-                                    .setDisplayTitle(track.name)
-                                    .setArtist(track.album.artists.joinToString(",") { track.name })
-                                    .setArtworkUri(Uri.parse(track.imageUrl))
-                                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                                    .build()
-                            }
-                    )
-                }
-            })
+        repository.getTracks(uncachedTracks)?.zip(uncachedTracks) { track, trackId ->
+            Track(
+                data = track,
+                mediaItem = MediaItem.Builder()
+                    .setMediaId(trackId)
+                    .setUri(track.audioUrl)
+                    .build().apply {
+                        mediaMetadata.buildUpon()
+                            .setTitle(track.name)
+                            .setAlbumTitle(track.album.name)
+                            .setDisplayTitle(track.name)
+                            .setArtist(track.album.artists.joinToString(",") { track.name })
+                            .setArtworkUri(Uri.parse(track.imageUrl))
+                            .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                            .build()
+                    }
+            )
+        }?.let {
+            mediaCache.putAll(it)
+            Log.d("Player", "Put all success")
+        }
 
         return mediaCache.loadFromCache(tracks)
     }
