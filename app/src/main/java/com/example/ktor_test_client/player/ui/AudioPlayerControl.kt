@@ -46,7 +46,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderColors
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -61,12 +61,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -471,6 +469,18 @@ private fun PlayerControls(
         label = "slider animation"
     )
 
+    val semiTransparentForeground by remember {
+        derivedStateOf {
+            foregroundColor.value.copy(.65f)
+        }
+    }
+
+    val fullyTransparentForeground by remember {
+        derivedStateOf {
+            foregroundColor.value.copy(.15f)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize(),
@@ -496,17 +506,17 @@ private fun PlayerControls(
                     modifier = Modifier
                         .weight(1f)
                         .align(Alignment.CenterVertically),
-                    colors = SliderColors(
-                        thumbColor = (backgroundColor.value) * 2.5f,
-                        activeTrackColor = (backgroundColor.value) * 2f,
-                        inactiveTrackColor = (backgroundColor.value) * .7f,
-                        activeTickColor = backgroundColor.value * 2.5f,
-                        inactiveTickColor = backgroundColor.value * .7f,
-                        disabledThumbColor = backgroundColor.value * .7f,
-                        disabledActiveTrackColor = backgroundColor.value * .7f,
-                        disabledActiveTickColor = backgroundColor.value * .7f,
-                        disabledInactiveTickColor = backgroundColor.value * .7f,
-                        disabledInactiveTrackColor = backgroundColor.value * .7f,
+                    colors = SliderDefaults.colors(
+                        activeTrackColor = semiTransparentForeground * 1.5f,
+                        activeTickColor = semiTransparentForeground * 2f,
+                        inactiveTrackColor = fullyTransparentForeground,
+
+                        inactiveTickColor = semiTransparentForeground,
+                        disabledThumbColor = semiTransparentForeground,
+                        disabledActiveTrackColor = semiTransparentForeground,
+                        disabledActiveTickColor = semiTransparentForeground,
+                        disabledInactiveTickColor = semiTransparentForeground,
+                        disabledInactiveTrackColor = semiTransparentForeground,
                     ),
                     thumb = {
                         Box(
@@ -514,7 +524,7 @@ private fun PlayerControls(
                                 .width(6.dp)
                                 .height(30.dp)
                                 .clip(MaterialTheme.shapes.small)
-                                .background(backgroundColor.value * 2.5f)
+                                .background(semiTransparentForeground * 2f)
                         )
                     }
                 )
@@ -578,7 +588,7 @@ private fun PlayerControls(
             }
 
             CircleButton(
-                containerColor = backgroundColor.value * 2f,
+                containerColor = fullyTransparentForeground,
                 size = 70.dp,
                 onClick = {
                     onPlayPause()
