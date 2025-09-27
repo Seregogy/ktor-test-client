@@ -59,7 +59,7 @@ fun ColoredScaffold(
 
         onBackgroundColor = remember {
             derivedStateOf {
-                Color(currentPalette.value?.dominantSwatch?.bodyTextColor ?: colorScheme.onBackground.toArgb())
+                Color(currentPalette.value?.dominantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
             }
         }
 

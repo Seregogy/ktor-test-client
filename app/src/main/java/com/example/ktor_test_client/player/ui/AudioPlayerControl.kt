@@ -30,15 +30,17 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +48,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -60,10 +61,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -78,7 +81,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -130,98 +132,120 @@ fun FullAudioPlayer(
             viewModel.palette.collectAsStateWithLifecycle()
         }
     ) {
-        Column(
-            modifier = Modifier
-                .background(backgroundColorAnimated.value)
-                .then(modifier)
-        ) {
-            TopBar(
-                textOnSecondaryColorAnimated = textOnPrimaryOrBackgroundColorAnimated,
-                currentTrackFullDto = currentTrack?.data,
-                onCollapseRequest = onCollapseRequest
-            )
-
-            Box(
+        AnimatedContent(
+            targetState = currentPalette.value,
+            transitionSpec = {
+                fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(animationsSpeed))
+            },
+            label = "image crossfade"
+        ) { palette ->
+            Column(
                 modifier = Modifier
-                    .heightIn(min = screenWidth)
-                    .offset(y = (-20).dp)
-            ) {
-                bitmap?.let {
-                    AnimatedContent(
-                        targetState = it,
-                        transitionSpec = {
-                            fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
-                                tween(
-                                    animationsSpeed
+                    .background(backgroundColorAnimated.value)
+                    .then(
+                        if (palette?.swatches != null) {
+                            Modifier.background(
+                                brush = Brush.verticalGradient(
+                                    colors = currentPalette.value!!.swatches.takeLast(3).mapNotNull { Color(it.rgb).copy(.2f) }
                                 )
                             )
-                        },
-                        label = "image animation"
-                    ) { animatedBitmap ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                                .drawWithContent {
-                                    drawContent()
+                        } else {
+                            Modifier
+                        }
+                    )
 
-                                    drawRect(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                Color.White,
-                                                Color.Transparent,
-                                            )
-                                        ),
-                                        blendMode = BlendMode.DstIn
+                    .then(modifier)
+            ) {
+                TopBar(
+                    textOnSecondaryColorAnimated = onBackgroundColorAnimated,
+                    currentTrackFullDto = currentTrack?.data,
+                    onCollapseRequest = onCollapseRequest
+                )
+
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = screenWidth)
+                        .offset(y = (-20).dp)
+                ) {
+                    bitmap?.let {
+                        AnimatedContent(
+                            targetState = it,
+                            transitionSpec = {
+                                fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
+                                    tween(
+                                        animationsSpeed
                                     )
-                                }
-                        ) {
-                            Image(
-                                bitmap = animatedBitmap.asImageBitmap(),
-                                contentDescription = "album image",
+                                )
+                            },
+                            label = "image animation"
+                        ) { animatedBitmap ->
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                                    .drawWithContent {
+                                        drawContent()
+
+                                        drawRect(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    Color.White,
+                                                    Color.Transparent,
+                                                )
+                                            ),
+                                            blendMode = BlendMode.DstIn
+                                        )
+                                    }
+                            ) {
+                                Image(
+                                    bitmap = animatedBitmap.asImageBitmap(),
+                                    contentDescription = "album image",
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset(y = (-50).dp)
-            ) {
-                Column(
+                Box(
                     modifier = Modifier
-                        .padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                        .fillMaxSize()
+                        .offset(y = (-50).dp)
                 ) {
-                    TrackInfo(
-                        currentTrackFullDto = currentTrack?.data,
-                        secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
-                        isTrackLoading = isLoading,
-                        onAlbumClicked = onAlbumClicked,
-                        onArtistClicked = onArtistClicked
-                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(15.dp)
+                    ) {
+                        TrackInfo(
+                            currentTrackFullDto = currentTrack?.data,
+                            foregroundColor = textOnPrimaryOrBackgroundColorAnimated,
+                            onBackgroundColor = onBackgroundColorAnimated,
+                            isTrackLoading = isLoading,
+                            onAlbumClicked = onAlbumClicked,
+                            onArtistClicked = onArtistClicked
+                        )
 
-                    PlayerControls(
-                        currentPosition = currentPosition,
-                        currentTrackDuration = currentTrackDuration,
-                        viewModel = viewModel,
-                        isPlay = isPlay,
-                        isSliding = isSliding,
-                        backgroundColor = backgroundColorAnimated,
-                        secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
-                        isTrackLoading = isLoading,
-                        isLastTrack = isLastTrack,
-                        onNext = { viewModel.audioPlayer.seekToNext() },
-                        onPrev = { viewModel.audioPlayer.seekToPrev() },
-                        onPlayPause = { viewModel.audioPlayer.playPause() }
-                    )
+                        PlayerControls(
+                            currentPosition = currentPosition,
+                            currentTrackDuration = currentTrackDuration,
+                            viewModel = viewModel,
+                            isPlay = isPlay,
+                            isSliding = isSliding,
+                            backgroundColor = backgroundColorAnimated,
+                            onBackgroundColor = onBackgroundColorAnimated,
+                            foregroundColor = onBackgroundColorAnimated,
+                            isTrackLoading = isLoading,
+                            isLastTrack = isLastTrack,
+                            onNext = { viewModel.audioPlayer.seekToNext() },
+                            onPrev = { viewModel.audioPlayer.seekToPrev() },
+                            onPlayPause = { viewModel.audioPlayer.playPause() }
+                        )
+                    }
                 }
             }
         }
@@ -243,8 +267,6 @@ private fun DoubleTapGestures(
             .fillMaxHeight()
             .width(100.dp)
             .weight(.4f)
-
-        val ripple = ripple()
 
         Box(
             modifier = modifier
@@ -324,7 +346,8 @@ private fun TopBar(
 @Composable
 private fun TrackInfo(
     currentTrackFullDto: TrackFullDto?,
-    secondaryColor: State<Color>,
+    foregroundColor: State<Color>,
+    onBackgroundColor: State<Color>,
     isTrackLoading: State<Boolean>,
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
@@ -386,7 +409,7 @@ private fun TrackInfo(
                     }
                     .alpha(textAlpha)
                     .basicMarquee(),
-                color = secondaryColor.value
+                color = foregroundColor.value
             )
 
             Text(
@@ -399,7 +422,7 @@ private fun TrackInfo(
                     }
                     .alpha(textAlpha)
                     .basicMarquee(),
-                color = secondaryColor.value
+                color = onBackgroundColor.value
             )
         }
     }
@@ -414,7 +437,8 @@ private fun PlayerControls(
     isPlay: State<Boolean>,
     isSliding: MutableState<Boolean>,
     backgroundColor: State<Color>,
-    secondaryColor: State<Color>,
+    onBackgroundColor: State<Color>,
+    foregroundColor: State<Color>,
     isTrackLoading: State<Boolean>,
     isLastTrack: State<Boolean>,
     onNext: () -> Unit = { },
@@ -424,9 +448,9 @@ private fun PlayerControls(
     val secondaryColorWithLoadingState by remember {
         derivedStateOf {
             if (isTrackLoading.value) {
-                secondaryColor.value.copy(.5f)
+                foregroundColor.value.copy(.5f)
             } else {
-                secondaryColor.value
+                foregroundColor.value
             }
         }
     }
@@ -434,9 +458,9 @@ private fun PlayerControls(
     val nextTrackLoadedColorState by remember {
         derivedStateOf {
             if (isLastTrack.value) {
-                secondaryColor.value.copy(.3f)
+                foregroundColor.value.copy(.3f)
             } else {
-                secondaryColor.value
+                foregroundColor.value
             }
         }
     }
@@ -447,92 +471,97 @@ private fun PlayerControls(
         label = "slider animation"
     )
 
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            Slider(
-                value = currentPositionAnimated.value,
-                onValueChange = {
-                    if (!isSliding.value) isSliding.value = true
-
-                    currentPosition.value = (it * currentTrackDuration.toFloat()).toLong()
-                },
-                onValueChangeFinished = {
-                    isSliding.value = false
-
-                    viewModel.audioPlayer.seek(currentPosition.value)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically),
-                colors = SliderColors(
-                    thumbColor = (backgroundColor.value) * 2.5f,
-                    activeTrackColor = (backgroundColor.value) * 2f,
-                    inactiveTrackColor = (backgroundColor.value) * .7f,
-                    activeTickColor = backgroundColor.value * 2.5f,
-                    inactiveTickColor = backgroundColor.value * .7f,
-                    disabledThumbColor = backgroundColor.value * .7f,
-                    disabledActiveTrackColor = backgroundColor.value * .7f,
-                    disabledActiveTickColor = backgroundColor.value * .7f,
-                    disabledInactiveTickColor = backgroundColor.value * .7f,
-                    disabledInactiveTrackColor = backgroundColor.value * .7f,
-                ),
-                thumb = {
-                    Box(
-                        modifier = Modifier
-                            .width(6.dp)
-                            .height(30.dp)
-                            .clip(MaterialTheme.shapes.small)
-                            .background(backgroundColor.value * 2.5f)
-                    )
-                }
-            )
-
-            IconButton(
-                onClick = { /*TODO(лайк на трек)*/ }
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                Icon(
-                    imageVector = if (false)
-                        Icons.Rounded.Favorite
-                    else
-                        Icons.Rounded.FavoriteBorder,
-                    contentDescription = "play/pause icon",
-                    tint = secondaryColorWithLoadingState,
-                    modifier = Modifier
-                        .size(26.dp)
-                )
-            }
-        }
+                Slider(
+                    value = currentPositionAnimated.value,
+                    onValueChange = {
+                        if (!isSliding.value) isSliding.value = true
 
-        Text(
-            text = buildAnnotatedString {
-                withStyle(
-                    style = SpanStyle(
-                        fontWeight = FontWeight.W600,
-                        fontSize = 18.sp
-                    )
-                ) {
-                    append(
-                        formatMinuteTimer(
-                            (currentPositionAnimated.value * currentTrackDuration.toFloat() / 1000).roundToInt().coerceIn(0..currentTrackDuration.toInt())
+                        currentPosition.value = (it * currentTrackDuration.toFloat()).toLong()
+                    },
+                    onValueChangeFinished = {
+                        isSliding.value = false
+
+                        viewModel.audioPlayer.seek(currentPosition.value)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically),
+                    colors = SliderColors(
+                        thumbColor = (backgroundColor.value) * 2.5f,
+                        activeTrackColor = (backgroundColor.value) * 2f,
+                        inactiveTrackColor = (backgroundColor.value) * .7f,
+                        activeTickColor = backgroundColor.value * 2.5f,
+                        inactiveTickColor = backgroundColor.value * .7f,
+                        disabledThumbColor = backgroundColor.value * .7f,
+                        disabledActiveTrackColor = backgroundColor.value * .7f,
+                        disabledActiveTickColor = backgroundColor.value * .7f,
+                        disabledInactiveTickColor = backgroundColor.value * .7f,
+                        disabledInactiveTrackColor = backgroundColor.value * .7f,
+                    ),
+                    thumb = {
+                        Box(
+                            modifier = Modifier
+                                .width(6.dp)
+                                .height(30.dp)
+                                .clip(MaterialTheme.shapes.small)
+                                .background(backgroundColor.value * 2.5f)
                         )
+                    }
+                )
+
+                IconButton(
+                    onClick = { /*TODO(лайк на трек)*/ }
+                ) {
+                    Icon(
+                        imageVector = if (false)
+                            Icons.Rounded.Favorite
+                        else
+                            Icons.Rounded.FavoriteBorder,
+                        contentDescription = "play/pause icon",
+                        tint = secondaryColorWithLoadingState,
+                        modifier = Modifier
+                            .size(26.dp)
                     )
                 }
+            }
 
-                append("/")
-                append(formatMinuteTimer((currentTrackDuration / 1000).toInt()))
-            },
-            textAlign = TextAlign.Center,
-            color = secondaryColorWithLoadingState
-        )
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.W600,
+                            fontSize = 18.sp
+                        )
+                    ) {
+                        append(
+                            formatMinuteTimer(
+                                (currentPositionAnimated.value * currentTrackDuration.toFloat() / 1000).roundToInt().coerceIn(0..currentTrackDuration.toInt())
+                            )
+                        )
+                    }
+
+                    append("/")
+                    append(formatMinuteTimer((currentTrackDuration / 1000).toInt()))
+                },
+                textAlign = TextAlign.Center,
+                color = secondaryColorWithLoadingState
+            )
+        }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .padding(top = 20.dp)
                 .align(Alignment.CenterHorizontally)
         ) {
 
@@ -561,7 +590,7 @@ private fun PlayerControls(
                         else
                             Icons.Rounded.PlayArrow,
                         contentDescription = "play/pause icon",
-                        tint = secondaryColor.value,
+                        tint = foregroundColor.value,
                         modifier = Modifier
                             .size(36.dp)
                     )
@@ -580,6 +609,53 @@ private fun PlayerControls(
                         .size(34.dp)
                 )
             }
+        }
+
+        BottomControls(
+            modifier = Modifier
+                .fillMaxWidth(),
+            foregroundColor = onBackgroundColor
+        )
+    }
+}
+
+@Composable
+fun BottomControls(
+    modifier: Modifier,
+    foregroundColor: State<Color>,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        IconButton(
+            onClick = { }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Timer,
+                contentDescription = "time icon",
+                tint = foregroundColor.value
+            )
+        }
+
+        IconButton(
+            onClick = { }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Lyrics,
+                contentDescription = "time icon",
+                tint = foregroundColor.value
+            )
+        }
+
+        IconButton(
+            onClick = { }
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Repeat,
+                contentDescription = "time icon",
+                tint = foregroundColor.value
+            )
         }
     }
 }
