@@ -530,7 +530,7 @@ private fun PlayerControls(
                 )
 
                 IconButton(
-                    onClick = { /*TODO(лайк на трек)*/ }
+                    onClick = {  }
                 ) {
                     Icon(
                         imageVector = if (false)
@@ -642,7 +642,7 @@ fun BottomControls(
             onClick = { }
         ) {
             Icon(
-                imageVector = Icons.Rounded.Timer,
+                painter = painterResource(R.drawable.timer_icon),
                 contentDescription = "time icon",
                 tint = foregroundColor.value
             )
@@ -652,7 +652,7 @@ fun BottomControls(
             onClick = { }
         ) {
             Icon(
-                imageVector = Icons.Rounded.Lyrics,
+                painter = painterResource(R.drawable.lyrics_icon),
                 contentDescription = "time icon",
                 tint = foregroundColor.value
             )
@@ -662,7 +662,7 @@ fun BottomControls(
             onClick = { }
         ) {
             Icon(
-                imageVector = Icons.Rounded.Repeat,
+                painter = painterResource(R.drawable.repeat_icon),
                 contentDescription = "time icon",
                 tint = foregroundColor.value
             )
