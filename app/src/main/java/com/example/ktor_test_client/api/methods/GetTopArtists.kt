@@ -14,8 +14,8 @@ data class GetTopArtistsResponse(
     val artists: List<BaseArtist>
 )
 
-suspend fun ApiClient.getTopArtists(): GetTopArtistsResponse? {
-    val response = httpClient.get("api/v1/artists/top")
+suspend fun ApiClient.getTopArtists(limit: Int): GetTopArtistsResponse? {
+    val response = httpClient.get("api/v1/artists/top?limit=$limit")
 
     Log.d("API", response.status.toString())
     Log.d("API", response.bodyAsText())

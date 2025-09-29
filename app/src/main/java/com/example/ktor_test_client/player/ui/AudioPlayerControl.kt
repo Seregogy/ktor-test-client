@@ -30,7 +30,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -44,6 +46,7 @@ import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -78,6 +81,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -86,6 +90,7 @@ import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
@@ -124,6 +129,7 @@ fun FullAudioPlayer(
         }
     }
     val isSliding = remember { mutableStateOf(false) }
+    val isLyricsOpen = remember { mutableStateOf(false) }
 
     ColoredScaffold(
         state = rememberColoredScaffoldState(tween(animationsSpeed)) {
@@ -155,55 +161,76 @@ fun FullAudioPlayer(
                     .then(modifier)
             ) {
                 TopBar(
-                    textOnSecondaryColorAnimated = onBackgroundColorAnimated,
                     currentTrackFullDto = currentTrack?.data,
                     onCollapseRequest = onCollapseRequest
                 )
 
                 Box(
                     modifier = Modifier
-                        .heightIn(min = screenWidth)
+                        .heightIn(min = screenWidth, max = screenWidth)
                         .offset(y = (-20).dp)
-                ) {
-                    bitmap?.let {
-                        AnimatedContent(
-                            targetState = it,
-                            transitionSpec = {
-                                fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
-                                    tween(
-                                        animationsSpeed
-                                    )
-                                )
-                            },
-                            label = "image animation"
-                        ) { animatedBitmap ->
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(1f)
-                                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                                    .drawWithContent {
-                                        drawContent()
+                        .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                        .drawWithContent {
+                            drawContent()
 
-                                        drawRect(
-                                            brush = Brush.verticalGradient(
-                                                colors = listOf(
-                                                    Color.Transparent,
-                                                    Color.White,
-                                                    Color.Transparent,
-                                                )
-                                            ),
-                                            blendMode = BlendMode.DstIn
+                            drawRect(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.White,
+                                        Color.Transparent,
+                                    )
+                                ),
+                                blendMode = BlendMode.DstIn
+                            )
+                        }
+                ) {
+                    val scroll = rememberScrollState()
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isLyricsOpen.value,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Text(
+                            text = currentTrack?.data?.lyrics ?: LoremIpsum().values.take(15).joinToString { it },
+                            modifier = Modifier
+                                .padding(horizontal = 40.dp)
+                                .verticalScroll(scroll)
+                                .padding(vertical = 100.dp)
+                        )
+                    }
+
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = !isLyricsOpen.value,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        bitmap?.let {
+                            AnimatedContent(
+                                targetState = it,
+                                transitionSpec = {
+                                    fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
+                                        tween(
+                                            animationsSpeed
                                         )
-                                    }
-                            ) {
-                                Image(
-                                    bitmap = animatedBitmap.asImageBitmap(),
-                                    contentDescription = "album image",
+                                    )
+                                },
+                                label = "image animation"
+                            ) { animatedBitmap ->
+                                Box(
                                     modifier = Modifier
-                                        .fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+
+                                ) {
+                                    Image(
+                                        bitmap = animatedBitmap.asImageBitmap(),
+                                        contentDescription = "album image",
+                                        modifier = Modifier
+                                            .fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                             }
                         }
                     }
@@ -221,8 +248,6 @@ fun FullAudioPlayer(
                     ) {
                         TrackInfo(
                             currentTrackFullDto = currentTrack?.data,
-                            foregroundColor = textOnPrimaryOrBackgroundColorAnimated,
-                            onBackgroundColor = onBackgroundColorAnimated,
                             isTrackLoading = isLoading,
                             onAlbumClicked = onAlbumClicked,
                             onArtistClicked = onArtistClicked
@@ -234,11 +259,9 @@ fun FullAudioPlayer(
                             viewModel = viewModel,
                             isPlay = isPlay,
                             isSliding = isSliding,
-                            backgroundColor = backgroundColorAnimated,
-                            onBackgroundColor = onBackgroundColorAnimated,
-                            foregroundColor = onBackgroundColorAnimated,
                             isTrackLoading = isLoading,
                             isLastTrack = isLastTrack,
+                            isLyricsOpen = isLyricsOpen,
                             onNext = { viewModel.audioPlayer.seekToNext() },
                             onPrev = { viewModel.audioPlayer.seekToPrev() },
                             onPlayPause = { viewModel.audioPlayer.playPause() }
@@ -251,49 +274,7 @@ fun FullAudioPlayer(
 }
 
 @Composable
-private fun DoubleTapGestures(
-    audioPlayerViewModel: AudioPlayerViewModel,
-    secondaryColor: State<Color>
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        val modifier = Modifier
-            .background(secondaryColor.value)
-            .fillMaxHeight()
-            .width(100.dp)
-            .weight(.4f)
-
-        Box(
-            modifier = modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = { offset ->
-                            audioPlayerViewModel.audioPlayer.seek(audioPlayerViewModel.audioPlayer.currentPosition.value - 5000)
-                        }
-                    )
-
-                }
-        )
-
-        Box(
-            modifier = modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = { offset ->
-                            audioPlayerViewModel.audioPlayer.seek(audioPlayerViewModel.audioPlayer.currentPosition.value + 5000)
-                        }
-                    )
-                }
-        )
-    }
-}
-
-@Composable
-private fun TopBar(
-    textOnSecondaryColorAnimated: State<Color>,
+private fun ColoredScaffoldState.TopBar(
     currentTrackFullDto: TrackFullDto?,
     onCollapseRequest: () -> Unit
 ) {
@@ -314,7 +295,7 @@ private fun TopBar(
                 contentDescription = "",
                 modifier = Modifier
                     .size(30.dp),
-                tint = textOnSecondaryColorAnimated.value
+                tint = onBackgroundColorAnimated.value
             )
         }
 
@@ -324,7 +305,7 @@ private fun TopBar(
                 .basicMarquee(),
             text = "Плейлист \"${currentTrackFullDto?.album?.name ?: "unknown"}\"",
             fontWeight = FontWeight.W700,
-            color = textOnSecondaryColorAnimated.value,
+            color = onBackgroundColorAnimated.value,
             textAlign = TextAlign.Center,
             maxLines = 1
         )
@@ -335,17 +316,15 @@ private fun TopBar(
             Icon(
                 painter = painterResource(R.drawable.queue_music_icon),
                 contentDescription = "",
-                tint = textOnSecondaryColorAnimated.value
+                tint = onBackgroundColorAnimated.value
             )
         }
     }
 }
 
 @Composable
-private fun TrackInfo(
+private fun ColoredScaffoldState.TrackInfo(
     currentTrackFullDto: TrackFullDto?,
-    foregroundColor: State<Color>,
-    onBackgroundColor: State<Color>,
     isTrackLoading: State<Boolean>,
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
@@ -407,7 +386,7 @@ private fun TrackInfo(
                     }
                     .alpha(textAlpha)
                     .basicMarquee(),
-                color = foregroundColor.value
+                color = textOnPrimaryOrBackgroundColorAnimated.value
             )
 
             Text(
@@ -420,7 +399,7 @@ private fun TrackInfo(
                     }
                     .alpha(textAlpha)
                     .basicMarquee(),
-                color = onBackgroundColor.value
+                color = onBackgroundColorAnimated.value
             )
         }
     }
@@ -428,17 +407,15 @@ private fun TrackInfo(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PlayerControls(
+private fun ColoredScaffoldState.PlayerControls(
     currentPosition: MutableState<Long>,
     currentTrackDuration: Long,
     viewModel: AudioPlayerViewModel,
     isPlay: State<Boolean>,
     isSliding: MutableState<Boolean>,
-    backgroundColor: State<Color>,
-    onBackgroundColor: State<Color>,
-    foregroundColor: State<Color>,
     isTrackLoading: State<Boolean>,
     isLastTrack: State<Boolean>,
+    isLyricsOpen: MutableState<Boolean>,
     onNext: () -> Unit = { },
     onPrev: () -> Unit = { },
     onPlayPause: () -> Unit = { }
@@ -446,9 +423,9 @@ private fun PlayerControls(
     val secondaryColorWithLoadingState by remember {
         derivedStateOf {
             if (isTrackLoading.value) {
-                foregroundColor.value.copy(.5f)
+                onBackgroundColorAnimated.value.copy(.5f)
             } else {
-                foregroundColor.value
+                onBackgroundColorAnimated.value
             }
         }
     }
@@ -456,9 +433,9 @@ private fun PlayerControls(
     val nextTrackLoadedColorState by remember {
         derivedStateOf {
             if (isLastTrack.value) {
-                foregroundColor.value.copy(.3f)
+                onBackgroundColorAnimated.value.copy(.3f)
             } else {
-                foregroundColor.value
+                onBackgroundColorAnimated.value
             }
         }
     }
@@ -471,13 +448,13 @@ private fun PlayerControls(
 
     val semiTransparentForeground by remember {
         derivedStateOf {
-            foregroundColor.value.copy(.65f)
+            onBackgroundColorAnimated.value.copy(.65f)
         }
     }
 
     val fullyTransparentForeground by remember {
         derivedStateOf {
-            foregroundColor.value.copy(.15f)
+            onBackgroundColorAnimated.value.copy(.15f)
         }
     }
 
@@ -600,7 +577,7 @@ private fun PlayerControls(
                         else
                             Icons.Rounded.PlayArrow,
                         contentDescription = "play/pause icon",
-                        tint = foregroundColor.value,
+                        tint = onBackgroundColorAnimated.value,
                         modifier = Modifier
                             .size(36.dp)
                     )
@@ -624,16 +601,26 @@ private fun PlayerControls(
         BottomControls(
             modifier = Modifier
                 .fillMaxWidth(),
-            foregroundColor = onBackgroundColor
+            viewModel = viewModel,
+            isLyricsOpen = isLyricsOpen
         )
     }
 }
 
 @Composable
-fun BottomControls(
+fun ColoredScaffoldState.BottomControls(
     modifier: Modifier,
-    foregroundColor: State<Color>,
+    viewModel: AudioPlayerViewModel,
+    isLyricsOpen: MutableState<Boolean>
 ) {
+    val track by viewModel.audioPlayer.currentTrack.collectAsStateWithLifecycle()
+
+    val haveLyrics by remember {
+        derivedStateOf {
+            track?.data?.lyrics != null
+        }
+    }
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceEvenly
@@ -644,17 +631,21 @@ fun BottomControls(
             Icon(
                 painter = painterResource(R.drawable.timer_icon),
                 contentDescription = "time icon",
-                tint = foregroundColor.value
+                tint = onBackgroundColor.value
             )
         }
 
-        IconButton(
-            onClick = { }
+        IconToggleButton(
+            checked = isLyricsOpen.value,
+            onCheckedChange = {
+                isLyricsOpen.value = it
+            },
+            enabled = haveLyrics
         ) {
             Icon(
                 painter = painterResource(R.drawable.lyrics_icon),
                 contentDescription = "time icon",
-                tint = foregroundColor.value
+                tint = if(haveLyrics) onBackgroundColor.value else onBackgroundColor.value.copy(.1f)
             )
         }
 
@@ -664,32 +655,8 @@ fun BottomControls(
             Icon(
                 painter = painterResource(R.drawable.repeat_icon),
                 contentDescription = "time icon",
-                tint = foregroundColor.value
+                tint = onBackgroundColor.value
             )
         }
-    }
-}
-
-@Composable
-private fun PlayerPageHeaderFadingGradientTop(
-    modifier: Modifier,
-    targetColor: State<Color>
-) {
-    Column(
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            .35f to Color.Transparent,
-                            .8f to targetColor.value
-                        )
-                    )
-                )
-        )
     }
 }
