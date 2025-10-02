@@ -93,7 +93,7 @@ class MusicApiService(
     }
 
     suspend fun getTopArtists(): Result<List<BaseArtist>> = safeRequest {
-        apiClient.getTopArtists()?.artists!!
+        apiClient.getTopArtists(10)?.artists!!
     }
 
     suspend fun getSinglesByArtist(artistId: String): Result<List<BaseAlbum>> = safeRequest {

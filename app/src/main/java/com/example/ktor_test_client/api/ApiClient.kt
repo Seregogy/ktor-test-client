@@ -21,7 +21,7 @@ import kotlinx.serialization.json.Json
 open class ApiClient(
     private val context: Context,
     private val defaultProtocol: URLProtocol = URLProtocol.Companion.HTTPS,
-    private val defaultHost: String = "seregogy-music.duckdns.org",
+    private val defaultHost: String = "onewave.duckdns.org",
     private val defaultPort: Int = 443,
     private val tokenHandler: TokenHandler
 ) {
