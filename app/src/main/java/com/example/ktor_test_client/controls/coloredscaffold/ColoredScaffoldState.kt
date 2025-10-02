@@ -4,6 +4,7 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +34,7 @@ class ColoredScaffoldState(
     var textOnPrimaryOrBackgroundColor: State<Color> = mutableStateOf(Color.White),
     var textOnPrimaryOrBackgroundColorAnimated: State<Color> = mutableStateOf(Color.White),
 
-    var additionalVerticalGradientBrush: State<Brush> = mutableStateOf(SolidColor(Color.Transparent))
+    var additionalVerticalGradientBrush: MutableState<Brush> = mutableStateOf(SolidColor(Color.Transparent))
 )
 
 @Composable

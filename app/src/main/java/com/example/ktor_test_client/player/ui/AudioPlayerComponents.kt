@@ -8,17 +8,16 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -60,6 +59,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,6 +67,7 @@ import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.CircleButton
+import com.example.ktor_test_client.controls.MarqueeText
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
@@ -139,11 +140,12 @@ fun ColoredScaffoldState.PlayerControls(
 
 @Composable
 fun ColoredScaffoldState.TopBar(
+    modifier: Modifier = Modifier,
     currentTrackFullDto: TrackFullDto?,
     onCollapseRequest: () -> Unit
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 15.dp),
         horizontalArrangement = Arrangement.SpaceAround,
@@ -163,16 +165,16 @@ fun ColoredScaffoldState.TopBar(
             )
         }
 
-        Text(
-            modifier = Modifier
-                .weight(.6f)
-                .basicMarquee(),
+        MarqueeText(
             text = "Плейлист \"${currentTrackFullDto?.album?.name ?: "unknown"}\"",
             fontWeight = FontWeight.W700,
             color = onBackgroundColorAnimated.value,
-            textAlign = TextAlign.Center,
-            maxLines = 1
+            maxLines = 1,
+            textAlign = Alignment.Center,
+            containerModifier = Modifier
+                .weight(.6f)
         )
+
 
         IconButton(
             onClick = { }
@@ -212,34 +214,35 @@ fun ColoredScaffoldState.TrackInfo(
         }
     }
 
-    var columnHeight by remember { mutableStateOf(0.dp) }
+    var columnSize by remember { mutableStateOf(IntSize.Zero) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        AsyncImage(
-            model = currentTrackFullDto?.album?.artists?.first()?.imageUrl,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .heightIn(max = columnHeight - 5.dp)
-                .aspectRatio(1f)
-                .clip(CircleShape)
-                .clickable {
-                    onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
-                },
-            contentDescription = "mini avatar"
-        )
+        if (columnSize.height != 0) {
+            AsyncImage(
+                model = currentTrackFullDto?.album?.artists?.first()?.imageUrl,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .height(with(density) { columnSize.height.toDp() })
+                    .aspectRatio(1f)
+                    .clip(CircleShape)
+                    .clickable {
+                        onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
+                    },
+                contentDescription = "mini avatar"
+            )
+        }
 
         Column(
             modifier = Modifier
+                .height(IntrinsicSize.Min)
                 .onSizeChanged {
-                    with(density) {
-                        columnHeight = it.height.toDp()
-                    }
+                    columnSize = it
                 }
         ) {
-            Text(
+            MarqueeText(
                 text = currentTrackFullDto?.name ?: "",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.W800,
@@ -248,12 +251,11 @@ fun ColoredScaffoldState.TrackInfo(
                     .clickable {
                         onAlbumClicked(currentTrackFullDto?.album?.id ?: "")
                     }
-                    .alpha(textAlpha)
-                    .basicMarquee(),
+                    .alpha(textAlpha),
                 color = textOnPrimaryOrBackgroundColorAnimated.value
             )
 
-            Text(
+            MarqueeText(
                 text = currentTrackFullDto?.album?.artists?.firstOrNull()?.name ?: "",
                 fontWeight = FontWeight.W600,
                 modifier = Modifier
@@ -261,8 +263,7 @@ fun ColoredScaffoldState.TrackInfo(
                     .clickable {
                         onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
                     }
-                    .alpha(textAlpha)
-                    .basicMarquee(),
+                    .alpha(textAlpha),
                 color = onBackgroundColorAnimated.value
             )
         }
@@ -480,6 +481,8 @@ fun ColoredScaffoldState.BottomControls(
 
     val haveLyrics by remember {
         derivedStateOf {
+            isLyricsOpen.value = isLyricsOpen.value && track?.data?.lyrics != null
+
             track?.data?.lyrics != null
         }
     }

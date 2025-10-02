@@ -10,10 +10,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +25,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
@@ -67,6 +69,7 @@ fun FullAudioPlayer(
             state == AudioPlayer.AudioPlayerState.Play
         }
     }
+
     val isLoading = remember {
         derivedStateOf {
             state == AudioPlayer.AudioPlayerState.Loading
@@ -81,137 +84,147 @@ fun FullAudioPlayer(
             viewModel.palette.collectAsStateWithLifecycle()
         }
     ) {
-        AnimatedContent(
-            targetState = currentPalette.value,
-            transitionSpec = {
-                fadeIn(tween(animationsSpeed)) togetherWith fadeOut(tween(animationsSpeed))
-            },
-            label = "image crossfade"
-        ) { palette ->
-            Column(
+        val secondaryColorWithLoadingState by remember {
+            derivedStateOf {
+                if (isLoading.value) {
+                    onBackgroundColorAnimated.value.copy(.5f)
+                } else {
+                    onBackgroundColorAnimated.value
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .background(backgroundColorAnimated.value)
+                .background(additionalVerticalGradientBrush.value)
+                .then(modifier)
+        ) {
+            TopBar(
+                currentTrackFullDto = currentTrack?.data,
+                onCollapseRequest = onCollapseRequest
+            )
+
+            Box(
                 modifier = Modifier
-                    .background(backgroundColorAnimated.value)
-                    .then(
-                        if (palette?.swatches != null) {
-                            Modifier.background(
-                                brush = Brush.verticalGradient(
-                                    colors = currentPalette.value!!.swatches.takeLast(3).mapNotNull { Color(it.rgb).copy(.2f) }
+                    .height(screenWidth)
+                    .offset(y = (-20).dp)
+                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                    .drawWithContent {
+                        drawContent()
+
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.White,
+                                    Color.Transparent,
                                 )
-                            )
-                        } else {
-                            Modifier
-                        }
-                    )
-
-                    .then(modifier)
-            ) {
-                TopBar(
-                    currentTrackFullDto = currentTrack?.data,
-                    onCollapseRequest = onCollapseRequest
-                )
-
-                Box(
-                    modifier = Modifier
-                        .heightIn(min = screenWidth, max = screenWidth)
-                        .offset(y = (-20).dp)
-                        .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                        .drawWithContent {
-                            drawContent()
-
-                            drawRect(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        Color.White,
-                                        Color.Transparent,
-                                    )
-                                ),
-                                blendMode = BlendMode.DstIn
-                            )
-                        }
-                ) {
-                    val scroll = rememberScrollState()
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = isLyricsOpen.value,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        Text(
-                            text = currentTrack?.data?.lyrics ?: LoremIpsum().values.take(15).joinToString { it },
-                            modifier = Modifier
-                                .padding(horizontal = 40.dp)
-                                .verticalScroll(scroll)
-                                .padding(vertical = 100.dp)
+                            ),
+                            blendMode = BlendMode.DstIn
                         )
                     }
+            ) {
+                val scroll = rememberScrollState()
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isLyricsOpen.value,
+                    enter = fadeIn(tween()),
+                    exit = fadeOut(tween())
+                ) {
+                    Text(
+                        text = currentTrack?.data?.lyrics ?: LoremIpsum().values.take(15).joinToString { it },
+                        modifier = Modifier
+                            .padding(horizontal = 40.dp)
+                            .verticalScroll(scroll)
+                            .padding(vertical = 100.dp),
+                        color = bodyTextOnBackgroundAnimated.value
+                    )
+                }
 
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = !isLyricsOpen.value,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        bitmap?.let {
-                            AnimatedContent(
-                                targetState = it,
-                                transitionSpec = {
-                                    fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
-                                        tween(
-                                            animationsSpeed
-                                        )
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = !isLyricsOpen.value,
+                    enter = fadeIn(tween()),
+                    exit = fadeOut(tween())
+                ) {
+                    bitmap?.let {
+                        AnimatedContent(
+                            targetState = it,
+                            transitionSpec = {
+                                fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
+                                    tween(
+                                        animationsSpeed
                                     )
-                                },
-                                label = "image animation"
-                            ) { animatedBitmap ->
-                                Box(
+                                )
+                            },
+                            label = "image animation"
+                        ) { animatedBitmap ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                            ) {
+                                Image(
+                                    bitmap = animatedBitmap.asImageBitmap(),
+                                    contentDescription = "album image",
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(1f)
-                                ) {
-                                    Image(
-                                        bitmap = animatedBitmap.asImageBitmap(),
-                                        contentDescription = "album image",
-                                        modifier = Modifier
-                                            .fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
+                                        .fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
                             }
                         }
                     }
                 }
+            }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset(y = (-50).dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(15.dp)
-                    ) {
-                        TrackInfo(
-                            currentTrackFullDto = currentTrack?.data,
-                            isTrackLoading = isLoading,
-                            onAlbumClicked = onAlbumClicked,
-                            onArtistClicked = onArtistClicked
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = (-50).dp)
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    TrackInfo(
+                        currentTrackFullDto = currentTrack?.data,
+                        isTrackLoading = isLoading,
+                        onAlbumClicked = onAlbumClicked,
+                        onArtistClicked = onArtistClicked
+                    )
 
-                        PlayerControls(
-                            currentPosition = currentPosition,
-                            currentTrackDuration = currentTrackDuration,
-                            viewModel = viewModel,
-                            isPlay = isPlay,
-                            isSliding = isSliding,
-                            isTrackLoading = isLoading,
-                            isLastTrack = isLastTrack,
-                            isLyricsOpen = isLyricsOpen,
-                            onNext = { viewModel.audioPlayer.seekToNext() },
-                            onPrev = { viewModel.audioPlayer.seekToPrev() },
-                            onPlayPause = { viewModel.audioPlayer.playPause() }
-                        )
-                    }
+                    Spacer(Modifier.height(10.dp))
+
+                    PlayerSlider(
+                        currentPosition = currentPosition,
+                        currentTrackDuration = currentTrackDuration,
+                        viewModel = viewModel,
+                        isSliding = isSliding
+                    )
+
+                    TimingText(
+                        secondaryColorWithLoadingState = secondaryColorWithLoadingState,
+                        currentPosition = currentPosition,
+                        currentTrackDuration =  currentTrackDuration,
+                        isSliding = isSliding
+                    )
                 }
+
+                PlayerNavigationButtons(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
+                    secondaryColorWithLoadingState = secondaryColorWithLoadingState,
+                    isPlay = isPlay,
+                    isLastTrack = isLastTrack,
+                    onNext = { viewModel.audioPlayer.seekToNext() },
+                    onPrev = { viewModel.audioPlayer.seekToPrev() },
+                    onPlayPause = { viewModel.audioPlayer.playPause() }
+                )
+
+                BottomControls(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    viewModel = viewModel,
+                    isLyricsOpen = isLyricsOpen
+                )
             }
         }
     }

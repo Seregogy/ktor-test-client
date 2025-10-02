@@ -27,20 +27,6 @@ class Track(
     val mediaItem: MediaItem
 )
 
-object DefaultPlayerConfig {
-    var timeToPreviousTrack = 3000
-    var isAutoplay: Boolean = false
-
-    var backBufferMs = 120_000
-
-    var minBufferMs = 5_000
-    var maxBufferMs = 300_000
-    var bufferForPlaybackMs = 5_000
-    var bufferForPlaybackAfterRebuffedMs = 5_000
-
-    var targetBufferBytesSize = 24 * 1024 * 1024
-}
-
 class AudioPlayer(
     private val mediaController: MediaController,
     private val mediaCache: MediaCache,
