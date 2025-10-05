@@ -23,12 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.TrackFullDto
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 
 @Composable
-fun TrackControl(
+fun ColoredScaffoldState.TrackControl(
     modifier: Modifier = Modifier,
     trackFullDto: TrackFullDto,
-    foregroundColor: Color = MaterialTheme.colorScheme.onBackground,
     onClick: (it: TrackFullDto) -> Unit = { },
     controls: @Composable RowScope.() -> Unit
 ) {
@@ -60,21 +60,22 @@ fun TrackControl(
             )
 
             Column {
-                Text(
+                MarqueeText(
                     text = trackFullDto.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.W700,
-                    color = foregroundColor,
+                    color = textOnPrimaryOrBackgroundColorAnimated.value,
                     maxLines = 1,
-                    modifier = Modifier
-                        .basicMarquee(),
-                    lineHeight = 18.sp
+                    lineHeight = 18.sp,
+                    textAlign = Alignment.CenterStart
                 )
-                Text(
+
+                MarqueeText(
                     text = artistsNames,
                     fontSize = 13.sp,
-                    color = foregroundColor,
-                    lineHeight = 13.sp
+                    color = onBackgroundColorAnimated.value,
+                    lineHeight = 13.sp,
+                    textAlign = Alignment.CenterStart
                 )
             }
         }

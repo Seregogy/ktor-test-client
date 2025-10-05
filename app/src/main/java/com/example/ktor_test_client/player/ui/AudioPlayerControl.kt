@@ -40,6 +40,7 @@ import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
@@ -50,6 +51,7 @@ const val animationsSpeed = 1200
 fun FullAudioPlayer(
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
+    coloredScaffoldState: ColoredScaffoldState,
     onCollapseRequest: () -> Unit = { },
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
@@ -79,11 +81,7 @@ fun FullAudioPlayer(
     val isSliding = remember { mutableStateOf(false) }
     val isLyricsOpen = remember { mutableStateOf(false) }
 
-    ColoredScaffold(
-        state = rememberColoredScaffoldState(tween(animationsSpeed)) {
-            viewModel.palette.collectAsStateWithLifecycle()
-        }
-    ) {
+    ColoredScaffold(coloredScaffoldState) {
         val secondaryColorWithLoadingState by remember {
             derivedStateOf {
                 if (isLoading.value) {

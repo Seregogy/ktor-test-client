@@ -19,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -32,6 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.TrackControl
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
+import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 
@@ -40,13 +44,11 @@ fun MiniAudioPlayer(
     viewModel: AudioPlayerViewModel,
     miniPlayerHeight: Dp,
     scaffoldInnerPadding: PaddingValues,
+    coloredScaffoldState: ColoredScaffoldState,
     onExpandRequest: () -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-
     val currentTrack by viewModel.audioPlayer.currentTrack.collectAsStateWithLifecycle()
     val currentState by viewModel.audioPlayer.currentState.collectAsStateWithLifecycle()
-    val palette by viewModel.palette.collectAsStateWithLifecycle()
 
     val isPlay by remember {
         derivedStateOf {
@@ -54,71 +56,62 @@ fun MiniAudioPlayer(
         }
     }
 
-    val backgroundColor by remember {
-        derivedStateOf {
-            Color(palette?.vibrantSwatch?.rgb ?: colorScheme.background.toArgb())
-        }
-    }
-
-    val foregroundColor by remember {
-        derivedStateOf {
-            Color(palette?.vibrantSwatch?.titleTextColor ?: colorScheme.onBackground.toArgb())
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .background(Color.Transparent)
-    ) {
-        TrackControl(
+    ColoredScaffold(coloredScaffoldState) {
+        Box(
             modifier = Modifier
-                .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
-                .height(miniPlayerHeight)
-                .fillMaxWidth()
-                .padding(18.dp)
-                .clip(RoundedCornerShape(15.dp))
-                .background(backgroundColor),
-            onClick = { onExpandRequest() },
-            foregroundColor = foregroundColor,
-            trackFullDto = currentTrack?.data ?: TrackFullDto()
+                .background(Color.Transparent)
+                .background(additionalHorizontalGradientBrush.value)
         ) {
-            Row(
+            TrackControl(
                 modifier = Modifier
-                    .weight(2f)
-                    .padding(end = 5.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(bottom = scaffoldInnerPadding.calculateBottomPadding())
+                    .height(miniPlayerHeight)
+                    .fillMaxWidth()
+                    .padding(18.dp)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(backgroundColorAnimated.value)
+                    .background(additionalHorizontalGradientBrush.value),
+                onClick = { onExpandRequest() },
+                trackFullDto = currentTrack?.data ?: TrackFullDto()
             ) {
-                IconButton(
-                    onClick = { }
+                Row(
+                    modifier = Modifier
+                        .weight(2f)
+                        .padding(end = 5.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (false)
-                            Icons.Rounded.Favorite
-                        else
-                            Icons.Rounded.FavoriteBorder,
-                        contentDescription = "favorite icon button",
-                        modifier = Modifier
-                            .size(24.dp),
-                        tint = foregroundColor
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        viewModel.audioPlayer.playPause()
+                    IconButton(
+                        onClick = { }
+                    ) {
+                        Icon(
+                            imageVector = if (false)
+                                Icons.Rounded.Favorite
+                            else
+                                Icons.Rounded.FavoriteBorder,
+                            contentDescription = "favorite icon button",
+                            modifier = Modifier
+                                .size(24.dp),
+                            tint = textOnPrimaryOrBackgroundColorAnimated.value
+                        )
                     }
-                ) {
-                    Icon(
-                        imageVector = if (isPlay)
-                            Icons.Rounded.Pause
-                        else
-                            Icons.Rounded.PlayArrow,
-                        contentDescription = "play/pause icon",
-                        modifier = Modifier
-                            .size(26.dp),
-                        tint = foregroundColor
-                    )
+
+                    IconButton(
+                        onClick = {
+                            viewModel.audioPlayer.playPause()
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (isPlay)
+                                Icons.Rounded.Pause
+                            else
+                                Icons.Rounded.PlayArrow,
+                            contentDescription = "play/pause icon",
+                            modifier = Modifier
+                                .size(26.dp),
+                            tint = textOnPrimaryOrBackgroundColorAnimated.value
+                        )
+                    }
                 }
             }
         }

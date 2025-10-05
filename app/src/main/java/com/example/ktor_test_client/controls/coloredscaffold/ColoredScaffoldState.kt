@@ -34,7 +34,8 @@ class ColoredScaffoldState(
     var textOnPrimaryOrBackgroundColor: State<Color> = mutableStateOf(Color.White),
     var textOnPrimaryOrBackgroundColorAnimated: State<Color> = mutableStateOf(Color.White),
 
-    var additionalVerticalGradientBrush: MutableState<Brush> = mutableStateOf(SolidColor(Color.Transparent))
+    var additionalVerticalGradientBrush: MutableState<Brush> = mutableStateOf(SolidColor(Color.Transparent)),
+    var additionalHorizontalGradientBrush: MutableState<Brush> = mutableStateOf(SolidColor(Color.Transparent))
 )
 
 @Composable

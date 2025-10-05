@@ -1,18 +1,13 @@
 package com.example.ktor_test_client.controls.coloredscaffold
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.tween
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.palette.graphics.Palette
 import com.example.ktor_test_client.helpers.contrast
 
 @Composable
@@ -163,6 +158,11 @@ private fun ColoredScaffoldState.CalculateAdditionalGradient() {
         additionalVerticalGradientBrush.value = remember(it) {
             Brush.verticalGradient(
                 colors = it
+            )
+        }
+        additionalHorizontalGradientBrush.value = remember(it) {
+            Brush.horizontalGradient(
+                colors = it.take(2)
             )
         }
     }
