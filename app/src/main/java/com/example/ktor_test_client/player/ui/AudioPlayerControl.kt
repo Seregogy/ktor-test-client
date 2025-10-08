@@ -1,64 +1,32 @@
 package com.example.ktor_test_client.player.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderColors
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -66,32 +34,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
-import com.example.ktor_test_client.R
-import com.example.ktor_test_client.api.dtos.TrackFullDto
-import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
-import com.example.ktor_test_client.helpers.formatMinuteTimer
-import com.example.ktor_test_client.helpers.times
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
-import kotlin.math.roundToInt
 
 const val animationsSpeed = 1200
 
@@ -99,6 +51,7 @@ const val animationsSpeed = 1200
 fun FullAudioPlayer(
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
+    coloredScaffoldState: ColoredScaffoldState,
     onCollapseRequest: () -> Unit = { },
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
@@ -118,492 +71,159 @@ fun FullAudioPlayer(
             state == AudioPlayer.AudioPlayerState.Play
         }
     }
+
     val isLoading = remember {
         derivedStateOf {
             state == AudioPlayer.AudioPlayerState.Loading
         }
     }
-    val isSliding = remember { mutableStateOf(false) }
 
-    ColoredScaffold(
-        state = rememberColoredScaffoldState(tween(animationsSpeed)) {
-            viewModel.palette.collectAsStateWithLifecycle()
+    val isSliding = remember { mutableStateOf(false) }
+    val isLyricsOpen = remember { mutableStateOf(false) }
+
+    ColoredScaffold(coloredScaffoldState) {
+        val secondaryColorWithLoadingState by remember {
+            derivedStateOf {
+                if (isLoading.value) {
+                    onBackgroundColorAnimated.value.copy(.5f)
+                } else {
+                    onBackgroundColorAnimated.value
+                }
+            }
         }
-    ) {
+
         Column(
             modifier = Modifier
                 .background(backgroundColorAnimated.value)
+                .background(additionalVerticalGradientBrush.value)
                 .then(modifier)
         ) {
             TopBar(
-                textOnSecondaryColorAnimated = textOnPrimaryOrBackgroundColorAnimated,
                 currentTrackFullDto = currentTrack?.data,
                 onCollapseRequest = onCollapseRequest
             )
 
             Box(
                 modifier = Modifier
-                    .heightIn(min = screenWidth)
+                    .height(screenWidth)
                     .offset(y = (-20).dp)
-            ) {
-                bitmap?.let {
-                    AnimatedContent(
-                        targetState = it,
-                        transitionSpec = {
-                            fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
-                                tween(
-                                    animationsSpeed
-                                )
-                            )
-                        },
-                        label = "image animation"
-                    ) { animatedBitmap ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(1f)
-                                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                                .drawWithContent {
-                                    drawContent()
+                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+                    .drawWithContent {
+                        drawContent()
 
-                                    drawRect(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                Color.White,
-                                                Color.Transparent,
-                                            )
-                                        ),
-                                        blendMode = BlendMode.DstIn
+                        drawRect(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.White,
+                                    Color.Transparent,
+                                )
+                            ),
+                            blendMode = BlendMode.DstIn
+                        )
+                    }
+            ) {
+                val scroll = rememberScrollState()
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isLyricsOpen.value,
+                    enter = fadeIn(tween()),
+                    exit = fadeOut(tween())
+                ) {
+                    Text(
+                        text = currentTrack?.data?.lyrics ?: LoremIpsum().values.take(15).joinToString { it },
+                        modifier = Modifier
+                            .padding(horizontal = 40.dp)
+                            .verticalScroll(scroll)
+                            .padding(vertical = 100.dp),
+                        color = bodyTextOnBackgroundAnimated.value
+                    )
+                }
+
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = !isLyricsOpen.value,
+                    enter = fadeIn(tween()),
+                    exit = fadeOut(tween())
+                ) {
+                    bitmap?.let {
+                        AnimatedContent(
+                            targetState = it,
+                            transitionSpec = {
+                                fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
+                                    tween(
+                                        animationsSpeed
                                     )
-                                }
-                        ) {
-                            Image(
-                                bitmap = animatedBitmap.asImageBitmap(),
-                                contentDescription = "album image",
+                                )
+                            },
+                            label = "image animation"
+                        ) { animatedBitmap ->
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                            ) {
+                                Image(
+                                    bitmap = animatedBitmap.asImageBitmap(),
+                                    contentDescription = "album image",
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .offset(y = (-50).dp)
+                    .padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
+                Column {
                     TrackInfo(
                         currentTrackFullDto = currentTrack?.data,
-                        secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
                         isTrackLoading = isLoading,
                         onAlbumClicked = onAlbumClicked,
                         onArtistClicked = onArtistClicked
                     )
 
-                    PlayerControls(
+                    Spacer(Modifier.height(10.dp))
+
+                    PlayerSlider(
                         currentPosition = currentPosition,
                         currentTrackDuration = currentTrackDuration,
                         viewModel = viewModel,
-                        isPlay = isPlay,
-                        isSliding = isSliding,
-                        backgroundColor = backgroundColorAnimated,
-                        secondaryColor = textOnPrimaryOrBackgroundColorAnimated,
-                        isTrackLoading = isLoading,
-                        isLastTrack = isLastTrack,
-                        onNext = { viewModel.audioPlayer.seekToNext() },
-                        onPrev = { viewModel.audioPlayer.seekToPrev() },
-                        onPlayPause = { viewModel.audioPlayer.playPause() }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DoubleTapGestures(
-    audioPlayerViewModel: AudioPlayerViewModel,
-    secondaryColor: State<Color>
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        val modifier = Modifier
-            .background(secondaryColor.value)
-            .fillMaxHeight()
-            .width(100.dp)
-            .weight(.4f)
-
-        val ripple = ripple()
-
-        Box(
-            modifier = modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = { offset ->
-                            audioPlayerViewModel.audioPlayer.seek(audioPlayerViewModel.audioPlayer.currentPosition.value - 5000)
-                        }
+                        isSliding = isSliding
                     )
 
-                }
-        )
-
-        Box(
-            modifier = modifier
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = { offset ->
-                            audioPlayerViewModel.audioPlayer.seek(audioPlayerViewModel.audioPlayer.currentPosition.value + 5000)
-                        }
+                    TimingText(
+                        secondaryColorWithLoadingState = secondaryColorWithLoadingState,
+                        currentPosition = currentPosition,
+                        currentTrackDuration =  currentTrackDuration,
+                        isSliding = isSliding
                     )
                 }
-        )
-    }
-}
 
-@Composable
-private fun TopBar(
-    textOnSecondaryColorAnimated: State<Color>,
-    currentTrackFullDto: TrackFullDto?,
-    onCollapseRequest: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 15.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            onClick = {
-                onCollapseRequest()
-            }
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.arrow_down_icon),
-                contentDescription = "",
-                modifier = Modifier
-                    .size(30.dp),
-                tint = textOnSecondaryColorAnimated.value
-            )
-        }
-
-        Text(
-            modifier = Modifier
-                .weight(.6f)
-                .basicMarquee(),
-            text = "Плейлист \"${currentTrackFullDto?.album?.name ?: "unknown"}\"",
-            fontWeight = FontWeight.W700,
-            color = textOnSecondaryColorAnimated.value,
-            textAlign = TextAlign.Center,
-            maxLines = 1
-        )
-
-        IconButton(
-            onClick = { }
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.queue_music_icon),
-                contentDescription = "",
-                tint = textOnSecondaryColorAnimated.value
-            )
-        }
-    }
-}
-
-@Composable
-private fun TrackInfo(
-    currentTrackFullDto: TrackFullDto?,
-    secondaryColor: State<Color>,
-    isTrackLoading: State<Boolean>,
-    onAlbumClicked: (albumId: String) -> Unit,
-    onArtistClicked: (artistId: String) -> Unit
-) {
-    val density = LocalDensity.current
-
-    val infiniteTransition = rememberInfiniteTransition("cycling animation transition")
-    val textAlphaAnimated by infiniteTransition.animateFloat(
-        initialValue = .3f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1500, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "text alpha animation"
-    )
-
-    val textAlpha by remember {
-        derivedStateOf {
-            if (isTrackLoading.value) textAlphaAnimated else 1f
-        }
-    }
-
-    var columnHeight by remember { mutableStateOf(0.dp) }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        AsyncImage(
-            model = currentTrackFullDto?.album?.artists?.first()?.imageUrl,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .heightIn(max = columnHeight - 5.dp)
-                .aspectRatio(1f)
-                .clip(CircleShape)
-                .clickable {
-                    onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
-                },
-            contentDescription = "mini avatar"
-        )
-
-        Column(
-            modifier = Modifier
-                .onSizeChanged {
-                    with(density) {
-                        columnHeight = it.height.toDp()
-                    }
-                }
-        ) {
-            Text(
-                text = currentTrackFullDto?.name ?: "",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.W800,
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable {
-                        onAlbumClicked(currentTrackFullDto?.album?.id ?: "")
-                    }
-                    .alpha(textAlpha)
-                    .basicMarquee(),
-                color = secondaryColor.value
-            )
-
-            Text(
-                text = currentTrackFullDto?.album?.artists?.firstOrNull()?.name ?: "",
-                fontWeight = FontWeight.W600,
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable {
-                        onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
-                    }
-                    .alpha(textAlpha)
-                    .basicMarquee(),
-                color = secondaryColor.value
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PlayerControls(
-    currentPosition: MutableState<Long>,
-    currentTrackDuration: Long,
-    viewModel: AudioPlayerViewModel,
-    isPlay: State<Boolean>,
-    isSliding: MutableState<Boolean>,
-    backgroundColor: State<Color>,
-    secondaryColor: State<Color>,
-    isTrackLoading: State<Boolean>,
-    isLastTrack: State<Boolean>,
-    onNext: () -> Unit = { },
-    onPrev: () -> Unit = { },
-    onPlayPause: () -> Unit = { }
-) {
-    val secondaryColorWithLoadingState by remember {
-        derivedStateOf {
-            if (isTrackLoading.value) {
-                secondaryColor.value.copy(.5f)
-            } else {
-                secondaryColor.value
-            }
-        }
-    }
-
-    val nextTrackLoadedColorState by remember {
-        derivedStateOf {
-            if (isLastTrack.value) {
-                secondaryColor.value.copy(.3f)
-            } else {
-                secondaryColor.value
-            }
-        }
-    }
-
-    val currentPositionAnimated = animateFloatAsState(
-        targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
-        animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
-        label = "slider animation"
-    )
-
-    Column {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(0.dp)
-        ) {
-            Slider(
-                value = currentPositionAnimated.value,
-                onValueChange = {
-                    if (!isSliding.value) isSliding.value = true
-
-                    currentPosition.value = (it * currentTrackDuration.toFloat()).toLong()
-                },
-                onValueChangeFinished = {
-                    isSliding.value = false
-
-                    viewModel.audioPlayer.seek(currentPosition.value)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically),
-                colors = SliderColors(
-                    thumbColor = (backgroundColor.value) * 2.5f,
-                    activeTrackColor = (backgroundColor.value) * 2f,
-                    inactiveTrackColor = (backgroundColor.value) * .7f,
-                    activeTickColor = backgroundColor.value * 2.5f,
-                    inactiveTickColor = backgroundColor.value * .7f,
-                    disabledThumbColor = backgroundColor.value * .7f,
-                    disabledActiveTrackColor = backgroundColor.value * .7f,
-                    disabledActiveTickColor = backgroundColor.value * .7f,
-                    disabledInactiveTickColor = backgroundColor.value * .7f,
-                    disabledInactiveTrackColor = backgroundColor.value * .7f,
-                ),
-                thumb = {
-                    Box(
-                        modifier = Modifier
-                            .width(6.dp)
-                            .height(30.dp)
-                            .clip(MaterialTheme.shapes.small)
-                            .background(backgroundColor.value * 2.5f)
-                    )
-                }
-            )
-
-            IconButton(
-                onClick = { /*TODO(лайк на трек)*/ }
-            ) {
-                Icon(
-                    imageVector = if (false)
-                        Icons.Rounded.Favorite
-                    else
-                        Icons.Rounded.FavoriteBorder,
-                    contentDescription = "play/pause icon",
-                    tint = secondaryColorWithLoadingState,
+                PlayerNavigationButtons(
                     modifier = Modifier
-                        .size(26.dp)
+                        .align(Alignment.CenterHorizontally),
+                    secondaryColorWithLoadingState = secondaryColorWithLoadingState,
+                    isPlay = isPlay,
+                    isLastTrack = isLastTrack,
+                    onNext = { viewModel.audioPlayer.seekToNext() },
+                    onPrev = { viewModel.audioPlayer.seekToPrev() },
+                    onPlayPause = { viewModel.audioPlayer.playPause() }
+                )
+
+                BottomControls(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    viewModel = viewModel,
+                    isLyricsOpen = isLyricsOpen
                 )
             }
         }
-
-        Text(
-            text = buildAnnotatedString {
-                withStyle(
-                    style = SpanStyle(
-                        fontWeight = FontWeight.W600,
-                        fontSize = 18.sp
-                    )
-                ) {
-                    append(
-                        formatMinuteTimer(
-                            (currentPositionAnimated.value * currentTrackDuration.toFloat() / 1000).roundToInt().coerceIn(0..currentTrackDuration.toInt())
-                        )
-                    )
-                }
-
-                append("/")
-                append(formatMinuteTimer((currentTrackDuration / 1000).toInt()))
-            },
-            textAlign = TextAlign.Center,
-            color = secondaryColorWithLoadingState
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(top = 20.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-
-            IconButton(
-                onClick = { onPrev() }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipPrevious,
-                    contentDescription = "prev icon",
-                    tint = secondaryColorWithLoadingState,
-                    modifier = Modifier
-                        .size(34.dp)
-                )
-            }
-
-            CircleButton(
-                containerColor = backgroundColor.value * 2f,
-                size = 70.dp,
-                onClick = {
-                    onPlayPause()
-                },
-                content = {
-                    Icon(
-                        imageVector = if (isPlay.value)
-                            Icons.Rounded.Pause
-                        else
-                            Icons.Rounded.PlayArrow,
-                        contentDescription = "play/pause icon",
-                        tint = secondaryColor.value,
-                        modifier = Modifier
-                            .size(36.dp)
-                    )
-                }
-            )
-
-            IconButton(
-                onClick = { onNext() },
-                enabled = isLastTrack.value.not()
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.SkipNext,
-                    contentDescription = "next icon",
-                    tint = nextTrackLoadedColorState,
-                    modifier = Modifier
-                        .size(34.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlayerPageHeaderFadingGradientTop(
-    modifier: Modifier,
-    targetColor: State<Color>
-) {
-    Column(
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            .35f to Color.Transparent,
-                            .8f to targetColor.value
-                        )
-                    )
-                )
-        )
     }
 }

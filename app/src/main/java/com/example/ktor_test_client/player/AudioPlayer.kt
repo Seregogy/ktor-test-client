@@ -2,6 +2,7 @@ package com.example.ktor_test_client.player
 
 import android.content.Context
 import android.net.Uri
+import android.os.Bundle
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -27,20 +28,6 @@ class Track(
     val mediaItem: MediaItem
 )
 
-object DefaultPlayerConfig {
-    var timeToPreviousTrack = 3000
-    var isAutoplay: Boolean = false
-
-    var backBufferMs = 120_000
-
-    var minBufferMs = 5_000
-    var maxBufferMs = 300_000
-    var bufferForPlaybackMs = 5_000
-    var bufferForPlaybackAfterRebuffedMs = 5_000
-
-    var targetBufferBytesSize = 24 * 1024 * 1024
-}
-
 class AudioPlayer(
     private val mediaController: MediaController,
     private val mediaCache: MediaCache,
@@ -50,6 +37,9 @@ class AudioPlayer(
     companion object {
         private val _currentlyPlayTrackId: MutableState<String?> = mutableStateOf(null)
         val currentlyPlayTrackId: State<String?> = _currentlyPlayTrackId
+
+        private val _currentPlaylistId: MutableState<String?> = mutableStateOf(null)
+        private val currentPlaylistId: State<String?> = _currentPlaylistId
     }
 
     private val _playlist = MutableStateFlow<MutableList<Track>>(mutableListOf())
@@ -160,7 +150,7 @@ class AudioPlayer(
         mediaController.pause()
     }
 
-    suspend fun loadPlaylist(tracks: List<String>) {
+    suspend fun addToPlaylist(tracks: List<String>, playlistId: String = "", playAfterLoad: Boolean = false) {
         val cachedTracks = preparePlaylistTracks(tracks)
 
         _playlist.value.addAll(cachedTracks)
@@ -168,7 +158,10 @@ class AudioPlayer(
         mediaController.apply {
             addMediaItems(cachedTracks.map { it.mediaItem })
             prepare()
-            play()
+
+            if (playAfterLoad) {
+                play()
+            }
         }
     }
 
@@ -187,9 +180,11 @@ class AudioPlayer(
         }
     }
 
-    private suspend fun preparePlaylistTracks(tracks: List<String>): List<Track> {
+    private suspend fun preparePlaylistTracks(tracks: List<String>, playlistId: String = ""): List<Track> {
         val cachedTracks = mediaCache.loadFromCache(tracks)
         val uncachedTracks = tracks - cachedTracks.map { it.data.id }.toSet()
+
+        _currentPlaylistId.value = playlistId
 
         repository.getTracks(uncachedTracks)?.zip(uncachedTracks) { track, trackId ->
             Track(
@@ -198,7 +193,7 @@ class AudioPlayer(
                     .setMediaId(trackId)
                     .setUri(track.audioUrl)
                     .build().apply {
-                        mediaMetadata.buildUpon()
+                        MediaMetadata.Builder()
                             .setTitle(track.name)
                             .setAlbumTitle(track.album.name)
                             .setDisplayTitle(track.name)
@@ -210,7 +205,7 @@ class AudioPlayer(
             )
         }?.let {
             mediaCache.putAll(it)
-            Log.d("Player", "Put all success")
+            Log.d("Player", it.joinToString { it.data.name })
         }
 
         return mediaCache.loadFromCache(tracks)

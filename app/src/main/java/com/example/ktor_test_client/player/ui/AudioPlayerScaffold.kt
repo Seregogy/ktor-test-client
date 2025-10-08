@@ -14,6 +14,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
@@ -57,11 +59,11 @@ fun AudioPlayerScaffold(
     var allInit by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.audioPlayer.loadPlaylist(
+        viewModel.audioPlayer.addToPlaylist(
             listOf(
                 "845a328a-1ba4-4c17-80ae-dd3378712f63",
-                "05c2bb03-960a-4dbe-a529-8d537ec49fa1",
-                "96b9bc56-f2bc-4deb-a651-bd42d3e44d1c"
+                "9703c54c-a360-4266-8e8a-2c0977c4c592",
+                "e4936e8b-b0f2-45a8-82f5-051e839171b4"
             )
         )
     }
@@ -172,6 +174,10 @@ fun BottomSheetAudioPlayer(
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
+    val coloredScaffoldState = rememberColoredScaffoldState {
+        viewModel.palette.collectAsState()
+    }
+
     Box {
         Box(
             Modifier
@@ -185,7 +191,7 @@ fun BottomSheetAudioPlayer(
                 .alpha(1f - targetMiniPlayerAlpha)
 
         ) {
-            FullAudioPlayer(viewModel, modifier, onCollapseRequest, onAlbumClicked, onArtistClicked)
+            FullAudioPlayer(viewModel, modifier, coloredScaffoldState, onCollapseRequest, onAlbumClicked, onArtistClicked)
         }
 
         Box(
@@ -207,7 +213,7 @@ fun BottomSheetAudioPlayer(
                         Modifier
                 )
         ) {
-            MiniAudioPlayer(viewModel, miniPlayerHeight, innerPadding, onExpandRequest)
+            MiniAudioPlayer(viewModel, miniPlayerHeight, innerPadding, coloredScaffoldState, onExpandRequest)
         }
     }
 }

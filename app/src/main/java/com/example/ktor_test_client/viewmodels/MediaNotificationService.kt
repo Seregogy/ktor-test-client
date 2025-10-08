@@ -3,6 +3,7 @@ package com.example.ktor_test_client.viewmodels
 import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT
 import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM
@@ -16,6 +17,7 @@ import androidx.media3.session.MediaSession.ConnectionResult
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
+import com.example.ktor_test_client.helpers.mediaItems
 import com.google.common.collect.ImmutableList
 import com.google.common.collect.ImmutableMap
 import com.google.common.util.concurrent.Futures
@@ -47,6 +49,29 @@ class MediaNotificationService : MediaSessionService() {
         player = ExoPlayer.Builder(this).build()
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(object : MediaSession.Callback {
+                override fun onPlaybackResumption(
+                    session: MediaSession,
+                    controller: MediaSession.ControllerInfo
+                ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = session.player.let {
+                    if (it.mediaItemCount == 0) {
+                        Futures.immediateFuture(
+                            MediaSession.MediaItemsWithStartPosition(
+                                emptyList(),
+                                C.INDEX_UNSET,
+                                C.TIME_UNSET
+                            )
+                        )
+                    } else {
+                        Futures.immediateFuture(
+                            MediaSession.MediaItemsWithStartPosition(
+                                it.mediaItems,
+                                it.currentMediaItemIndex,
+                                it.currentPosition
+                            )
+                        )
+                    }
+                }
+
                 override fun onConnect(
                     session: MediaSession,
                     controller: MediaSession.ControllerInfo

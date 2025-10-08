@@ -1,5 +1,6 @@
 package com.example.ktor_test_client
 
+import android.util.Log
 import androidx.compose.ui.graphics.Color
 import com.example.ktor_test_client.helpers.contrast
 import org.junit.Assert.assertEquals
@@ -15,5 +16,9 @@ class ExampleUnitTest {
     fun colorContrastTestDefault() {
         assertEquals(2.12f, Color(0xffff00ff).contrast(Color(0xff545c73)), .01f)
         assertEquals(10.5f, Color(0xffffdd00).contrast(Color(0xff2b2b2b)), .1f)
+
+        assertEquals(11, longestWord("hello zov goida aaaaaaaaaaa ads a"))
     }
+
+    fun longestWord(str: String): Int = str.split(' ').map { it.length }.maxByOrNull { it } ?: -1
 }

@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 
 operator fun Color.times(multiplier: Float): Color {
-    return Color(this.red * multiplier, this.green * multiplier, this.blue * multiplier, 1f)
+    return Color(this.red * multiplier, this.green * multiplier, this.blue * multiplier, this.alpha)
 }
 
 fun Color.contrast(otherColor: Color): Float {

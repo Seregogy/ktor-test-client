@@ -1,6 +1,7 @@
 package com.example.ktor_test_client.helpers
 
 import android.annotation.SuppressLint
+import kotlin.math.absoluteValue
 
 @SuppressLint("DefaultLocale")
 fun formatNumber(number: Number): String {
@@ -9,5 +10,5 @@ fun formatNumber(number: Number): String {
 
 @SuppressLint("DefaultLocale")
 fun formatMinuteTimer(seconds: Int): String {
-    return "${(seconds.div(60)).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}"
+    return "${if(seconds < 0) "-" else ""}${(seconds.div(60).absoluteValue).toString().padStart(1, '0')}:${(seconds % 60).absoluteValue.toString().padStart(2, '0')}"
 }
