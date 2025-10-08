@@ -150,7 +150,7 @@ class AudioPlayer(
         mediaController.pause()
     }
 
-    suspend fun addToPlaylist(tracks: List<String>, playlistId: String = "") {
+    suspend fun addToPlaylist(tracks: List<String>, playlistId: String = "", playAfterLoad: Boolean = false) {
         val cachedTracks = preparePlaylistTracks(tracks)
 
         _playlist.value.addAll(cachedTracks)
@@ -158,7 +158,10 @@ class AudioPlayer(
         mediaController.apply {
             addMediaItems(cachedTracks.map { it.mediaItem })
             prepare()
-            play()
+
+            if (playAfterLoad) {
+                play()
+            }
         }
     }
 

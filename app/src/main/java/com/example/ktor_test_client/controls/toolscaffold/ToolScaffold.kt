@@ -2,6 +2,7 @@ package com.example.ktor_test_client.controls.toolscaffold
 
 import androidx.compose.animation.core.EaseIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.ktor_test_client.controls.MarqueeText
 import dev.chrisbanes.haze.HazeProgressive
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
@@ -51,7 +53,37 @@ fun ToolScaffold(
     var contentState: @Composable () -> Unit by remember { mutableStateOf({ }) }
 
     state.run {
-        Box {
+        content(PaddingValues(top = toolBarHeight))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .then(
+                    if (toolBarTitle.value != null) {
+                        if (hazeState != null) {
+                            Modifier
+                                .hazeEffect(
+                                    state = hazeState,
+                                    style = HazeMaterials.ultraThin(Color.Black)
+                                ) {
+                                    progressive = HazeProgressive.verticalGradient(
+                                        startIntensity = 1f,
+                                        endIntensity = 0f,
+                                        easing = EaseIn
+                                    )
+                                }
+                        } else {
+                            Modifier.background(Color.Black.copy(.93f))
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+                .fillMaxWidth()
+                .then(modifier)
+                .padding(horizontal = 15.dp)
+                .height(toolBarHeight)
+        ) {
             onLaunchContextAction = {
                 contentState = it
                 expanded.value = true
@@ -62,36 +94,9 @@ fun ToolScaffold(
                 content = contentState
             )
 
-            content(PaddingValues(top = toolBarHeight))
-
             Box(
                 modifier = Modifier
-                    .then(
-                        if (toolBarTitle.value != null) {
-                            if (hazeState != null) {
-                                Modifier
-                                    .hazeEffect(
-                                        state = hazeState,
-                                        style = HazeMaterials.ultraThin(Color.Black)
-                                    ) {
-                                        progressive = HazeProgressive.verticalGradient(
-                                            startIntensity = 1f,
-                                            endIntensity = 0f,
-                                            easing = EaseIn
-                                        )
-                                    }
-                            } else {
-                                Modifier.background(Color.Black.copy(.93f))
-                            }
-                        } else {
-                            Modifier
-                        }
-                    )
-                    .fillMaxWidth()
-                    .then(modifier)
-                    .height(toolBarHeight)
-                    .padding(horizontal = 15.dp)
-                    .align(Alignment.TopCenter)
+                    .weight(4f)
             ) {
                 IconButton(
                     onClick = onBackRequest,
@@ -104,43 +109,48 @@ fun ToolScaffold(
                         tint = foregroundColor.value
                     )
                 }
+            }
 
-                Text(
+            Box(
+                modifier = Modifier
+                    .weight(9f),
+                contentAlignment = Alignment.Center
+            ) {
+                MarqueeText(
                     text = toolBarTitle.value ?: "",
                     fontWeight = FontWeight.W700,
                     color = foregroundColor.value,
-                    modifier = Modifier
-                        .align(Alignment.Center)
+                    textAlign = Alignment.Center
                 )
+            }
 
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
+            Row(
+                modifier = Modifier
+                    .weight(4f),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(
+                    onClick = onSearchRequest
                 ) {
-                    IconButton(
-                        onClick = onSearchRequest
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = "",
-                            tint = foregroundColor.value
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "",
+                        tint = foregroundColor.value
+                    )
+                }
 
-                    IconButton(
-                        onClick = {  }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.MoreVert,
-                            contentDescription = "",
-                            tint = foregroundColor.value
-                        )
-                    }
+                IconButton(
+                    onClick = {  }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.MoreVert,
+                        contentDescription = "",
+                        tint = foregroundColor.value
+                    )
                 }
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -75,70 +75,6 @@ import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import kotlin.math.roundToInt
 
 @Composable
-fun ColoredScaffoldState.PlayerControls(
-    currentPosition: MutableState<Long>,
-    currentTrackDuration: Long,
-    viewModel: AudioPlayerViewModel,
-    isPlay: State<Boolean>,
-    isSliding: MutableState<Boolean>,
-    isTrackLoading: State<Boolean>,
-    isLastTrack: State<Boolean>,
-    isLyricsOpen: MutableState<Boolean>,
-    onNext: () -> Unit = { },
-    onPrev: () -> Unit = { },
-    onPlayPause: () -> Unit = { }
-) {
-    val secondaryColorWithLoadingState by remember {
-        derivedStateOf {
-            if (isTrackLoading.value) {
-                onBackgroundColorAnimated.value.copy(.5f)
-            } else {
-                onBackgroundColorAnimated.value
-            }
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column {
-            PlayerSlider(
-                currentPosition = currentPosition,
-                currentTrackDuration = currentTrackDuration,
-                viewModel = viewModel,
-                isSliding = isSliding
-            )
-
-            TimingText(
-                secondaryColorWithLoadingState = secondaryColorWithLoadingState,
-                currentPosition = currentPosition,
-                currentTrackDuration =  currentTrackDuration,
-                isSliding = isSliding
-            )
-        }
-
-        PlayerNavigationButtons(
-            secondaryColorWithLoadingState = secondaryColorWithLoadingState,
-            isPlay = isPlay,
-            isLastTrack = isLastTrack,
-            onNext = onNext,
-            onPrev = onPrev,
-            onPlayPause = onPlayPause
-        )
-
-        BottomControls(
-            modifier = Modifier
-                .fillMaxWidth(),
-            viewModel = viewModel,
-            isLyricsOpen = isLyricsOpen
-        )
-    }
-}
-
-@Composable
 fun ColoredScaffoldState.TopBar(
     modifier: Modifier = Modifier,
     currentTrackFullDto: TrackFullDto?,
@@ -270,6 +206,165 @@ fun ColoredScaffoldState.TrackInfo(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ColoredScaffoldState.PlayerSlider(
+    modifier: Modifier = Modifier,
+    currentPosition: MutableState<Long>,
+    currentTrackDuration: Long,
+    viewModel: AudioPlayerViewModel,
+    isSliding: MutableState<Boolean>,
+) {
+    val semiTransparentForeground by remember {
+        derivedStateOf {
+            onBackgroundColorAnimated.value.copy(.65f)
+        }
+    }
+
+    val fullyTransparentForeground by remember {
+        derivedStateOf {
+            onBackgroundColorAnimated.value.copy(.15f)
+        }
+    }
+
+    val currentPositionAnimated = animateFloatAsState(
+        targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
+        animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
+        label = "slider animation"
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Slider(
+            modifier = modifier
+                .weight(1f),
+            value = currentPositionAnimated.value,
+            onValueChange = {
+                if (!isSliding.value) isSliding.value = true
+
+                currentPosition.value = (it * currentTrackDuration.toFloat()).toLong()
+            },
+            onValueChangeFinished = {
+                isSliding.value = false
+
+                viewModel.audioPlayer.seek(currentPosition.value)
+            },
+            colors = SliderDefaults.colors(
+                activeTrackColor = semiTransparentForeground * 1.5f,
+                activeTickColor = semiTransparentForeground * 2f,
+                inactiveTrackColor = fullyTransparentForeground,
+
+                inactiveTickColor = semiTransparentForeground,
+                disabledThumbColor = semiTransparentForeground,
+                disabledActiveTrackColor = semiTransparentForeground,
+                disabledActiveTickColor = semiTransparentForeground,
+                disabledInactiveTickColor = semiTransparentForeground,
+                disabledInactiveTrackColor = semiTransparentForeground,
+            ),
+            thumb = {
+                Box(
+                    modifier = Modifier
+                        .width(6.dp)
+                        .height(30.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(onBackgroundColor.value)
+                )
+            }
+        )
+
+        IconButton(
+            onClick = {  }
+        ) {
+            Icon(
+                imageVector = if (false)
+                    Icons.Rounded.Favorite
+                else
+                    Icons.Rounded.FavoriteBorder,
+                contentDescription = "play/pause icon",
+                tint = onBackgroundColor.value,
+                modifier = Modifier
+                    .size(26.dp)
+            )
+        }
+    }
+
+}
+
+enum class TimingTextState {
+    CurrentTime,
+    RemainingTime
+}
+
+@Composable
+fun ColoredScaffoldState.TimingText(
+    secondaryColorWithLoadingState: Color,
+    currentPosition: MutableState<Long>,
+    currentTrackDuration: Long,
+    isSliding: MutableState<Boolean>
+) {
+    val currentPositionAnimated = animateFloatAsState(
+        targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
+        animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
+        label = "slider animation"
+    )
+
+    val fullyTransparentForeground by remember {
+        derivedStateOf {
+            onBackgroundColorAnimated.value.copy(.15f)
+        }
+    }
+
+    var currentTextState by remember { mutableStateOf(TimingTextState.CurrentTime) }
+
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(fullyTransparentForeground)
+            .clickable {
+                currentTextState = if (currentTextState == TimingTextState.CurrentTime) {
+                    TimingTextState.RemainingTime
+                } else {
+                    TimingTextState.CurrentTime
+                }
+            }
+            .padding(horizontal = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = buildAnnotatedString {
+                withStyle(
+                    style = SpanStyle(
+                        fontSize = 13.sp
+                    )
+                ) {
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.W800
+                        )
+                    ) {
+                        append(
+                            formatMinuteTimer(
+                                if (currentTextState == TimingTextState.CurrentTime) {
+                                    (currentPositionAnimated.value * currentTrackDuration.toFloat() / 1000)
+                                } else {
+                                    -(currentTrackDuration - currentPositionAnimated.value * currentTrackDuration.toFloat()) / 1000
+                                }.roundToInt().coerceIn(-currentTrackDuration.toInt()..currentTrackDuration.toInt())
+                            )
+                        )
+                    }
+
+                    append(" / ")
+
+                    append(formatMinuteTimer((currentTrackDuration / 1000).toInt()))
+                }
+            },
+            textAlign = TextAlign.Center,
+            color = secondaryColorWithLoadingState
+        )
+    }
+}
+
 @Composable
 fun ColoredScaffoldState.PlayerNavigationButtons(
     modifier: Modifier = Modifier,
@@ -346,129 +441,6 @@ fun ColoredScaffoldState.PlayerNavigationButtons(
             )
         }
     }
-}
-
-@Composable
-fun TimingText(
-    secondaryColorWithLoadingState: Color,
-    currentPosition: MutableState<Long>,
-    currentTrackDuration: Long,
-    isSliding: MutableState<Boolean>
-) {
-    val currentPositionAnimated = animateFloatAsState(
-        targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
-        animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
-        label = "slider animation"
-    )
-
-    Text(
-        text = buildAnnotatedString {
-            withStyle(
-                style = SpanStyle(
-                    fontWeight = FontWeight.W600,
-                    fontSize = 18.sp
-                )
-            ) {
-                append(
-                    formatMinuteTimer(
-                        (currentPositionAnimated.value * currentTrackDuration.toFloat() / 1000).roundToInt()
-                            .coerceIn(0..currentTrackDuration.toInt())
-                    )
-                )
-            }
-
-            append("/")
-            append(formatMinuteTimer((currentTrackDuration / 1000).toInt()))
-        },
-        textAlign = TextAlign.Center,
-        color = secondaryColorWithLoadingState
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ColoredScaffoldState.PlayerSlider(
-    modifier: Modifier = Modifier,
-    currentPosition: MutableState<Long>,
-    currentTrackDuration: Long,
-    viewModel: AudioPlayerViewModel,
-    isSliding: MutableState<Boolean>,
-) {
-    val semiTransparentForeground by remember {
-        derivedStateOf {
-            onBackgroundColorAnimated.value.copy(.65f)
-        }
-    }
-
-    val fullyTransparentForeground by remember {
-        derivedStateOf {
-            onBackgroundColorAnimated.value.copy(.15f)
-        }
-    }
-
-    val currentPositionAnimated = animateFloatAsState(
-        targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
-        animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
-        label = "slider animation"
-    )
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        Slider(
-            modifier = modifier
-                .weight(1f),
-            value = currentPositionAnimated.value,
-            onValueChange = {
-                if (!isSliding.value) isSliding.value = true
-
-                currentPosition.value = (it * currentTrackDuration.toFloat()).toLong()
-            },
-            onValueChangeFinished = {
-                isSliding.value = false
-
-                viewModel.audioPlayer.seek(currentPosition.value)
-            },
-            colors = SliderDefaults.colors(
-                activeTrackColor = semiTransparentForeground * 1.5f,
-                activeTickColor = semiTransparentForeground * 2f,
-                inactiveTrackColor = fullyTransparentForeground,
-
-                inactiveTickColor = semiTransparentForeground,
-                disabledThumbColor = semiTransparentForeground,
-                disabledActiveTrackColor = semiTransparentForeground,
-                disabledActiveTickColor = semiTransparentForeground,
-                disabledInactiveTickColor = semiTransparentForeground,
-                disabledInactiveTrackColor = semiTransparentForeground,
-            ),
-            thumb = {
-                Box(
-                    modifier = Modifier
-                        .width(6.dp)
-                        .height(30.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(onBackgroundColor.value)
-                )
-            }
-        )
-
-        IconButton(
-            onClick = {  }
-        ) {
-            Icon(
-                imageVector = if (false)
-                    Icons.Rounded.Favorite
-                else
-                    Icons.Rounded.FavoriteBorder,
-                contentDescription = "play/pause icon",
-                tint = onBackgroundColor.value,
-                modifier = Modifier
-                    .size(26.dp)
-            )
-        }
-    }
-
 }
 
 @Composable

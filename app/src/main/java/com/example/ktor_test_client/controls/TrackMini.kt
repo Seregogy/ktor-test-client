@@ -124,15 +124,15 @@ fun TrackMini(
             )
         }
 
-        Text(
+        MarqueeText(
             text = track.name,
             fontSize = 16.sp,
             fontWeight = FontWeight.W600,
             maxLines = 1,
             color = onPrimaryColor,
             modifier = Modifier
-                .padding(horizontal = 25.dp)
-                .basicMarquee()
+                .padding(horizontal = 25.dp),
+            textAlign = Alignment.CenterStart
         )
 
         IconButton(

@@ -62,8 +62,8 @@ fun AudioPlayerScaffold(
         viewModel.audioPlayer.addToPlaylist(
             listOf(
                 "845a328a-1ba4-4c17-80ae-dd3378712f63",
-                "05c2bb03-960a-4dbe-a529-8d537ec49fa1",
-                "96b9bc56-f2bc-4deb-a651-bd42d3e44d1c"
+                "9703c54c-a360-4266-8e8a-2c0977c4c592",
+                "e4936e8b-b0f2-45a8-82f5-051e839171b4"
             )
         )
     }
