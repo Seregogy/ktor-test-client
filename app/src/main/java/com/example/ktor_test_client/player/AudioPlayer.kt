@@ -192,16 +192,17 @@ class AudioPlayer(
                 mediaItem = MediaItem.Builder()
                     .setMediaId(trackId)
                     .setUri(track.audioUrl)
-                    .build().apply {
+                    .setMediaMetadata(
                         MediaMetadata.Builder()
                             .setTitle(track.name)
-                            .setAlbumTitle(track.album.name)
                             .setDisplayTitle(track.name)
-                            .setArtist(track.album.artists.joinToString(",") { track.name })
+                            .setAlbumTitle(track.album.name)
+                            .setArtist(track.album.artists.joinToString(",") { it.name })
                             .setArtworkUri(Uri.parse(track.imageUrl))
                             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                             .build()
-                    }
+                    )
+                    .build()
             )
         }?.let {
             mediaCache.putAll(it)
