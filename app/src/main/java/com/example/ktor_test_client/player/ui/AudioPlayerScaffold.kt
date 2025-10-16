@@ -31,7 +31,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.ktor_test_client.api.MusicApiService
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
+import com.example.ktor_test_client.data.providers.PlaylistProvider
+import com.example.ktor_test_client.data.providers.PlaylistProviderImpl
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
@@ -39,6 +42,7 @@ import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,12 +62,16 @@ fun AudioPlayerScaffold(
     val miniPlayerHeightPx = with(density) { 100.dp.roundToPx() }
     var allInit by remember { mutableStateOf(false) }
 
+    val apiService = koinInject<MusicApiService>()
     LaunchedEffect(Unit) {
-        viewModel.audioPlayer.addToPlaylist(
-            listOf(
-                "845a328a-1ba4-4c17-80ae-dd3378712f63",
-                "9703c54c-a360-4266-8e8a-2c0977c4c592",
-                "e4936e8b-b0f2-45a8-82f5-051e839171b4"
+        viewModel.audioPlayer.setPlaylist(
+            PlaylistProviderImpl(
+                baseTracks = listOf(
+                    "845a328a-1ba4-4c17-80ae-dd3378712f63",
+                    "9703c54c-a360-4266-8e8a-2c0977c4c592",
+                    "e4936e8b-b0f2-45a8-82f5-051e839171b4"
+                ),
+                musicApiService = apiService
             )
         )
     }

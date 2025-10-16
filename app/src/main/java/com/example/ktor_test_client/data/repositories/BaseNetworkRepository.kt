@@ -2,12 +2,13 @@ package com.example.ktor_test_client.data.repositories
 
 import android.util.Log
 import com.example.ktor_test_client.api.MusicApiService
+import com.example.ktor_test_client.api.dtos.Lyrics
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 class BaseNetworkRepository(
     private val service: MusicApiService,
 ) : Repository() {
-    override suspend fun getTrack(id: String): TrackFullDto? =
-        service.getTrack(id).getOrNull()
+    override suspend fun getTrack(trackId: String): TrackFullDto? =
+        service.getTrack(trackId).getOrNull()
 
     override suspend fun getTracks(tracksId: List<String>): List<TrackFullDto>? {
         service.getTracks(tracksId).onSuccess {
@@ -18,6 +19,10 @@ class BaseNetworkRepository(
         }
 
         return null
+    }
+
+    override suspend fun getLyrics(trackId: String): Lyrics? {
+        return service.getLyrics(trackId).getOrNull()
     }
 }
 

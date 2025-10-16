@@ -1,5 +1,9 @@
 package com.example.ktor_test_client.player.ui
 
+import android.graphics.Bitmap
+import android.util.Log
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -7,21 +11,41 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -29,6 +53,7 @@ import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,18 +63,27 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -59,19 +93,27 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.R
+import com.example.ktor_test_client.api.dtos.Lyrics
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.MarqueeText
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.helpers.formatMinuteTimer
 import com.example.ktor_test_client.helpers.times
+import com.example.ktor_test_client.player.AudioPlayer
+import com.example.ktor_test_client.player.Track
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
@@ -120,6 +162,79 @@ fun ColoredScaffoldState.TopBar(
                 contentDescription = "",
                 tint = onBackgroundColorAnimated.value
             )
+        }
+    }
+}
+
+@Composable
+fun ColoredScaffoldState.MainContent(
+    viewModel: AudioPlayerViewModel,
+    isLyricsOpen: MutableState<Boolean>,
+    currentPosition: MutableState<Long>,
+    screenWidth: Dp,
+) {
+    val currentImage by viewModel.bitmap.collectAsStateWithLifecycle()
+
+    Box(
+        modifier = Modifier
+            .height(screenWidth)
+            .offset(y = (-20).dp)
+            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+            .drawWithContent {
+                drawContent()
+
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White,
+                            Color.Transparent,
+                        )
+                    ),
+                    blendMode = BlendMode.DstIn
+                )
+            }
+    ) {
+        AnimatedVisibility(
+            visible = isLyricsOpen.value,
+            enter = fadeIn(tween()),
+            exit = fadeOut(tween())
+        ) {
+            LyricsDrawer(viewModel, currentPosition)
+        }
+
+        AnimatedVisibility(
+            visible = !isLyricsOpen.value,
+            enter = fadeIn(tween()),
+            exit = fadeOut(tween())
+        ) {
+            currentImage?.let {
+                AnimatedContent(
+                    targetState = it,
+                    transitionSpec = {
+                        fadeIn(tween(animationsSpeed)) togetherWith fadeOut(
+                            tween(
+                                animationsSpeed
+                            )
+                        )
+                    },
+                    label = "image animation"
+                ) { animatedBitmap ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                    ) {
+                        Image(
+                            bitmap = animatedBitmap.asImageBitmap(),
+                            contentDescription = "album image",
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -254,7 +369,6 @@ fun ColoredScaffoldState.PlayerSlider(
                 activeTrackColor = semiTransparentForeground * 1.5f,
                 activeTickColor = semiTransparentForeground * 2f,
                 inactiveTrackColor = fullyTransparentForeground,
-
                 inactiveTickColor = semiTransparentForeground,
                 disabledThumbColor = semiTransparentForeground,
                 disabledActiveTrackColor = semiTransparentForeground,
@@ -268,13 +382,15 @@ fun ColoredScaffoldState.PlayerSlider(
                         .width(6.dp)
                         .height(30.dp)
                         .clip(MaterialTheme.shapes.small)
-                        .background(onBackgroundColor.value)
+                        .background(onBackgroundColorAnimated.value)
                 )
             }
         )
 
         IconButton(
-            onClick = {  }
+            onClick = {
+
+            }
         ) {
             Icon(
                 imageVector = if (false)
@@ -282,7 +398,7 @@ fun ColoredScaffoldState.PlayerSlider(
                 else
                     Icons.Rounded.FavoriteBorder,
                 contentDescription = "play/pause icon",
-                tint = onBackgroundColor.value,
+                tint = onBackgroundColorAnimated.value,
                 modifier = Modifier
                     .size(26.dp)
             )
@@ -449,15 +565,8 @@ fun ColoredScaffoldState.BottomControls(
     viewModel: AudioPlayerViewModel,
     isLyricsOpen: MutableState<Boolean>
 ) {
-    val track by viewModel.audioPlayer.currentTrack.collectAsStateWithLifecycle()
-
-    val haveLyrics by remember {
-        derivedStateOf {
-            isLyricsOpen.value = isLyricsOpen.value && track?.data?.lyrics != null
-
-            track?.data?.lyrics != null
-        }
-    }
+    val coroutineScope = rememberCoroutineScope()
+    val repeatMode by viewModel.audioPlayer.repeatModeState.collectAsStateWithLifecycle()
 
     Row(
         modifier = modifier,
@@ -469,32 +578,186 @@ fun ColoredScaffoldState.BottomControls(
             Icon(
                 painter = painterResource(R.drawable.timer_icon),
                 contentDescription = "time icon",
-                tint = onBackgroundColor.value
+                tint = onBackgroundColorAnimated.value
             )
         }
 
         IconToggleButton(
             checked = isLyricsOpen.value,
             onCheckedChange = {
-                isLyricsOpen.value = it
+                isLyricsOpen.value = !isLyricsOpen.value
+                coroutineScope.launch {
+                    viewModel.audioPlayer.getLyricsForCurrentTrack()
+                }
             },
-            enabled = haveLyrics
         ) {
             Icon(
                 painter = painterResource(R.drawable.lyrics_icon),
                 contentDescription = "time icon",
-                tint = if(haveLyrics) onBackgroundColor.value else onBackgroundColor.value.copy(.1f)
+                tint = onBackgroundColorAnimated.value
             )
         }
 
         IconButton(
-            onClick = { }
+            onClick = {
+                viewModel.audioPlayer.nextRepeatMode()
+            }
         ) {
             Icon(
-                painter = painterResource(R.drawable.repeat_icon),
+                painter = when(repeatMode) {
+                    AudioPlayer.RepeatMode.Single -> painterResource(R.drawable.repeat_icon_1)
+                    AudioPlayer.RepeatMode.Playlist -> painterResource(R.drawable.repeat_icon)
+                    AudioPlayer.RepeatMode.None -> painterResource(R.drawable.repeat_off)
+                },
                 contentDescription = "time icon",
-                tint = onBackgroundColor.value
+                tint = onBackgroundColorAnimated.value
             )
+        }
+    }
+}
+
+@Composable
+fun ColoredScaffoldState.LyricsDrawer(
+    viewModel: AudioPlayerViewModel,
+    currentPosition: MutableState<Long>
+) {
+    val density = LocalDensity.current
+    val trackName by remember {
+        derivedStateOf {
+            viewModel.audioPlayer.currentTrack.value?.data?.name ?: "unknown"
+        }
+    }
+    val lyrics by viewModel.audioPlayer.currentLyrics.collectAsStateWithLifecycle()
+
+    when {
+        lyrics == null -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    color = onBackgroundColorAnimated.value
+                )
+            }
+        }
+        lyrics?.syncedText != null -> {
+            val lazyListState = rememberLazyListState()
+            val syncedTextPairs = lyrics!!.syncedText!!.map { it.key to it.value.trim() }
+            val syncedTextSizes = mutableMapOf<Long, IntSize>()
+
+            var columnSize by remember { mutableStateOf(IntSize.Zero) }
+            var currentIndex by remember { mutableIntStateOf(-1) }
+
+            LaunchedEffect(currentPosition.value) {
+                for (i in 0..<(syncedTextPairs.size - 1)) {
+                    if (currentPosition.value in syncedTextPairs[i].first..syncedTextPairs[i + 1].first) {
+                        currentIndex = i
+
+                        val currentSize = syncedTextSizes[syncedTextPairs[i].first]
+
+                        lazyListState.animateScrollToItem(currentIndex + 1,
+                            -(columnSize.height / 2) + ((currentSize?.height ?: 0) / 2)
+                        )
+
+                        return@LaunchedEffect
+                    }
+                }
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .padding(horizontal = 40.dp)
+                    .onSizeChanged {
+                        columnSize = it
+                    },
+                state = lazyListState,
+                verticalArrangement = Arrangement.spacedBy(70.dp)
+            ) {
+                item {
+                    Spacer(Modifier.height(with(density) { columnSize.height.toDp() / 2 }))
+                }
+
+                itemsIndexed(syncedTextPairs) { index, item ->
+                    Text(
+                        text = item.second,
+                        fontSize = 32.sp,
+                        lineHeight = 32.sp,
+                        fontWeight = FontWeight.W700,
+                        textAlign = TextAlign.Center,
+                        color = if (currentIndex == index) bodyTextOnBackgroundAnimated.value else bodyTextOnBackgroundAnimated.value.copy(.2f),
+                        onTextLayout = {
+                            syncedTextSizes.put(item.first, it.size)
+                        }
+                    )
+                }
+
+                item {
+                    Spacer(Modifier.height(100.dp))
+                }
+            }
+        }
+
+        lyrics?.plainText != null -> {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 40.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = trackName,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.W700,
+                    color = bodyTextOnBackgroundAnimated.value
+                )
+
+                Text(
+                    text = lyrics!!.plainText!!,
+                    modifier = Modifier,
+                    color = bodyTextOnBackgroundAnimated.value
+                )
+
+                Text(
+                    "Lyrics provider ${lyrics?.provider} open library",
+                    fontSize = 13.sp,
+                    color = bodyTextOnBackgroundAnimated.value
+                )
+            }
+        }
+    }
+}
+
+fun scrollToItemCentered(
+    index: Int,
+    coroutineScope: CoroutineScope,
+    listState: LazyListState
+) {
+    coroutineScope.launch {
+        val layoutInfo = listState.layoutInfo
+
+        if (layoutInfo.visibleItemsInfo.isNotEmpty()) {
+            val viewportSize = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
+
+            val firstVisibleIndex = layoutInfo.visibleItemsInfo.first().index
+
+            listState.animateScrollToItem(index)
+
+            delay(300)
+
+            val updatedLayoutInfo = listState.layoutInfo
+            val targetItem = updatedLayoutInfo.visibleItemsInfo
+                .firstOrNull { it.index == index }
+
+            targetItem?.let { item ->
+                val itemOffset = item.offset
+                val itemSize = item.size
+                val scrollToCenter = itemOffset - (viewportSize - itemSize) / 2
+
+                listState.animateScrollBy(scrollToCenter.toFloat())
+            }
         }
     }
 }

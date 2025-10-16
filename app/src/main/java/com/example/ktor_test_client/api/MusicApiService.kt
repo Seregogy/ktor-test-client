@@ -5,6 +5,7 @@ import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseArtist
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
+import com.example.ktor_test_client.api.dtos.Lyrics
 import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.api.methods.GetArtistResponse
 import com.example.ktor_test_client.api.methods.GetLastReleaseByArtistResponse
@@ -19,7 +20,6 @@ import com.example.ktor_test_client.api.methods.getRandomTrackId
 import com.example.ktor_test_client.api.methods.getTopArtists
 import com.example.ktor_test_client.api.methods.getTrack
 import com.example.ktor_test_client.api.methods.toggleLike
-import com.example.ktor_test_client.player.Track
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -81,7 +81,7 @@ class MusicApiService(
             .post("/api/v1/tracks") {
                 contentType(ContentType.Application.Json)
                 setBody(GetTracksRequest(tracksId))
-            }.call.body<GetTracksResponse>().tracks
+            }.body<GetTracksResponse>().tracks
     }
 
     suspend fun getArtist(artistId: String): Result<GetArtistResponse> = safeRequest {
@@ -97,19 +97,21 @@ class MusicApiService(
     }
 
     suspend fun getSinglesByArtist(artistId: String): Result<List<BaseAlbum>> = safeRequest {
-        val response = apiClient.httpClient.get {
+        apiClient.httpClient.get {
             url("/api/v1/artists/$artistId/singles")
-        }
-
-        return@safeRequest response.body<GetSinglesByArtistsResponse>().singles
+        }.body<GetSinglesByArtistsResponse>().singles
     }
 
     suspend fun getReleasesByArtist(artistId: String): Result<List<BaseAlbum>> = safeRequest {
-        val response = apiClient.httpClient.get {
+        apiClient.httpClient.get {
             url("/api/v1/artists/$artistId/releases")
-        }
+        }.body<GetReleasesByArtistsResponse>().releases
+    }
 
-        return@safeRequest response.body<GetReleasesByArtistsResponse>().releases
+    suspend fun getLyrics(trackId: String): Result<Lyrics> = safeRequest {
+        apiClient.httpClient.get {
+            url("/api/v1/lyrics/$trackId")
+        }.body()
     }
 
     suspend fun getLastReleaseByArtist(artistId: String): Result<Pair<BaseAlbum, Long>> = safeRequest {

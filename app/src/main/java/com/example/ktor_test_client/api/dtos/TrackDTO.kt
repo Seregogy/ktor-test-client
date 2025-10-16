@@ -28,9 +28,10 @@ class TrackFullDto(
     val imageUrl: String? = "",
     val indexInAlbum: Int = 0,
     val durationSeconds: Int = 0,
-    val lyrics: String? = "",
+    val hasLyrics: Boolean = false,
+    var lyrics: Lyrics? = null,
     val listening: Int? = 0,
     val isExplicit: Boolean? = false,
     val audioUrl: String = "",
-    val album: BaseAlbum = BaseAlbum()
+    val album: Album = Album()
 )

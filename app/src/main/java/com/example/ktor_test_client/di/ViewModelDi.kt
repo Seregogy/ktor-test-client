@@ -22,7 +22,7 @@ object DefaultPlayerConfig {
     var bufferForPlaybackMs = 5_000
     var bufferForPlaybackAfterRebuffedMs = 5_000
 
-    var targetBufferBytesSize = 24 * 1024 * 1024
+    var targetBufferBytesSize = 64 * 1024 * 1024
 }
 
 @SuppressLint("UnsafeOptInUsageError")
@@ -49,8 +49,7 @@ val viewModelDi = module {
             audioPlayer = AudioPlayer(
                 mediaController = mediaController,
                 mediaCache = MediaCache(),
-                repository = get<BaseNetworkRepository>(),
-                context = get()
+                repository = get<BaseNetworkRepository>()
             ),
             context = get()
         )

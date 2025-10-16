@@ -24,7 +24,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.ktor_test_client.di.apiClientDi
 import com.example.ktor_test_client.di.apiServiceDi
-import com.example.ktor_test_client.di.dataProviderDi
 import com.example.ktor_test_client.di.repositoryDi
 import com.example.ktor_test_client.di.tokenHandlerDi
 import com.example.ktor_test_client.di.viewModelDi
@@ -56,7 +55,7 @@ class MainActivity : ComponentActivity() {
 
                 KoinApplication(
                     application = {
-                        modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, dataProviderDi, repositoryDi, viewModelDi))
+                        modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, repositoryDi, viewModelDi))
                         androidContext(context)
                     }
                 ) {
