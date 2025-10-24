@@ -33,7 +33,9 @@ private fun ColoredScaffoldState.CalculateColors() {
     primaryOrBackgroundColor = remember {
         derivedStateOf {
             return@derivedStateOf if (currentPalette.value?.vibrantSwatch == null) {
-                Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.tertiary.toArgb())
+                Color(currentPalette.value?.dominantSwatch?.rgb
+                    ?: colorScheme.tertiary.toArgb()
+                )
             } else {
                 Color(currentPalette.value?.vibrantSwatch?.rgb!!)
             }
@@ -48,7 +50,7 @@ private fun ColoredScaffoldState.CalculateColors() {
                         ?: colorScheme.tertiary.toArgb()
                 )
             } else {
-                Color(currentPalette.value?.vibrantSwatch?.titleTextColor!!)
+                Color(currentPalette.value?.vibrantSwatch?.titleTextColor!!).copy(0.8f)
             }
         }
     }
@@ -62,13 +64,16 @@ private fun ColoredScaffoldState.CalculateColors() {
                             ?: colorScheme.onTertiary.toArgb()
                     )
                 } else {
-                    Color(currentPalette.value?.vibrantSwatch?.rgb ?: colorScheme.tertiary.toArgb())
+                    Color(
+                        currentPalette.value?.vibrantSwatch?.rgb
+                            ?: colorScheme.tertiary.toArgb()
+                    )
                 }
             } else {
                 Color(
                     currentPalette.value?.dominantSwatch?.titleTextColor
                         ?: colorScheme.onTertiary.toArgb()
-                )
+                ).copy(0.8f)
             }
         }
     }
@@ -76,15 +81,6 @@ private fun ColoredScaffoldState.CalculateColors() {
     backgroundColor = remember {
         derivedStateOf {
             Color(currentPalette.value?.dominantSwatch?.rgb ?: colorScheme.background.toArgb())
-        }
-    }
-
-    onBackgroundColor = remember {
-        derivedStateOf {
-            Color(
-                currentPalette.value?.dominantSwatch?.titleTextColor
-                    ?: colorScheme.onBackground.toArgb()
-            )
         }
     }
 

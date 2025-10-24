@@ -2,18 +2,32 @@ package com.example.ktor_test_client.player.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -24,16 +38,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.ktor_test_client.api.MusicApiService
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
+import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
-import com.example.ktor_test_client.data.providers.PlaylistProvider
 import com.example.ktor_test_client.data.providers.PlaylistProviderImpl
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
 import dev.chrisbanes.haze.HazeState
@@ -58,19 +75,24 @@ fun AudioPlayerScaffold(
 
     val density = LocalDensity.current
 
-    val miniPlayerHeight = 100.dp
-    val miniPlayerHeightPx = with(density) { 100.dp.roundToPx() }
+
+    val bottomSectionHeight = remember { mutableStateOf(0.dp) }
+    val bottomSectionHeightPx by remember {
+        derivedStateOf {
+            with(density) {
+                bottomSectionHeight.value.roundToPx()
+            }
+        }
+    }
+
+
     var allInit by remember { mutableStateOf(false) }
 
     val apiService = koinInject<MusicApiService>()
     LaunchedEffect(Unit) {
         viewModel.audioPlayer.setPlaylist(
             PlaylistProviderImpl(
-                baseTracks = listOf(
-                    "845a328a-1ba4-4c17-80ae-dd3378712f63",
-                    "9703c54c-a360-4266-8e8a-2c0977c4c592",
-                    "e4936e8b-b0f2-45a8-82f5-051e839171b4"
-                ),
+                baseTracks = listOf(),
                 musicApiService = apiService
             )
         )
@@ -109,10 +131,10 @@ fun AudioPlayerScaffold(
         LocalConfiguration.current.screenHeightDp.dp.roundToPx()
     }
 
-    val alphaStateThreshold = with(density) { miniPlayerHeight.roundToPx() }
+    val alphaStateThreshold = with(density) { bottomSectionHeight.value.roundToPx() }
     val targetMiniPlayerAlpha by remember {
         derivedStateOf {
-            yCurrentOffset.value / (screenHeight - miniPlayerHeightPx)
+            yCurrentOffset.value / (screenHeight - bottomSectionHeightPx)
         }
     }
 
@@ -122,7 +144,7 @@ fun AudioPlayerScaffold(
         }
     }
 
-    val sheetPeekHeight = miniPlayerHeight + innerPadding.calculateBottomPadding()
+    val sheetPeekHeight = bottomSectionHeight.value + innerPadding.calculateBottomPadding()
     BottomSheetScaffold(
         sheetPeekHeight = sheetPeekHeight,
         scaffoldState = bottomSheetState,
@@ -131,7 +153,7 @@ fun AudioPlayerScaffold(
         sheetContainerColor = Color.Transparent,
         sheetContent = {
             BottomSheetAudioPlayer(
-                miniPlayerHeight = miniPlayerHeight,
+                bottomSectionHeight = bottomSectionHeight,
                 innerPadding = innerPadding,
                 viewModel = viewModel,
                 modifier = Modifier.padding(top = innerPadding.calculateTopPadding()),
@@ -170,7 +192,7 @@ fun AudioPlayerScaffold(
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 fun BottomSheetAudioPlayer(
-    miniPlayerHeight: Dp,
+    bottomSectionHeight: MutableState<Dp>,
     innerPadding: PaddingValues,
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
@@ -182,6 +204,8 @@ fun BottomSheetAudioPlayer(
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
+    val density = LocalDensity.current
+
     val coloredScaffoldState = rememberColoredScaffoldState {
         viewModel.palette.collectAsState()
     }
@@ -197,31 +221,74 @@ fun BottomSheetAudioPlayer(
         Box(
             modifier = Modifier
                 .alpha(1f - targetMiniPlayerAlpha)
-
         ) {
             FullAudioPlayer(viewModel, modifier, coloredScaffoldState, onCollapseRequest, onAlbumClicked, onArtistClicked)
         }
 
-        Box(
-            modifier = Modifier
-                .alpha(targetMiniPlayerAlpha)
-                .align(Alignment.TopCenter)
-                .then(
-                    if (targetMiniPlayerAlpha > 0.99f) {
-                        Modifier
-                            .hazeEffect(hazeState, HazeMaterials.thin(Color.Black))
-                    } else {
-                        Modifier
-                    }
-                )
-                .then(
-                    if (targetMiniPlayerAlpha < .8f)
-                        Modifier.pointerInteropFilter { return@pointerInteropFilter false }
-                    else
-                        Modifier
-                )
+        ColoredScaffold(
+            state = rememberColoredScaffoldState {
+                viewModel.palette.collectAsState()
+            }
         ) {
-            MiniAudioPlayer(viewModel, miniPlayerHeight, innerPadding, coloredScaffoldState, onExpandRequest)
+            Column(
+                modifier = Modifier
+                    .padding(bottom = innerPadding.calculateBottomPadding())
+                    .alpha(targetMiniPlayerAlpha)
+                    .align(Alignment.TopCenter)
+                    .then(
+                        if (targetMiniPlayerAlpha > 0.99f) {
+                            Modifier
+                                .hazeEffect(hazeState, HazeMaterials.thin(Color.Black))
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .then(
+                        if (targetMiniPlayerAlpha < .8f)
+                            Modifier.pointerInteropFilter { return@pointerInteropFilter false }
+                        else
+                            Modifier
+                    )
+                    .onSizeChanged {
+                        bottomSectionHeight.value = with(density) {
+                            it.height.toDp()
+                        }
+                    }
+                    .background(additionalHorizontalGradientBrush.value)
+            ) {
+                MiniAudioPlayer(
+                    viewModel = viewModel,
+                    onExpandRequest = onExpandRequest
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 25.dp)
+                        .padding(bottom = 10.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(Color.Black.copy(.7f))
+                        .padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    listOf(
+                        Icons.Rounded.Home,
+                        Icons.Rounded.Search,
+                        Icons.Rounded.AutoAwesome,
+                        Icons.Rounded.Person
+                    ).forEach {
+                        IconButton(
+                            onClick = { }
+                        ) {
+                            Icon(
+                                imageVector = it,
+                                contentDescription = ""
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

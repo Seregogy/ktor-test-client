@@ -4,10 +4,13 @@ import android.util.Log
 import com.example.ktor_test_client.api.MusicApiService
 
 class PlaylistProviderImpl(
-    val baseTracks: List<String>,
+    val baseTracks: List<String> = listOf(),
     val musicApiService: MusicApiService
 ) : PlaylistProvider() {
     override suspend fun getTracks(): List<String> {
+        if (baseTracks.isEmpty()) {
+            return getAdditionalTracks(5, 0)
+        }
         return baseTracks
     }
 

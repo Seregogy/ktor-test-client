@@ -22,6 +22,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.ktor_test_client.di.apiClientDi
 import com.example.ktor_test_client.di.apiServiceDi
 import com.example.ktor_test_client.di.repositoryDi
@@ -136,13 +137,20 @@ class MainActivity : ComponentActivity() {
 
             composable(
                 route = "AlbumPage?id={albumId}",
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "onewave://app/albums/{albumId}"
+                    }
+                ),
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
+                val playerVM: AudioPlayerViewModel = koinInject()
+
                 val albumId = it.arguments?.getString("albumId")
 
                 AlbumPageRouter(
                     albumId = albumId,
-                    playerViewModel = audioPlayerViewModel,
+                    playerViewModel = playerVM,
                     innerPadding = innerPadding,
                     bottomPadding = additionalBottomPadding,
                     hazeState = hazeState,

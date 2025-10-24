@@ -200,7 +200,7 @@ fun ColoredScaffoldState.MainContent(
             enter = fadeIn(tween()),
             exit = fadeOut(tween())
         ) {
-            LyricsDrawer(viewModel, currentPosition)
+            LyricsDrawer(viewModel)
         }
 
         AnimatedVisibility(
@@ -618,8 +618,7 @@ fun ColoredScaffoldState.BottomControls(
 
 @Composable
 fun ColoredScaffoldState.LyricsDrawer(
-    viewModel: AudioPlayerViewModel,
-    currentPosition: MutableState<Long>
+    viewModel: AudioPlayerViewModel
 ) {
     val density = LocalDensity.current
     val trackName by remember {
@@ -642,43 +641,49 @@ fun ColoredScaffoldState.LyricsDrawer(
             }
         }
         lyrics?.syncedText != null -> {
+            var currentPosition by remember { viewModel.audioPlayer.currentPosition }
             val lazyListState = rememberLazyListState()
-            val syncedTextPairs = lyrics!!.syncedText!!.map { it.key to it.value.trim() }
-            val syncedTextSizes = mutableMapOf<Long, IntSize>()
+            val syncedTextPairs = remember {
+                return@remember lyrics!!.syncedText!!.map { it.key to it.value.trim() }.toMutableList().apply {
+                    add(Long.MAX_VALUE to "")
+                }
+            }
+            val syncedTextSizes = remember { mutableMapOf<Long, IntSize>() }
 
             var columnSize by remember { mutableStateOf(IntSize.Zero) }
             var currentIndex by remember { mutableIntStateOf(-1) }
 
-            LaunchedEffect(currentPosition.value) {
-                for (i in 0..<(syncedTextPairs.size - 1)) {
-                    if (currentPosition.value in syncedTextPairs[i].first..syncedTextPairs[i + 1].first) {
-                        currentIndex = i
+            LaunchedEffect(currentPosition) {
+                currentIndex = findCurrentIndex(currentPosition, syncedTextPairs)
+            }
 
-                        val currentSize = syncedTextSizes[syncedTextPairs[i].first]
-
-                        lazyListState.animateScrollToItem(currentIndex + 1,
-                            -(columnSize.height / 2) + ((currentSize?.height ?: 0) / 2)
-                        )
-
-                        return@LaunchedEffect
-                    }
+            LaunchedEffect(currentIndex) {
+                if (currentIndex in syncedTextPairs.indices) {
+                    lazyListState.animateScrollToItem(currentIndex + 1,
+                        -(columnSize.height / 2) + ((syncedTextSizes[syncedTextPairs[currentIndex].first]?.height ?: 0) / 2)
+                    )
                 }
             }
 
             LazyColumn(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = 40.dp)
                     .onSizeChanged {
                         columnSize = it
                     },
                 state = lazyListState,
-                verticalArrangement = Arrangement.spacedBy(70.dp)
+                verticalArrangement = Arrangement.spacedBy(70.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
                     Spacer(Modifier.height(with(density) { columnSize.height.toDp() / 2 }))
                 }
 
-                itemsIndexed(syncedTextPairs) { index, item ->
+                itemsIndexed(
+                    items = syncedTextPairs,
+                    key = { _, item -> item.first }
+                ) { index, item ->
                     Text(
                         text = item.second,
                         fontSize = 32.sp,
@@ -686,6 +691,11 @@ fun ColoredScaffoldState.LyricsDrawer(
                         fontWeight = FontWeight.W700,
                         textAlign = TextAlign.Center,
                         color = if (currentIndex == index) bodyTextOnBackgroundAnimated.value else bodyTextOnBackgroundAnimated.value.copy(.2f),
+                        modifier = Modifier
+                            .clip(MaterialTheme.shapes.medium)
+                            .clickable {
+                                viewModel.audioPlayer.seek(item.first)
+                            },
                         onTextLayout = {
                             syncedTextSizes.put(item.first, it.size)
                         }
@@ -693,6 +703,12 @@ fun ColoredScaffoldState.LyricsDrawer(
                 }
 
                 item {
+                    Text(
+                        "Lyrics provider ${lyrics?.provider} open library",
+                        fontSize = 13.sp,
+                        color = bodyTextOnBackgroundAnimated.value
+                    )
+
                     Spacer(Modifier.height(100.dp))
                 }
             }
@@ -730,34 +746,19 @@ fun ColoredScaffoldState.LyricsDrawer(
     }
 }
 
-fun scrollToItemCentered(
-    index: Int,
-    coroutineScope: CoroutineScope,
-    listState: LazyListState
-) {
-    coroutineScope.launch {
-        val layoutInfo = listState.layoutInfo
+private fun findCurrentIndex(position: Long, pairs: List<Pair<Long, String>>): Int {
+    var low = 0
+    var high = pairs.size - 2
 
-        if (layoutInfo.visibleItemsInfo.isNotEmpty()) {
-            val viewportSize = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
-
-            val firstVisibleIndex = layoutInfo.visibleItemsInfo.first().index
-
-            listState.animateScrollToItem(index)
-
-            delay(300)
-
-            val updatedLayoutInfo = listState.layoutInfo
-            val targetItem = updatedLayoutInfo.visibleItemsInfo
-                .firstOrNull { it.index == index }
-
-            targetItem?.let { item ->
-                val itemOffset = item.offset
-                val itemSize = item.size
-                val scrollToCenter = itemOffset - (viewportSize - itemSize) / 2
-
-                listState.animateScrollBy(scrollToCenter.toFloat())
-            }
+    while (low <= high) {
+        val mid = (low + high) / 2
+        if (position in pairs[mid].first..pairs[mid + 1].first) {
+            return mid
+        } else if (position < pairs[mid].first) {
+            high = mid - 1
+        } else {
+            low = mid + 1
         }
     }
+    return -1
 }

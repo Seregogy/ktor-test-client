@@ -312,7 +312,7 @@ fun ColoredScaffoldState.ArtistHeader(
             CircleButton(
                 containerColor = onBackgroundColorAnimated.value,
                 onClick = { },
-                underscoreText = formatNumber(artist.likes),
+                underscoreText = "Нравится",
                 underscoreTextColor = onBackgroundColorAnimated.value
             ) {
                 Icon(
@@ -475,7 +475,7 @@ fun LatestRelease(
                 )
 
                 Text(
-                    text = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault()).format(Date(latestAlbum.second * 1000)),
+                    text = SimpleDateFormat("d MMMM yyyy", Locale.getDefault()).format(Date(latestAlbum.second * 1000)),
                     fontSize = 14.sp
                 )
             }

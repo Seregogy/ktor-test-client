@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,7 @@ import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 
 @Composable
-fun ColoredScaffoldState.TrackControl(
+fun TrackControl(
     modifier: Modifier = Modifier,
     trackFullDto: TrackFullDto,
     onClick: (it: TrackFullDto) -> Unit = { },
@@ -39,7 +40,7 @@ fun ColoredScaffoldState.TrackControl(
             .clickable {
                 onClick(trackFullDto)
             }
-            .padding(10.dp),
+            .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
@@ -52,9 +53,10 @@ fun ColoredScaffoldState.TrackControl(
             AsyncImage(
                 model = trackFullDto.imageUrl,
                 modifier = Modifier
+                    .height(50.dp)
                     .aspectRatio(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(5.dp)),
+                    .clip(MaterialTheme.shapes.small),
                 contentDescription = "mini track image",
                 contentScale = ContentScale.Crop
             )
@@ -64,7 +66,7 @@ fun ColoredScaffoldState.TrackControl(
                     text = trackFullDto.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.W700,
-                    color = textOnPrimaryOrBackgroundColorAnimated.value,
+                    color = Color.White,
                     maxLines = 1,
                     lineHeight = 18.sp,
                     textAlign = Alignment.CenterStart
@@ -73,7 +75,7 @@ fun ColoredScaffoldState.TrackControl(
                 MarqueeText(
                     text = artistsNames,
                     fontSize = 13.sp,
-                    color = onBackgroundColorAnimated.value,
+                    color = Color.White.copy(.7f),
                     lineHeight = 13.sp,
                     textAlign = Alignment.CenterStart
                 )

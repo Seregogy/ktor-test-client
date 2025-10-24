@@ -395,7 +395,7 @@ fun ColoredScaffoldState.AlbumHeaderControls(
             CircleButton(
                 containerColor = onPrimaryOrBackgroundColorAnimated.value,
                 onClick = { },
-                underscoreText = formatNumber(album.likes),
+                underscoreText = "Нравится",
                 underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
             ) {
                 Icon(
