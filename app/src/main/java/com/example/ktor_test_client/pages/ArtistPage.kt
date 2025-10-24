@@ -34,18 +34,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -148,6 +159,7 @@ fun ArtistPage(
                             pagerState = pagerState,
                             currentOffset = currentOffset,
                             screenHeight = screenHeight,
+                            alpha = alpha,
                             artist = it
                         )
                     }
@@ -157,9 +169,7 @@ fun ArtistPage(
                         Header(
                             artist = it,
                             screenHeight = screenHeight,
-                            alpha = alpha,
-                            colorAlpha = colorAlpha,
-                            color = backgroundColorAnimated
+                            alpha = alpha
                         )
                     }
                 }
@@ -167,7 +177,6 @@ fun ArtistPage(
                 artist?.let {
                     Content(
                         artist = it,
-                        colorAlpha = colorAlpha,
                         bottomPadding = bottomPadding,
                         latestRelease = latestRelease,
                         topTracks = topTracks,
@@ -183,11 +192,12 @@ fun ArtistPage(
 }
 
 @Composable
-private fun ColoredScaffoldState.ArtistAvatarPager(
+private fun ArtistAvatarPager(
     viewModel: ArtistViewModel,
     pagerState: PagerState,
     currentOffset: State<Dp>,
     screenHeight: Dp,
+    alpha: FloatState,
     artist: Artist
 ) {
     val context = LocalContext.current
@@ -199,17 +209,32 @@ private fun ColoredScaffoldState.ArtistAvatarPager(
 
     Box(
         modifier = Modifier
-            .background(backgroundColorAnimated.value)
+            .alpha(alpha.floatValue)
             .fillMaxWidth()
-            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT)
+            .height(screenHeight * .7f)
+            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+            .drawWithContent {
+                drawContent()
+
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White,
+                            Color.Transparent,
+                        )
+                    ),
+                    blendMode = BlendMode.DstIn
+                )
+            }
+            .offset {
+                return@offset IntOffset(0, (-currentOffset.value / 4).roundToPx())
+            }
     ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .offset {
-                    return@offset IntOffset(0, (-currentOffset.value / 5).roundToPx())
-                }
+
         ) { page ->
             AsyncImage(
                 model = artist.images[page],
@@ -223,144 +248,79 @@ private fun ColoredScaffoldState.ArtistAvatarPager(
 }
 
 @Composable
-private fun ColoredScaffoldState.Header(
+private fun Header(
     artist: Artist,
     screenHeight: Dp,
-    alpha: FloatState,
-    colorAlpha: FloatState,
-    color: State<Color>
+    alpha: FloatState
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight)
+            .fillMaxSize()
+            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
-                .background(Color.Black)
+                .alpha(alpha.floatValue)
                 .align(Alignment.BottomCenter)
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
+                .padding(horizontal = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            ArtistHeaderFadingGradientTop(
-                modifier = Modifier
-                    .alpha(colorAlpha.floatValue)
-                    .align(Alignment.BottomCenter),
-                targetColor = color
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Headset,
+                    contentDescription = "headphones icon",
+                    modifier = Modifier
+                        .size(15.dp),
+                    tint = Color.White
+                )
 
-            ArtistHeader(
-                modifier = Modifier
-                    .alpha(alpha.floatValue)
-                    .align(Alignment.BottomCenter),
-                artist = artist
-            )
-        }
-    }
-}
-
-@OptIn(UnstableApi::class)
-@Composable
-fun ColoredScaffoldState.ArtistHeader(
-    modifier: Modifier = Modifier,
-    artist: Artist
-) {
-    Column(
-        modifier = modifier
-            .padding(horizontal = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        Text(
-            text = artist.name,
-            fontWeight = FontWeight.W800,
-            fontSize = 38.sp,
-            color = onBackgroundColorAnimated.value
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Headset,
-                contentDescription = "headphones icon",
-                modifier = Modifier
-                    .size(24.dp),
-                tint = onBackgroundColorAnimated.value
-            )
+                Text(
+                    text = artist.listeningInMonth.toString(),
+                    color = Color.White,
+                    fontWeight = FontWeight.W600,
+                    lineHeight = 10.sp
+                )
+            }
 
             Text(
-                text = "${formatNumber(artist.listeningInMonth)} за месяц",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.W600,
-                color = onBackgroundColorAnimated.value
+                text = artist.name,
+                fontWeight = FontWeight.W800,
+                fontSize = 40.sp,
+                lineHeight = 40.sp,
+                color = Color.White
             )
-        }
 
-        Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier
-                .padding(top = 20.dp)
-                .fillMaxWidth(.85f)
-        ) {
-            CircleButton(
-                containerColor = onBackgroundColorAnimated.value,
-                onClick = { },
-                underscoreText = "Нравится",
-                underscoreTextColor = onBackgroundColorAnimated.value
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.FavoriteBorder,
-                    modifier = Modifier
-                        .size(24.dp),
-                    contentDescription = "",
-                    tint = backgroundColorAnimated.value
-                )
-            }
-
-            CircleButton(
-                containerColor = onBackgroundColorAnimated.value,
-                onClick = { },
-                underscoreText = "Трейлер",
-                underscoreTextColor = onBackgroundColorAnimated.value
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                    modifier = Modifier
-                        .size(24.dp),
-                    contentDescription = "",
-                    tint = backgroundColorAnimated.value
-                )
-            }
-
-            CircleButton(
-                containerColor = textOnPrimaryOrBackgroundColorAnimated.value,
-                onClick = { },
-                underscoreText = "Слушать",
-                underscoreTextColor = onBackgroundColorAnimated.value
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.PlayArrow,
-                    modifier = Modifier
-                        .size(28.dp),
-                    contentDescription = "",
-                    tint = backgroundColorAnimated.value
-                )
+                listOf("singer", "producer", "rapper").forEach {
+                    Box(
+                        modifier = Modifier
+                            .clip(MaterialTheme.shapes.small)
+                            .background(Color.White.copy(.3f))
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = it,
+                            fontWeight = FontWeight.W600
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ColoredScaffoldState.Content(
+private fun Content(
     artist: Artist,
-    colorAlpha: FloatState,
     bottomPadding: Dp,
     latestRelease: Pair<BaseAlbum, Long>?,
     topTracks: List<BaseTrackWithArtists>?,
@@ -369,17 +329,11 @@ private fun ColoredScaffoldState.Content(
     onTrackClicked: (clickedTrack: BaseTrack) -> Unit,
     onAlbumClicked: (albumId: String) -> Unit
 ) {
+
     Box(
         modifier = Modifier
             .wrapContentHeight()
-            .background(Color.Black)
     ) {
-        ArtistHeaderFadingGradientBottom(
-            modifier = Modifier
-                .alpha(colorAlpha.floatValue),
-            targetColor = backgroundColorAnimated
-        )
-
         Column {
             Spacer(Modifier.height(40.dp))
 
@@ -562,7 +516,7 @@ private fun FlingScrollScaffoldState.calcScrollState(
     topPadding: Dp
 ) {
     isHeaderVisible.value = lazyListState.firstVisibleItemIndex == 0
-    totalHeight.value = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
+    totalHeight.value = screenHeight * TopAppContentBar.TOP_PART_WEIGHT
 
     if (isHeaderVisible.value) {
         currentOffset.value = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
