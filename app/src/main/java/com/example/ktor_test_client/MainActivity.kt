@@ -139,7 +139,7 @@ class MainActivity : ComponentActivity() {
                 route = "AlbumPage?id={albumId}",
                 deepLinks = listOf(
                     navDeepLink {
-                        uriPattern = "onewave://app/albums/{albumId}"
+                        uriPattern = "inwave://app/albums/{albumId}"
                     }
                 ),
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })

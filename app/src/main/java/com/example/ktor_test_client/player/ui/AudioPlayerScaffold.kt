@@ -1,6 +1,16 @@
 package com.example.ktor_test_client.player.ui
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -28,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -45,6 +57,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.ktor_test_client.api.MusicApiService
@@ -132,7 +145,7 @@ fun AudioPlayerScaffold(
     }
 
     val alphaStateThreshold = with(density) { bottomSectionHeight.value.roundToPx() }
-    val targetMiniPlayerAlpha by remember {
+    val targetMiniPlayerAlpha = remember {
         derivedStateOf {
             yCurrentOffset.value / (screenHeight - bottomSectionHeightPx)
         }
@@ -196,7 +209,7 @@ fun BottomSheetAudioPlayer(
     innerPadding: PaddingValues,
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
-    targetMiniPlayerAlpha: Float,
+    targetMiniPlayerAlpha: State<Float>,
     blurTargetMiniPlayerAlpha: Float,
     hazeState: HazeState,
     onExpandRequest: () -> Unit = { },
@@ -210,6 +223,13 @@ fun BottomSheetAudioPlayer(
         viewModel.palette.collectAsState()
     }
 
+    val bottomBarShown by remember {
+        derivedStateOf {
+            Log.d("Player", targetMiniPlayerAlpha.toString())
+            targetMiniPlayerAlpha.value > 0.94f
+        }
+    }
+
     Box {
         Box(
             Modifier
@@ -220,7 +240,7 @@ fun BottomSheetAudioPlayer(
 
         Box(
             modifier = Modifier
-                .alpha(1f - targetMiniPlayerAlpha)
+                .alpha(1f - targetMiniPlayerAlpha.value)
         ) {
             FullAudioPlayer(viewModel, modifier, coloredScaffoldState, onCollapseRequest, onAlbumClicked, onArtistClicked)
         }
@@ -233,10 +253,10 @@ fun BottomSheetAudioPlayer(
             Column(
                 modifier = Modifier
                     .padding(bottom = innerPadding.calculateBottomPadding())
-                    .alpha(targetMiniPlayerAlpha)
+                    .alpha(targetMiniPlayerAlpha.value)
                     .align(Alignment.TopCenter)
                     .then(
-                        if (targetMiniPlayerAlpha > 0.99f) {
+                        if (targetMiniPlayerAlpha.value > 0.99f) {
                             Modifier
                                 .hazeEffect(hazeState, HazeMaterials.thin(Color.Black))
                         } else {
@@ -244,7 +264,7 @@ fun BottomSheetAudioPlayer(
                         }
                     )
                     .then(
-                        if (targetMiniPlayerAlpha < .8f)
+                        if (targetMiniPlayerAlpha.value < .8f)
                             Modifier.pointerInteropFilter { return@pointerInteropFilter false }
                         else
                             Modifier
@@ -261,33 +281,45 @@ fun BottomSheetAudioPlayer(
                     onExpandRequest = onExpandRequest
                 )
 
-                Row(
+                Box(
                     modifier = Modifier
+                        .height(55.dp)
                         .fillMaxWidth()
                         .padding(horizontal = 25.dp)
                         .padding(bottom = 10.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(Color.Black.copy(.7f))
-                        .padding(horizontal = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    listOf(
-                        Icons.Rounded.Home,
-                        Icons.Rounded.Search,
-                        Icons.Rounded.AutoAwesome,
-                        Icons.Rounded.Person
-                    ).forEach {
-                        IconButton(
-                            onClick = { }
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = bottomBarShown,
+                        enter = slideInVertically() + expandVertically() + fadeIn(),
+                        exit = slideOutVertically() + shrinkVertically() + fadeOut()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.small)
+                                .background(Color.Black.copy(.7f)),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Icon(
-                                imageVector = it,
-                                contentDescription = ""
-                            )
+                            listOf(
+                                Icons.Rounded.Home,
+                                Icons.Rounded.Search,
+                                Icons.Rounded.AutoAwesome,
+                                Icons.Rounded.Person
+                            ).forEach {
+                                IconButton(
+                                    onClick = { }
+                                ) {
+                                    Icon(
+                                        imageVector = it,
+                                        contentDescription = ""
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+
             }
         }
     }

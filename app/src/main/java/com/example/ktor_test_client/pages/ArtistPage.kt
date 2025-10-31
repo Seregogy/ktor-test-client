@@ -124,6 +124,8 @@ fun ArtistPage(
     }
     val toolScaffoldState = rememberToolScaffoldState(onBackRequest = onBackRequest)
 
+    
+
     val topBarHazeState = rememberHazeState()
     ColoredScaffold(
         state = coloredScaffoldState
