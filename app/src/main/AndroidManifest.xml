@@ -23,7 +23,7 @@
         android:theme="@style/Theme.Ktortestclient">
 
         <service
-            android:name="com.example.ktor_test_client.viewmodels.MediaNotificationService"
+            android:name="com.example.ktor_test_client.player.MediaPlayerService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="true"
             android:permission="FOREGROUND_SERVICE_MEDIA_PLAYBACK">

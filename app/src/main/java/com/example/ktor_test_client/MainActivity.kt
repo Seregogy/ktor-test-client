@@ -34,7 +34,7 @@ import com.example.ktor_test_client.routers.ArtistPageRouter
 import com.example.ktor_test_client.routers.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.ApplicationTheme
 import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
-import com.example.ktor_test_client.viewmodels.MediaNotificationService
+import com.example.ktor_test_client.player.MediaPlayerService
 import com.google.common.util.concurrent.MoreExecutors
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
 
-        val sessionToken = SessionToken(this, ComponentName(this, MediaNotificationService::class.java))
+        val sessionToken = SessionToken(this, ComponentName(this, MediaPlayerService::class.java))
         val controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
 
         controllerFuture.addListener({

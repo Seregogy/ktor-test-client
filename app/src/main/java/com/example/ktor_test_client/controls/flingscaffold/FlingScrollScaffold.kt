@@ -104,7 +104,10 @@ fun FlingScrollScaffold(
 
             Box(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .pointerInteropFilter {
+                        return@pointerInteropFilter false
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 LazyColumn(
@@ -113,9 +116,6 @@ fun FlingScrollScaffold(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Transparent)
-                        .pointerInteropFilter {
-                            return@pointerInteropFilter false
-                        }
                 ) {
                     item(0) {
                         headingContent()

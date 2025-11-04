@@ -1,8 +1,6 @@
 package com.example.ktor_test_client.pages
 
-import androidx.annotation.OptIn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,10 +21,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Headset
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,12 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -51,33 +41,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.media3.common.util.UnstableApi
 import coil3.compose.AsyncImage
 import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
-import com.example.ktor_test_client.controls.CircleButton
 import com.example.ktor_test_client.controls.TrackMiniWithImage
 import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffold
-import com.example.ktor_test_client.controls.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.controls.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffold
 import com.example.ktor_test_client.controls.flingscaffold.FlingScrollScaffoldState
 import com.example.ktor_test_client.controls.flingscaffold.rememberFlingScaffoldState
 import com.example.ktor_test_client.controls.toolscaffold.ToolScaffold
 import com.example.ktor_test_client.controls.toolscaffold.rememberToolScaffoldState
-import com.example.ktor_test_client.helpers.formatNumber
 import com.example.ktor_test_client.viewmodels.ArtistViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -110,23 +93,11 @@ fun ArtistPage(
     val albums by viewModel.albums
     val singles by viewModel.singles
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(5000)
-
-            val currentIndex = pagerState.currentPage
-            pagerState.animateScrollToPage((currentIndex + 1) % (artist?.images?.count() ?: 0))
-        }
-    }
-
     val coloredScaffoldState = rememberColoredScaffoldState {
         viewModel.palette.collectAsStateWithLifecycle()
     }
     val toolScaffoldState = rememberToolScaffoldState(onBackRequest = onBackRequest)
 
-    
-
-    val topBarHazeState = rememberHazeState()
     ColoredScaffold(
         state = coloredScaffoldState
     ) {
@@ -134,13 +105,12 @@ fun ArtistPage(
             modifier = Modifier
                 .padding(top = innerPadding.calculateTopPadding()),
             state = toolScaffoldState,
-            hazeState = topBarHazeState
+            hazeState = hazeState
         ) { toolScaffoldInnerPadding ->
 
             FlingScrollScaffold(
                 modifier = Modifier
-                    .hazeSource(state = topBarHazeState)
-                    .hazeSource(state = hazeState)
+                    .hazeSource(hazeState)
                     .fillMaxSize()
                     .background(Color.Black),
                 state = rememberFlingScaffoldState(

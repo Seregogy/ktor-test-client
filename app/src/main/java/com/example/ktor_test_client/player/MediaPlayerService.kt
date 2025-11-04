@@ -1,29 +1,22 @@
-package com.example.ktor_test_client.viewmodels
+package com.example.ktor_test_client.player
 
 import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.C
-import androidx.media3.common.Player
-import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT
-import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM
-import androidx.media3.common.Player.COMMAND_SEEK_TO_PREVIOUS
-import androidx.media3.common.Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSession.ConnectionResult
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.example.ktor_test_client.helpers.mediaItems
 import com.google.common.collect.ImmutableList
-import com.google.common.collect.ImmutableMap
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 
-class MediaNotificationService : MediaSessionService() {
+class MediaPlayerService : MediaSessionService() {
     private lateinit var mediaSession: MediaSession
     private lateinit var player: ExoPlayer
 
@@ -75,15 +68,15 @@ class MediaNotificationService : MediaSessionService() {
                 override fun onConnect(
                     session: MediaSession,
                     controller: MediaSession.ControllerInfo
-                ): ConnectionResult {
-                    return ConnectionResult.AcceptedResultBuilder(session)
+                ): MediaSession.ConnectionResult {
+                    return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                         .setMediaButtonPreferences(
                             ImmutableList.of(
                                 unfavoriteButton,
                                 favoriteButton
                             ))
                         .setAvailableSessionCommands(
-                            ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                            MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
                                 .add(unfavoriteCommand)
                                 .add(favoriteCommand)
                                 .build()
@@ -105,7 +98,8 @@ class MediaNotificationService : MediaSessionService() {
                     return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
                 }
             })
-            .setMediaButtonPreferences(ImmutableList.of(
+            .setMediaButtonPreferences(
+                ImmutableList.of(
                 favoriteButton, unfavoriteButton
             ))
             .build()
