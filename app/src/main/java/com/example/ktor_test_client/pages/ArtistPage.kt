@@ -126,14 +126,16 @@ fun ArtistPage(
                 },
                 backgroundContent = {
                     artist?.let {
-                        ArtistAvatarPager(
-                            viewModel = viewModel,
-                            pagerState = pagerState,
-                            currentOffset = currentOffset,
-                            screenHeight = screenHeight,
-                            alpha = alpha,
-                            artist = it
-                        )
+                        if (lastVisibleIndex.intValue == 0) {
+                            ArtistAvatarPager(
+                                viewModel = viewModel,
+                                pagerState = pagerState,
+                                currentOffset = currentOffset,
+                                screenHeight = screenHeight,
+                                alpha = alpha,
+                                artist = it
+                            )
+                        }
                     }
                 },
                 headingContent = {
@@ -206,7 +208,6 @@ private fun ArtistAvatarPager(
             state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-
         ) { page ->
             AsyncImage(
                 model = artist.images[page],

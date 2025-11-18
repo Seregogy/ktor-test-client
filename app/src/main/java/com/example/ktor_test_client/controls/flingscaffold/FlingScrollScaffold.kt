@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 fun FlingScrollScaffold(
     modifier: Modifier = Modifier,
     state: FlingScrollScaffoldState,
+    containerColor: Color = Color.Transparent,
     backgroundContent: @Composable FlingScrollScaffoldState.() -> Unit,
     headingContent: @Composable FlingScrollScaffoldState.() -> Unit,
     mainContent: @Composable FlingScrollScaffoldState.() -> Unit
@@ -63,9 +64,8 @@ fun FlingScrollScaffold(
         snapLayoutInfoProvider = SnapLayoutInfoProvider(lazyListState, snapPosition)
 
         val isFirstVisibleIndex by remember {
-            var lastVisibleIndex = 0
             derivedStateOf {
-                if (lastVisibleIndex >= 1 && lazyListState.firstVisibleItemIndex == 0) {
+                if (lastVisibleIndex.intValue >= 1 && lazyListState.firstVisibleItemIndex == 0) {
                     coroutineScope.launch {
                         delay(300)
 
@@ -74,7 +74,7 @@ fun FlingScrollScaffold(
                     }
                 }
 
-                lastVisibleIndex = lazyListState.firstVisibleItemIndex
+                lastVisibleIndex.intValue = lazyListState.firstVisibleItemIndex
 
                 lazyListState.firstVisibleItemIndex == 0
             }
@@ -97,7 +97,7 @@ fun FlingScrollScaffold(
 
         Box(
             modifier = modifier
-                .background(Color.Black)
+                .background(containerColor)
                 .fillMaxSize()
         ) {
             backgroundContent()

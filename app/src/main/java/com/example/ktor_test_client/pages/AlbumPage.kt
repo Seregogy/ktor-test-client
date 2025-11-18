@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -42,13 +44,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -87,9 +95,6 @@ fun AlbumPage(
 ) {
     val infiniteTransition = rememberInfiniteTransition("infinity transition animation")
 
-    val imageAlpha = remember { mutableFloatStateOf(1f) }
-    val albumHeaderHeight = 150.dp
-
     val imageBitmap: Bitmap? by viewModel.bitmap.collectAsStateWithLifecycle()
     val album by viewModel.album
     val tracks by viewModel.tracks
@@ -117,10 +122,11 @@ fun AlbumPage(
                     .hazeSource(state = topBarHazeState)
                     .background(Color.Black)
                     .fillMaxSize(),
+                containerColor = primaryOrBackgroundColor.value.copy(.25f),
                 state = rememberFlingScaffoldState(
                     yFlingOffset = toolBarInnerPadding.calculateTopPadding()
                 ) {
-                    calcScrollState(imageAlpha, albumHeaderHeight, toolBarInnerPadding.calculateTopPadding())
+                    calcScrollState(toolBarInnerPadding.calculateTopPadding())
 
                     toolBarScaffoldState.toolBarTitle.value = if (isHeaderSwiped.value.not()) {
                          album?.name
@@ -129,20 +135,12 @@ fun AlbumPage(
                     }
                 },
                 backgroundContent = {
-                    Box(
-                        modifier = Modifier
-                            .alpha(colorAlpha.floatValue)
-                            .fillMaxSize()
-                            .background(primaryOrBackgroundColorAnimated.value)
-                    ) {
-                        AlbumHeaderImage(
-                            modifier = Modifier
-                                .alpha(imageAlpha.floatValue),
-                            innerPadding = toolBarInnerPadding,
-                            screenHeight = screenHeight,
-                            bitmap = imageBitmap
-                        )
-                    }
+                    AlbumHeaderImage(
+                        bitmap = imageBitmap,
+                        currentOffset = currentOffset,
+                        screenHeight = screenHeight,
+                        alpha = alpha
+                    )
                 },
                 headingContent = {
                     album?.let { album ->
@@ -158,7 +156,6 @@ fun AlbumPage(
                 album?.let { album ->
                     tracks?.let { tracks ->
                         AlbumContent(
-                            colorAlpha = colorAlpha,
                             bottomPadding = bottomPadding,
                             album = album,
                             tracks = tracks,
@@ -169,7 +166,7 @@ fun AlbumPage(
                             onTrackHold = {
                                 toolBarScaffoldState.launchContextAction {
                                     Text(
-                                        text = "ASSSSS"
+                                        text = "Track details"
                                     )
                                 }
                             }
@@ -191,20 +188,120 @@ private fun ColoredScaffoldState.AlbumHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight)
+            .height(screenHeight * .7f)
     ) {
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .alpha(alpha.floatValue)
                 .fillMaxWidth()
         ) {
-            AlbumHeaderControls(
+            Column(
                 modifier = Modifier
-                    .alpha(alpha.floatValue)
-                    .align(Alignment.BottomCenter),
-                album = album
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                onArtistClicked(album.artists.first().id)
+                Text(
+                    text = album.name,
+                    fontWeight = FontWeight.W800,
+                    fontSize = 28.sp,
+                    lineHeight = 28.sp,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                Row(
+                    modifier = Modifier
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable { onArtistClicked(album.id) }
+                        .padding(5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    AsyncImage(
+                        model = album.artists.first().imageUrl,
+                        contentDescription = "mini artist avatar",
+                        modifier = Modifier
+                            .size(25.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Text(
+                        text = album.artists.first().name,
+                        fontWeight = FontWeight.W700,
+                        color = Color.White
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier
+                        .fillMaxWidth(.85f)
+                ) {
+                    CircleButton(
+                        containerColor = onPrimaryOrBackgroundColor.value,
+                        onClick = { },
+                        underscoreText = "Скачать",
+                        underscoreTextColor = Color.White
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Downloading,
+                            modifier = Modifier
+                                .size(28.dp),
+                            contentDescription = "",
+                            tint = primaryOrBackgroundColorAnimated.value
+                        )
+                    }
+
+                    CircleButton(
+                        containerColor = onPrimaryOrBackgroundColor.value,
+                        onClick = { },
+                        underscoreText = "Нравится",
+                        underscoreTextColor = Color.White
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.FavoriteBorder,
+                            modifier = Modifier
+                                .size(28.dp),
+                            contentDescription = "",
+                            tint = primaryOrBackgroundColorAnimated.value
+                        )
+                    }
+
+                    CircleButton(
+                        containerColor = onPrimaryOrBackgroundColor.value,
+                        onClick = { },
+                        underscoreText = "Трейлер",
+                        underscoreTextColor = Color.White
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
+                            modifier = Modifier
+                                .size(28.dp),
+                            contentDescription = "",
+                            tint = primaryOrBackgroundColorAnimated.value
+                        )
+                    }
+
+                    CircleButton(
+                        containerColor = onPrimaryOrBackgroundColor.value,
+                        onClick = { },
+                        underscoreText = "Слушать",
+                        underscoreTextColor = Color.White
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.PlayArrow,
+                            modifier = Modifier
+                                .size(30.dp),
+                            contentDescription = "",
+                            tint = primaryOrBackgroundColorAnimated.value
+                        )
+                    }
+                }
             }
         }
     }
@@ -212,7 +309,6 @@ private fun ColoredScaffoldState.AlbumHeader(
 
 @Composable
 private fun ColoredScaffoldState.AlbumContent(
-    colorAlpha: FloatState,
     bottomPadding: Dp,
     album: Album,
     tracks: List<BaseTrack>,
@@ -222,36 +318,25 @@ private fun ColoredScaffoldState.AlbumContent(
     otherAlbums: List<BaseAlbum>,
     onAlbumClicked: (artistId: String) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .background(Color.Black)
-    ) {
-        AlbumHeaderFadingGradientBottom(
-            modifier = Modifier
-                .alpha(colorAlpha.floatValue),
-            targetColor = primaryOrBackgroundColorAnimated.value
-        )
+    Column {
+        Spacer(Modifier.height(20.dp))
 
-        Column {
-            Spacer(Modifier.height(30.dp))
-
-            for (track in tracks) {
-                TrackMini(
-                    track = track,
-                    infiniteTransition = infiniteTransition,
-                    primaryColor = primaryOrBackgroundColorAnimated.value,
-                    onPrimaryColor = Color.White,
-                    onClick = onTrackClicked,
-                    onContextAction = onTrackHold
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            OtherAlbums("Ещё от ${album.artists.first().name}", otherAlbums, onAlbumClicked)
-
-            Spacer(Modifier.height(bottomPadding))
+        for (track in tracks) {
+            TrackMini(
+                track = track,
+                infiniteTransition = infiniteTransition,
+                primaryColor = primaryOrBackgroundColorAnimated.value,
+                onPrimaryColor = Color.White,
+                onClick = onTrackClicked,
+                onContextAction = onTrackHold
+            )
         }
+
+        Spacer(Modifier.height(20.dp))
+
+        OtherAlbums("Ещё от ${album.artists.first().name}", otherAlbums, onAlbumClicked)
+
+        Spacer(Modifier.height(bottomPadding))
     }
 }
 
@@ -291,19 +376,34 @@ fun OtherAlbums(
 }
 
 @Composable
-private fun BoxScope.AlbumHeaderImage(
-    modifier: Modifier,
-    innerPadding: PaddingValues,
+private fun AlbumHeaderImage(
+    modifier: Modifier = Modifier,
+    bitmap: Bitmap?,
+    currentOffset: State<Dp>,
     screenHeight: Dp,
-    bitmap: Bitmap?
+    alpha: FloatState
 ) {
-    val defaultImagePaddingDp = 75.dp
-
     Box(
         modifier = modifier
-            .align(Alignment.TopCenter)
-            .fillMaxWidth()
-            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT)
+            .alpha(alpha.floatValue)
+            .height(screenHeight * .7f)
+            .offset {
+                return@offset IntOffset(0, (-currentOffset.value / 4).roundToPx())
+            }
+            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+            .drawWithContent {
+                drawContent()
+
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White.copy(.85f),
+                            Color.Transparent,
+                        )
+                    ),
+                    blendMode = BlendMode.DstIn
+                )
+            }
     ) {
         bitmap?.let {
             Image(
@@ -311,173 +411,23 @@ private fun BoxScope.AlbumHeaderImage(
                 contentDescription = "",
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .aspectRatio(1f)
-                    .fillMaxSize()
-                    .offset(y = (-20).dp)
-                    .padding(defaultImagePaddingDp)
-//                    .padding(top = defaultImagePaddingDp - innerPadding.calculateTopPadding(), bottom = defaultImagePaddingDp)
-                    .clip(MaterialTheme.shapes.large),
+                    .fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
         }
-    }
-}
-
-@Composable
-fun ColoredScaffoldState.AlbumHeaderControls(
-    modifier: Modifier = Modifier,
-    album: Album,
-    onArtistClick: () -> Unit = { }
-) {
-    Column(
-        modifier = modifier
-            .padding(horizontal = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = album.name,
-            fontWeight = FontWeight.W800,
-            fontSize = 28.sp,
-            lineHeight = 28.sp,
-            color = onPrimaryOrBackgroundColorAnimated.value,
-            overflow = TextOverflow.Ellipsis,
-            maxLines = 1
-        )
-
-        Row(
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
-                .clickable {
-                    onArtistClick()
-                }
-                .padding(5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            AsyncImage(
-                model = album.artists.first().imageUrl,
-                contentDescription = "mini artist avatar",
-                modifier = Modifier
-                    .size(25.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-
-            Text(
-                text = album.artists.first().name,
-                fontWeight = FontWeight.W700,
-                color = onPrimaryOrBackgroundColorAnimated.value
-            )
-        }
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier
-                .padding(top = 10.dp)
-                .fillMaxWidth(.85f)
-        ) {
-            CircleButton(
-                containerColor = onPrimaryOrBackgroundColorAnimated.value,
-                onClick = { },
-                underscoreText = "Скачать",
-                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Downloading,
-                    modifier = Modifier
-                        .size(28.dp),
-                    contentDescription = "",
-                    tint = primaryOrBackgroundColorAnimated.value
-                )
-            }
-
-            CircleButton(
-                containerColor = onPrimaryOrBackgroundColorAnimated.value,
-                onClick = { },
-                underscoreText = "Нравится",
-                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.FavoriteBorder,
-                    modifier = Modifier
-                        .size(28.dp),
-                    contentDescription = "",
-                    tint = primaryOrBackgroundColorAnimated.value
-                )
-            }
-
-            CircleButton(
-                containerColor = onPrimaryOrBackgroundColorAnimated.value,
-                onClick = { },
-                underscoreText = "Трейлер",
-                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.QueueMusic,
-                    modifier = Modifier
-                        .size(28.dp),
-                    contentDescription = "",
-                    tint = primaryOrBackgroundColorAnimated.value
-                )
-            }
-
-            CircleButton(
-                containerColor = textOnPrimaryOrBackgroundColorAnimated.value.times(1.2f),
-                onClick = { },
-                underscoreText = "Слушать",
-                underscoreTextColor = onPrimaryOrBackgroundColorAnimated.value
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.PlayArrow,
-                    modifier = Modifier
-                        .size(30.dp),
-                    contentDescription = "",
-                    tint = primaryOrBackgroundColorAnimated.value
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AlbumHeaderFadingGradientBottom(
-    modifier: Modifier,
-    targetColor: Color
-) {
-    Column(
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(230.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            .1f to targetColor,
-                            .9f to Color.Transparent
-                        )
-                    )
-                )
-        )
     }
 }
 
 private fun FlingScrollScaffoldState.calcScrollState(
-    imageAlpha: MutableFloatState,
-    albumHeaderHeight: Dp,
     topPadding: Dp
 ) {
     isHeaderVisible.value = lazyListState.firstVisibleItemIndex == 0
-    totalHeight.value = screenHeight * TopAppContentBar.TOP_PART_WEIGHT + TopAppContentBar.additionalHeight
+    totalHeight.value = screenHeight * .7f
 
     if (isHeaderVisible.value) {
         currentOffset.value = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }
 
-        alpha.floatValue = ((totalHeight.value - topPadding - currentOffset.value) / totalHeight.value).coerceIn(0f..1f)
-        colorAlpha.floatValue = ((totalHeight.value - topPadding - currentOffset.value) / 60.dp).coerceIn(0f..1f)
-
-        imageAlpha.floatValue = (albumHeaderHeight - currentOffset.value) / albumHeaderHeight
+        alpha.floatValue = (totalHeight.value - topPadding - currentOffset.value) / totalHeight.value
+        colorAlpha.floatValue = (totalHeight.value - topPadding - currentOffset.value) / 45.dp
     }
 }

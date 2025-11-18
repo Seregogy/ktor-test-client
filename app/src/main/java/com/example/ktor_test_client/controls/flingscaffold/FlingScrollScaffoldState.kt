@@ -5,8 +5,10 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,6 +28,8 @@ class FlingScrollScaffoldState(
     lateinit var snapLayoutInfoProvider: SnapLayoutInfoProvider
 
     var isHeaderSwiped: MutableState<Boolean> = mutableStateOf(true)
+
+    var lastVisibleIndex: MutableIntState = mutableIntStateOf(0)
 
     var alpha: MutableFloatState = mutableFloatStateOf(0f)
     var colorAlpha: MutableFloatState = mutableFloatStateOf(0f)
