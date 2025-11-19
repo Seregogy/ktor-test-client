@@ -47,6 +47,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Pause
@@ -630,17 +631,13 @@ fun ColoredScaffoldState.LyricsDrawer(
 
     when {
         lyrics == null -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(
                     color = onBackgroundColorAnimated.value
                 )
             }
         }
-        lyrics?.syncedText != null -> {
+        lyrics?.syncedText?.isNotEmpty() ?: false -> {
             var currentPosition by remember { viewModel.audioPlayer.currentPosition }
             val lazyListState = rememberLazyListState()
             val syncedTextPairs = remember {
@@ -713,8 +710,7 @@ fun ColoredScaffoldState.LyricsDrawer(
                 }
             }
         }
-
-        lyrics?.plainText != null -> {
+        lyrics?.plainText?.isNotEmpty() ?: false -> {
             Column(
                 modifier = Modifier
                     .padding(horizontal = 40.dp)
@@ -741,6 +737,30 @@ fun ColoredScaffoldState.LyricsDrawer(
                     fontSize = 13.sp,
                     color = bodyTextOnBackgroundAnimated.value
                 )
+            }
+        }
+        else -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 40.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Error,
+                        modifier = Modifier
+                            .size(52.dp),
+                        contentDescription = "Lyrics warning",
+                        tint = onBackgroundColor.value
+                    )
+
+                    Text(
+                        text = "Не удалось найти текст для этого трека",
+                        color = onBackgroundColor.value,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
