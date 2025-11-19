@@ -22,9 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.api.dtos.TrackFullDto
-import com.example.ktor_test_client.controls.TrackControl
+import com.example.ktor_test_client.control.TrackControl
 import com.example.ktor_test_client.player.AudioPlayer
-import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
 
 @Composable
 fun MiniAudioPlayer(

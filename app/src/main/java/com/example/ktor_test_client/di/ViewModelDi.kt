@@ -7,9 +7,9 @@ import androidx.media3.session.MediaController
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.player.MediaCache
 import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
-import com.example.ktor_test_client.viewmodels.AlbumViewModel
-import com.example.ktor_test_client.viewmodels.ArtistViewModel
-import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodel.AlbumViewModel
+import com.example.ktor_test_client.viewmodel.ArtistViewModel
+import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
 import org.koin.dsl.module
 
 object DefaultPlayerConfig {

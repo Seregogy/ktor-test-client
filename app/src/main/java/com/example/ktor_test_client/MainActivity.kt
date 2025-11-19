@@ -29,11 +29,11 @@ import com.example.ktor_test_client.di.repositoryDi
 import com.example.ktor_test_client.di.tokenHandlerDi
 import com.example.ktor_test_client.di.viewModelDi
 import com.example.ktor_test_client.player.ui.AudioPlayerScaffold
-import com.example.ktor_test_client.routers.AlbumPageRouter
-import com.example.ktor_test_client.routers.ArtistPageRouter
-import com.example.ktor_test_client.routers.ArtistsCardPageRouter
+import com.example.ktor_test_client.router.AlbumPageRouter
+import com.example.ktor_test_client.router.ArtistPageRouter
+import com.example.ktor_test_client.router.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.ApplicationTheme
-import com.example.ktor_test_client.viewmodels.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
 import com.example.ktor_test_client.player.MediaPlayerService
 import com.google.common.util.concurrent.MoreExecutors
 import dev.chrisbanes.haze.HazeState

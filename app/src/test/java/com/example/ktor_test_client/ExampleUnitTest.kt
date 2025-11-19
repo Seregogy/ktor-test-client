@@ -1,8 +1,7 @@
 package com.example.ktor_test_client
 
-import android.util.Log
 import androidx.compose.ui.graphics.Color
-import com.example.ktor_test_client.helpers.contrast
+import com.example.ktor_test_client.helper.contrast
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
