@@ -156,6 +156,8 @@ fun ToolScaffold(
 @Composable
 fun ContextMenu(
     expanded: MutableState<Boolean>,
+    containerColor: Color = Color.Black,
+    thumbColor: Color = Color.White,
     content: @Composable () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -169,7 +171,9 @@ fun ContextMenu(
                 }.invokeOnCompletion {
                     expanded.value = false
                 }
-            }
+            },
+            contentColor = thumbColor,
+            containerColor = containerColor
         ) {
             content()
         }

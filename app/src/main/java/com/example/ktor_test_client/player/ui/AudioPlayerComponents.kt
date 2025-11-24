@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,6 +31,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -68,11 +71,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -94,8 +101,10 @@ import com.example.ktor_test_client.api.dtos.TrackFullDto
 import com.example.ktor_test_client.control.CircleButton
 import com.example.ktor_test_client.control.MarqueeText
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffoldState
+import com.example.ktor_test_client.control.toolscaffold.ContextMenu
 import com.example.ktor_test_client.helper.formatMinuteTimer
 import com.example.ktor_test_client.helper.times
+import com.example.ktor_test_client.layout.AvatarRow
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
 import kotlinx.coroutines.launch
@@ -231,6 +240,7 @@ fun ColoredScaffoldState.TrackInfo(
     onAlbumClicked: (albumId: String) -> Unit,
     onArtistClicked: (artistId: String) -> Unit
 ) {
+    val artistsSheet = remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
     val infiniteTransition = rememberInfiniteTransition("cycling animation transition")
@@ -253,26 +263,36 @@ fun ColoredScaffoldState.TrackInfo(
     var columnSize by remember { mutableStateOf(IntSize.Zero) }
 
     Row(
+        modifier = Modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         if (columnSize.height != 0) {
-            AsyncImage(
-                model = currentTrackFullDto?.album?.artists?.first()?.imageUrl,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .height(with(density) { columnSize.height.toDp() })
-                    .aspectRatio(1f)
-                    .clip(CircleShape)
-                    .clickable {
-                        onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
-                    },
-                contentDescription = "mini avatar"
-            )
+            AvatarRow(
+                spaceBetween = 5.dp
+            ) {
+                currentTrackFullDto?.album?.artists?.forEach { artist ->
+                    Box {
+                        AsyncImage(
+                            model = artist.imageUrl,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .height(with(density) { columnSize.height.toDp() })
+                                .aspectRatio(1f)
+                                .clip(CircleShape)
+                                .clickable {
+                                    onArtistClicked(artist.id)
+                                },
+                            contentDescription = "mini avatar"
+                        )
+                    }
+                }
+            }
         }
 
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .height(IntrinsicSize.Min)
                 .onSizeChanged {
                     columnSize = it
@@ -292,16 +312,70 @@ fun ColoredScaffoldState.TrackInfo(
             )
 
             MarqueeText(
-                text = currentTrackFullDto?.album?.artists?.firstOrNull()?.name ?: "",
+                text = currentTrackFullDto?.album?.artists?.joinToString(", ") { it.name } ?: "unknown",
                 fontWeight = FontWeight.W600,
                 modifier = Modifier
                     .clip(MaterialTheme.shapes.small)
                     .clickable {
-                        onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
+                        if ((currentTrackFullDto?.album?.artists?.size ?: 0) == 1) {
+                            onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
+                        } else {
+                            artistsSheet.value = true
+                        }
                     }
                     .alpha(textAlpha),
                 color = onBackgroundColorAnimated.value
             )
+        }
+    }
+
+    ContextMenu(artistsSheet) {
+        currentTrackFullDto?.album?.artists?.let { artists ->
+            LazyColumn(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 25.dp),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Артисты",
+                        modifier = Modifier
+                            .padding(top = 15.dp)
+                            .padding(bottom = 25.dp),
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.W700
+                    )
+                }
+
+                items(artists) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.small)
+                            .clickable {
+                                onArtistClicked(it.id)
+                                artistsSheet.value = false
+                            }
+                            .padding(5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(15.dp)
+                    ) {
+                        AsyncImage(
+                            model = it.imageUrl,
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .size(60.dp),
+                            contentDescription = ""
+                        )
+
+                        Text(
+                            text = it.name,
+                            fontWeight = FontWeight.W600
+                        )
+                    }
+                }
+            }
         }
     }
 }

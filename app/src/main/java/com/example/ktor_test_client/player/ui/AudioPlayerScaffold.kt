@@ -82,7 +82,6 @@ fun AudioPlayerScaffold(
 
     val density = LocalDensity.current
 
-
     val bottomSectionHeight = remember { mutableStateOf(0.dp) }
     val bottomSectionHeightPx by remember {
         derivedStateOf {
@@ -91,7 +90,6 @@ fun AudioPlayerScaffold(
             }
         }
     }
-
 
     var allInit by remember { mutableStateOf(false) }
 
@@ -179,14 +177,14 @@ fun AudioPlayerScaffold(
                 },
                 onAlbumClicked = { albumId ->
                     coroutineScope.launch {
-                        navController.navigate("AlbumPage?id=$albumId")
                         bottomSheetState.bottomSheetState.partialExpand()
+                        navController.navigate("AlbumPage?id=$albumId")
                     }
                 },
                 onArtistClicked = { artistId ->
                     coroutineScope.launch {
-                        navController.navigate("ArtistPage?id=$artistId")
                         bottomSheetState.bottomSheetState.partialExpand()
+                        navController.navigate("ArtistPage?id=$artistId")
                     }
                 }
             )
@@ -219,7 +217,6 @@ fun BottomSheetAudioPlayer(
 
     val bottomBarShown by remember {
         derivedStateOf {
-            Log.d("Player", targetMiniPlayerAlpha.toString())
             targetMiniPlayerAlpha.value > 0.94f
         }
     }

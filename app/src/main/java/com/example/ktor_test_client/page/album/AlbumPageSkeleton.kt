@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
@@ -28,7 +26,6 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.valentinilk.shimmer.shimmer
 
@@ -37,26 +34,27 @@ import com.valentinilk.shimmer.shimmer
 fun AlbumPageSkeleton() {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
-            Box(
-                modifier = Modifier
-                    .height(screenHeight * .7f)
-                    .fillMaxWidth()
-                    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                    .drawWithContent {
-                        drawContent()
+    Box(
+        modifier = Modifier
+            .height(screenHeight * .7f)
+            .fillMaxWidth()
+            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+            .drawWithContent {
+                drawContent()
 
-                        drawRect(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(.2f),
-                                    Color.Transparent,
-                                )
-                            ),
-                            blendMode = BlendMode.DstIn
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White.copy(.2f),
+                            Color.Transparent,
                         )
-                    }
-                    .background(Color.Gray)
-            )
+                    ),
+                    blendMode = BlendMode.DstIn
+                )
+            }
+            .background(Color.Gray)
+    )
+
     Column(
         modifier = Modifier
             .shimmer()
