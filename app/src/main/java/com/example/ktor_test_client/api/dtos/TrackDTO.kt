@@ -30,7 +30,7 @@ class TrackFullDto(
     val durationSeconds: Int = 0,
     val hasLyrics: Boolean = false,
     var lyrics: Lyrics? = null,
-    val listening: Int? = 0,
+    val listening: Long = 0,
     val isExplicit: Boolean? = false,
     val audioUrl: String = "",
     val album: Album = Album()

@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.control.toolscaffold
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -13,10 +14,10 @@ class ToolScaffoldState(
     var onSearchRequest: () -> Unit,
     var foregroundColor: State<Color> = mutableStateOf(Color.White),
     var toolBarTitle: MutableState<String?> = mutableStateOf(null),
-    var onLaunchContextAction: (content: @Composable () -> Unit) -> Unit = { }
+    var onLaunchContextAction: (content: @Composable (padding: PaddingValues) -> Unit) -> Unit = { }
 ) {
     fun launchContextAction(
-        content: @Composable () -> Unit = { }
+        content: @Composable (padding: PaddingValues) -> Unit = { }
     ) {
         onLaunchContextAction(content)
     }

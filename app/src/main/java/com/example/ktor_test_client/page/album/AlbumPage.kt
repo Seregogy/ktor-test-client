@@ -60,6 +60,8 @@ import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.control.AlbumMiniPreview
 import com.example.ktor_test_client.control.CircleButton
+import com.example.ktor_test_client.control.MockAdditionalTrackData
+import com.example.ktor_test_client.control.PreviewAdditionalTrackData
 import com.example.ktor_test_client.control.TrackMini
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffoldState
@@ -156,10 +158,8 @@ fun AlbumPage(
                             otherAlbums = otherAlbums,
                             onAlbumClicked = onAlbumClicked,
                             onTrackHold = {
-                                toolBarScaffoldState.launchContextAction {
-                                    Text(
-                                        text = "Track details"
-                                    )
+                                toolBarScaffoldState.launchContextAction { padding ->
+                                    MockAdditionalTrackData(padding, primaryOrBackgroundColor.value)
                                 }
                             }
                         )
@@ -208,7 +208,7 @@ private fun ColoredScaffoldState.AlbumHeader(
                 Row(
                     modifier = Modifier
                         .clip(MaterialTheme.shapes.small)
-                        .clickable { onArtistClicked(album.id) }
+                        .clickable { onArtistClicked(album.artists.first().id) }
                         .padding(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(5.dp)

@@ -145,7 +145,6 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("albumId") { type = NavType.StringType })
             ) {
                 val playerVM: AudioPlayerViewModel = koinInject()
-
                 val albumId = it.arguments?.getString("albumId")
 
                 AlbumPageRouter(

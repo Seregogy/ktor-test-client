@@ -107,5 +107,8 @@ dependencies {
     implementation(libs.haze)
     implementation(libs.haze.materials)
 
+    implementation(libs.bottomsheet)
+    implementation(libs.markdown.render)
+
     implementation(libs.kotlinx.serialization.json)
 }

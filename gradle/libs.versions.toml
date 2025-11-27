@@ -28,9 +28,10 @@ navigationCompose = "2.9.0-beta03"
 hilt-version = "2.51.1"
 paletteKtx = "1.0.0"
 runner = "1.6.1"
+bottomSheetVersion = "1.5.1"
+markdownRenderVersion = "0.5.8"
 
 [libraries]
-accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefresh" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
@@ -61,6 +62,9 @@ koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", versi
 koin-androidx-compose-navigation = { module = "io.insert-koin:koin-androidx-compose-navigation", version.ref = "koinAndroidxComposeNavigation" }
 koin-androidx-viewmodel = { module = "io.insert-koin:koin-androidx-viewmodel", version.ref = "koinAndroidxViewmodel" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+
+bottomsheet = { module = "com.holix.android:bottomsheetdialog-compose", version.ref = "bottomSheetVersion" }
+markdown-render = { module = "com.github.jeziellago:compose-markdown", version.ref = "markdownRenderVersion" }
 
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientVersion" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientVersion" }
