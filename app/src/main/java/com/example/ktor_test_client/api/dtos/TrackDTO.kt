@@ -33,5 +33,6 @@ class TrackFullDto(
     val listening: Long = 0,
     val isExplicit: Boolean? = false,
     val audioUrl: String = "",
-    val album: Album = Album()
+    val album: Album = Album(),
+    val artists: List<BaseArtist> = listOf()
 )

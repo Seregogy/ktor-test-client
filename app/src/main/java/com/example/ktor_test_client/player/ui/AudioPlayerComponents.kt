@@ -361,7 +361,8 @@ fun ColoredScaffoldState.TrackInfo(
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .size(60.dp),
-                            contentDescription = ""
+                            contentDescription = "",
+                            contentScale = ContentScale.Crop
                         )
 
                         Text(
@@ -428,7 +429,7 @@ fun ColoredScaffoldState.PlayerSlider(
                 disabledActiveTrackColor = semiTransparentForeground,
                 disabledActiveTickColor = semiTransparentForeground,
                 disabledInactiveTickColor = semiTransparentForeground,
-                disabledInactiveTrackColor = semiTransparentForeground,
+                disabledInactiveTrackColor = semiTransparentForeground
             ),
             thumb = {
                 Box(

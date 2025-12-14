@@ -38,6 +38,7 @@ fun AvatarRow(
             var xPosition = 0
 
             placeables.forEach { placeable ->
+                //TODO: клиппинг следующего изображения
                 placeable.placeRelative(
                     x = xPosition,
                     y = 0

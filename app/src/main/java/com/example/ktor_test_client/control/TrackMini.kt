@@ -150,7 +150,6 @@ fun TrackMini(
     }
 }
 
-
 @Composable
 fun TrackMiniWithImage(
     modifier: Modifier = Modifier,
@@ -180,12 +179,12 @@ fun TrackMiniWithImage(
             }
             .then(
                 if (isCurrentlyPlay)
-                    Modifier.background(primaryColor.copy(.2f))
+                    Modifier.background(primaryColor.copy(.1f))
                 else
                     Modifier
             )
             .padding(start = 20.dp, end = 10.dp)
-            .padding(vertical = 5.dp),
+            .padding(vertical = 10.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Row(
@@ -196,7 +195,7 @@ fun TrackMiniWithImage(
                 model = track.imageUrl,
                 contentDescription = "mini track image",
                 modifier = Modifier
-                    .height(55.dp)
+                    .height(50.dp)
                     .aspectRatio(1f)
                     .clip(MaterialTheme.shapes.small),
                 contentScale = ContentScale.Crop

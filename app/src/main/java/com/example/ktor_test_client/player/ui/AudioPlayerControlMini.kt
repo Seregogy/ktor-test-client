@@ -1,6 +1,7 @@
 package com.example.ktor_test_client.player.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -32,7 +34,6 @@ fun MiniAudioPlayer(
     modifier: Modifier = Modifier,
     onExpandRequest: () -> Unit
 ) {
-    val currentTrack by viewModel.audioPlayer.currentTrack.collectAsStateWithLifecycle()
     val currentState by viewModel.audioPlayer.currentState.collectAsStateWithLifecycle()
 
     val isPlay by remember {
@@ -43,10 +44,9 @@ fun MiniAudioPlayer(
 
     TrackControl(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 25.dp),
-        onClick = { onExpandRequest() },
-        trackFullDto = currentTrack?.data ?: TrackFullDto()
+            .fillMaxWidth(),
+        viewModel = viewModel,
+        onClick = { onExpandRequest() }
     ) {
         Row(
             modifier = Modifier
@@ -81,7 +81,7 @@ fun MiniAudioPlayer(
                         Icons.Rounded.PlayArrow,
                     contentDescription = "play/pause icon",
                     modifier = Modifier
-                        .size(26.dp),
+                        .size(24.dp),
                     tint = Color.White.copy(.7f)
                 )
             }

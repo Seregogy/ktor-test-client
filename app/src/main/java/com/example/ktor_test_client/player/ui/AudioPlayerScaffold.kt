@@ -33,12 +33,14 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -150,6 +152,8 @@ fun AudioPlayerScaffold(
     }
 
     val sheetPeekHeight = bottomSectionHeight.value + innerPadding.calculateBottomPadding()
+
+
     BottomSheetScaffold(
         sheetPeekHeight = sheetPeekHeight,
         scaffoldState = bottomSheetState,
@@ -233,7 +237,14 @@ fun BottomSheetAudioPlayer(
             modifier = Modifier
                 .alpha(1f - targetMiniPlayerAlpha.value)
         ) {
-            FullAudioPlayer(viewModel, modifier, coloredScaffoldState, onCollapseRequest, onAlbumClicked, onArtistClicked)
+            FullAudioPlayer(
+                viewModel = viewModel,
+                modifier = modifier,
+                coloredScaffoldState = coloredScaffoldState,
+                onCollapseRequest = onCollapseRequest,
+                onAlbumClicked = onAlbumClicked,
+                onArtistClicked = onArtistClicked
+            )
         }
 
         ColoredScaffold(
@@ -268,11 +279,13 @@ fun BottomSheetAudioPlayer(
                     .background(additionalHorizontalGradientBrush.value)
             ) {
                 MiniAudioPlayer(
+                    modifier = Modifier
+                        .padding(bottom = 5.dp),
                     viewModel = viewModel,
                     onExpandRequest = onExpandRequest
                 )
 
-                Box(
+                /*Box(
                     modifier = Modifier
                         .height(55.dp)
                         .fillMaxWidth()
@@ -309,8 +322,7 @@ fun BottomSheetAudioPlayer(
                             }
                         }
                     }
-                }
-
+                }*/
             }
         }
     }

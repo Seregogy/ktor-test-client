@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,10 +68,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-object TopAppContentBar {
-    const val TOP_PART_WEIGHT = .55f
-    val additionalHeight = 60.dp
-}
+const val TOP_PART_WEIGHT = .55f
 
 @Composable
 fun ArtistPage(
@@ -228,7 +224,7 @@ private fun Header(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .height(screenHeight * TopAppContentBar.TOP_PART_WEIGHT),
+            .height(screenHeight * TOP_PART_WEIGHT),
         contentAlignment = Alignment.BottomCenter
     ) {
         Column(
@@ -436,59 +432,11 @@ private fun TopTracks(
     }
 }
 
-@Composable
-fun ArtistHeaderFadingGradientTop(
-    modifier: Modifier,
-    targetColor: State<Color>
-) {
-    Column(
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            .35f to Color.Transparent,
-                            .8f to targetColor.value
-                        )
-                    )
-                )
-        )
-    }
-}
-
-@Composable
-fun ArtistHeaderFadingGradientBottom(
-    modifier: Modifier,
-    targetColor: State<Color>
-) {
-    Column(
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(230.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colorStops = arrayOf(
-                            .1f to targetColor.value,
-                            .9f to Color.Transparent
-                        )
-                    )
-                )
-        )
-    }
-}
-
 private fun FlingScrollScaffoldState.calcScrollState(
     topPadding: Dp
 ) {
     isHeaderVisible.value = lazyListState.firstVisibleItemIndex == 0
-    totalHeight.value = screenHeight * TopAppContentBar.TOP_PART_WEIGHT
+    totalHeight.value = screenHeight * TOP_PART_WEIGHT
 
     if (isHeaderVisible.value) {
         currentOffset.value = with(density) { lazyListState.firstVisibleItemScrollOffset.toDp() }

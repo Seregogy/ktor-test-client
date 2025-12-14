@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -24,6 +27,7 @@ import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
+import kotlin.math.absoluteValue
 
 const val animationsSpeed = 1200
 

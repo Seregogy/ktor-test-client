@@ -17,7 +17,6 @@ import com.example.ktor_test_client.data.providers.PlaylistProvider
 import com.example.ktor_test_client.data.repositories.Repository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -138,7 +137,7 @@ class AudioPlayer(
             do {
                 currentPosition.value = mediaController.currentPosition
 
-                if (mediaController.duration != 0L && _currentTrackDuration.value == mediaController.contentDuration) {
+                if (mediaController.duration != 0L && _currentTrackDuration.value == mediaController.duration) {
                     _currentTrackDuration.value = mediaController.contentDuration
                 }
 
@@ -245,7 +244,7 @@ class AudioPlayer(
                             .setTitle(track.name)
                             .setDisplayTitle(track.name)
                             .setAlbumTitle(track.album.name)
-                            .setArtist(track.album.artists.joinToString(",") { it.name })
+                            .setArtist(track.album.artists.joinToString(", ") { it.name })
                             .setArtworkUri(Uri.parse(track.imageUrl))
                             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                             .build()
