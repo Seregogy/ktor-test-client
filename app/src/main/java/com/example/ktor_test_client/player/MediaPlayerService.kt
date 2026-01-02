@@ -1,16 +1,22 @@
 package com.example.ktor_test_client.player
 
+import android.app.PendingIntent
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
+import com.example.ktor_test_client.MainActivity
+import com.example.ktor_test_client.di.DefaultPlayerConfig
 import com.example.ktor_test_client.helper.mediaItems
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -33,14 +39,37 @@ class MediaPlayerService : MediaSessionService() {
                 .setSessionCommand(favoriteCommand)
                 .build()
 
+        val sessionActivityPending = createSessionActivityPendingIntent()
+
+        val loadControl = DefaultLoadControl.Builder()
+            .setBackBuffer(DefaultPlayerConfig.backBufferMs, true)
+            .setBufferDurationsMs(
+                DefaultPlayerConfig.minBufferMs,
+                DefaultPlayerConfig.maxBufferMs,
+                DefaultPlayerConfig.bufferForPlaybackMs,
+                DefaultPlayerConfig.bufferForPlaybackAfterRebuffedMs
+            )
+            .setTargetBufferBytes(DefaultPlayerConfig.targetBufferBytesSize)
+            .build()
+
         val unfavoriteButton =
             CommandButton.Builder(CommandButton.ICON_MINUS_CIRCLE_UNFILLED)
                 .setDisplayName("Save to unfavorites")
                 .setSessionCommand(unfavoriteCommand)
                 .build()
 
-        player = ExoPlayer.Builder(this).build()
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
+
+        player = ExoPlayer.Builder(this)
+            .setAudioAttributes(audioAttributes, true)
+            .setLoadControl(loadControl)
+            .build()
+
         mediaSession = MediaSession.Builder(this, player)
+            .setSessionActivity(sessionActivityPending)
             .setCallback(object : MediaSession.Callback {
                 override fun onPlaybackResumption(
                     session: MediaSession,
@@ -103,6 +132,21 @@ class MediaPlayerService : MediaSessionService() {
                 favoriteButton, unfavoriteButton
             ))
             .build()
+    }
+
+    private fun createSessionActivityPendingIntent(): PendingIntent {
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            action = Intent.ACTION_MAIN
+            putExtra("from_notification", true)
+        }
+
+        return PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     override fun onDestroy() {

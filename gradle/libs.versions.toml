@@ -30,6 +30,7 @@ paletteKtx = "1.0.0"
 runner = "1.6.1"
 bottomSheetVersion = "1.5.1"
 markdownRenderVersion = "0.5.8"
+particlesConfettiVersion = "0.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -62,6 +63,8 @@ koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", versi
 koin-androidx-compose-navigation = { module = "io.insert-koin:koin-androidx-compose-navigation", version.ref = "koinAndroidxComposeNavigation" }
 koin-androidx-viewmodel = { module = "io.insert-koin:koin-androidx-viewmodel", version.ref = "koinAndroidxViewmodel" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+
+particles-confetti = { module = "io.github.vinceglb:confettikit", version.ref = "particlesConfettiVersion" }
 
 bottomsheet = { module = "com.holix.android:bottomsheetdialog-compose", version.ref = "bottomSheetVersion" }
 markdown-render = { module = "com.github.jeziellago:compose-markdown", version.ref = "markdownRenderVersion" }

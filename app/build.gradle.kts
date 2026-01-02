@@ -8,12 +8,14 @@ plugins {
 
 android {
     namespace = "com.example.ktor_test_client"
-    compileSdk = 35
+    compileSdk {
+        version = release(36)
+    }
 
     defaultConfig {
         applicationId = "com.example.ktor_test_client"
-        minSdk = 34
-        targetSdk = 34
+        minSdk = 28
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -109,6 +111,8 @@ dependencies {
 
     implementation(libs.bottomsheet)
     implementation(libs.markdown.render)
+
+    implementation(libs.particles.confetti)
 
     implementation(libs.kotlinx.serialization.json)
 }

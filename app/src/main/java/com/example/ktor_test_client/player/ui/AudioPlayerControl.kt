@@ -1,5 +1,8 @@
 package com.example.ktor_test_client.player.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,7 +32,17 @@ import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffoldState
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
+import io.github.vinceglb.confettikit.compose.ConfettiKit
+import io.github.vinceglb.confettikit.core.Angle
+import io.github.vinceglb.confettikit.core.Party
+import io.github.vinceglb.confettikit.core.Position
+import io.github.vinceglb.confettikit.core.Rotation
+import io.github.vinceglb.confettikit.core.Spread
+import io.github.vinceglb.confettikit.core.emitter.Emitter
+import io.github.vinceglb.confettikit.core.models.Shape
+import io.github.vinceglb.confettikit.core.models.Size
 import kotlin.math.absoluteValue
+import kotlin.time.Duration
 
 const val animationsSpeed = 1200
 
@@ -49,6 +64,8 @@ fun FullAudioPlayer(
     val currentPosition = viewModel.audioPlayer.currentPosition
 
     val isLastTrack = viewModel.audioPlayer.isLastTrack
+
+    val snowEnabled = remember { mutableStateOf(true) }
 
     val isPlay = remember {
         derivedStateOf {
@@ -145,9 +162,47 @@ fun FullAudioPlayer(
                     modifier = Modifier
                         .fillMaxWidth(),
                     viewModel = viewModel,
+                    snowEnabled = snowEnabled,
                     isLyricsOpen = isLyricsOpen
                 )
             }
         }
+
+        for (i in 0 until 1) {
+            println("ass")
+        }
+
+        AnimatedVisibility(
+            snowEnabled.value,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            ConfettiKit(
+                modifier = Modifier
+                    .fillMaxSize(),
+                parties = listOf(
+                    Party(
+                        speed = 0f,
+                        maxSpeed = 10f,
+                        damping = .15f,
+                        timeToLive = 30000,
+                        angle = Angle.BOTTOM,
+                        spread = Spread.ROUND,
+                        colors = listOf(Color.White.toArgb()),
+                        shapes = listOf(Shape.Circle),
+                        emitter = Emitter(Duration.INFINITE)
+                            .perSecond(7),
+                        position = Position.Relative(0.0, -0.1)
+                            .between(Position.Relative(1.0, -0.1)),
+                        rotation = Rotation.disabled(),
+                        size = listOf(
+                            Size(1),
+                            Size(2)
+                        )
+                    )
+                )
+            )
+        }
+
     }
 }

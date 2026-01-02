@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.player.ui
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
@@ -57,13 +58,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.asLongState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -75,9 +79,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -102,6 +108,7 @@ import com.example.ktor_test_client.layout.AvatarRow
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 @Composable
@@ -385,6 +392,25 @@ fun ColoredScaffoldState.PlayerSlider(
     viewModel: AudioPlayerViewModel,
     isSliding: MutableState<Boolean>,
 ) {
+    val haptic = LocalHapticFeedback.current
+
+    val tickCount = 50
+    val sliderGap = 1f / tickCount
+    var currentGap by remember { mutableFloatStateOf(0f) }
+
+    var localPosition by remember { mutableFloatStateOf(0f) }
+
+    val compositionPosition by remember {
+        derivedStateOf {
+            if (!isSliding.value) {
+                localPosition = (currentPosition.value / viewModel.audioPlayer.currentTrackDuration.value.toFloat()).coerceIn(0f..currentTrackDuration.toFloat())
+
+                Log.d("Player", (currentPosition.value / viewModel.audioPlayer.currentTrackDuration.value.toFloat()).toString())
+            }
+            localPosition
+        }
+    }
+
     val semiTransparentForeground by remember {
         derivedStateOf {
             onBackgroundColorAnimated.value.copy(.65f)
@@ -397,9 +423,9 @@ fun ColoredScaffoldState.PlayerSlider(
         }
     }
 
-    val currentPositionAnimated = animateFloatAsState(
-        targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
-        animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
+    val currentPositionAnimated by animateFloatAsState(
+        targetValue = compositionPosition,
+        animationSpec = if (isSliding.value) tween(0) else tween(500, easing = LinearEasing),
         label = "slider animation"
     )
 
@@ -409,11 +435,21 @@ fun ColoredScaffoldState.PlayerSlider(
         Slider(
             modifier = modifier
                 .weight(1f),
-            value = currentPositionAnimated.value,
+            value = currentPositionAnimated,
             onValueChange = {
+                if ((localPosition - currentGap).absoluteValue > sliderGap) {
+                    haptic.performHapticFeedback(
+                        HapticFeedbackType.SegmentFrequentTick
+                    )
+
+                    currentGap = currentPositionAnimated
+                }
+
                 if (!isSliding.value) isSliding.value = true
 
-                currentPosition.value = (it * currentTrackDuration.toFloat()).toLong()
+                localPosition = it
+
+                currentPosition.value = (it * viewModel.audioPlayer.currentTrackDuration.value.toFloat()).toLong()
             },
             onValueChangeFinished = {
                 isSliding.value = false
@@ -444,7 +480,9 @@ fun ColoredScaffoldState.PlayerSlider(
 
         IconButton(
             onClick = {
-
+                haptic.performHapticFeedback(
+                    HapticFeedbackType.Confirm
+                )
             }
         ) {
             Icon(
@@ -474,6 +512,8 @@ fun ColoredScaffoldState.TimingText(
     currentTrackDuration: Long,
     isSliding: MutableState<Boolean>
 ) {
+    val haptic = LocalHapticFeedback.current
+
     val currentPositionAnimated = animateFloatAsState(
         targetValue = (currentPosition.value / currentTrackDuration.toFloat()).coerceIn(0f..currentTrackDuration.toFloat()),
         animationSpec = if (isSliding.value) tween(0) else tween(300, easing = LinearEasing),
@@ -493,6 +533,10 @@ fun ColoredScaffoldState.TimingText(
             .clip(CircleShape)
             .background(fullyTransparentForeground)
             .clickable {
+                haptic.performHapticFeedback(
+                    HapticFeedbackType.ContextClick
+                )
+
                 currentTextState = if (currentTextState == TimingTextState.CurrentTime) {
                     TimingTextState.RemainingTime
                 } else {
@@ -546,6 +590,8 @@ fun ColoredScaffoldState.PlayerNavigationButtons(
     onPrev: () -> Unit,
     onPlayPause: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
+
     val nextTrackLoadedColorState by remember {
         derivedStateOf {
             if (isLastTrack.value) {
@@ -568,7 +614,13 @@ fun ColoredScaffoldState.PlayerNavigationButtons(
         modifier = modifier
     ) {
         IconButton(
-            onClick = { onPrev() }
+            onClick = {
+                haptic.performHapticFeedback(
+                    HapticFeedbackType.ContextClick
+                )
+
+                onPrev()
+            }
         ) {
             Icon(
                 imageVector = Icons.Rounded.SkipPrevious,
@@ -583,6 +635,10 @@ fun ColoredScaffoldState.PlayerNavigationButtons(
             containerColor = fullyTransparentForeground,
             size = 70.dp,
             onClick = {
+                haptic.performHapticFeedback(
+                    HapticFeedbackType.Confirm
+                )
+
                 onPlayPause()
             },
             content = {
@@ -600,7 +656,13 @@ fun ColoredScaffoldState.PlayerNavigationButtons(
         )
 
         IconButton(
-            onClick = { onNext() },
+            onClick = {
+                haptic.performHapticFeedback(
+                    HapticFeedbackType.ContextClick
+                )
+
+                onNext()
+            },
             enabled = isLastTrack.value.not()
         ) {
             Icon(
@@ -618,6 +680,7 @@ fun ColoredScaffoldState.PlayerNavigationButtons(
 fun ColoredScaffoldState.BottomControls(
     modifier: Modifier,
     viewModel: AudioPlayerViewModel,
+    snowEnabled: MutableState<Boolean>,
     isLyricsOpen: MutableState<Boolean>
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -634,6 +697,21 @@ fun ColoredScaffoldState.BottomControls(
                 painter = painterResource(R.drawable.timer_icon),
                 contentDescription = "time icon",
                 tint = onBackgroundColorAnimated.value
+            )
+        }
+
+        IconButton(
+            onClick = {
+                snowEnabled.value = !snowEnabled.value
+            }
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.snow_icon),
+                contentDescription = "time icon",
+                tint = if (snowEnabled.value)
+                    onBackgroundColorAnimated.value
+                else
+                    onBackgroundColorAnimated.value.copy(.2f)
             )
         }
 

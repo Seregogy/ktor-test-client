@@ -52,6 +52,7 @@ import com.example.ktor_test_client.api.dtos.Artist
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseTrack
 import com.example.ktor_test_client.api.dtos.BaseTrackWithArtists
+import com.example.ktor_test_client.control.CircleIndicator
 import com.example.ktor_test_client.control.TrackMiniWithImage
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.control.coloredscaffold.rememberColoredScaffoldState
@@ -138,7 +139,9 @@ fun ArtistPage(
                         Header(
                             artist = it,
                             screenHeight = screenHeight,
-                            alpha = alpha
+                            alpha = alpha,
+                            it.images.size,
+                            pagerState
                         )
                     }
                 }
@@ -219,7 +222,9 @@ private fun ArtistAvatarPager(
 private fun Header(
     artist: Artist,
     screenHeight: Dp,
-    alpha: FloatState
+    alpha: FloatState,
+    imagesCount: Int,
+    pagerState: PagerState
 ) {
     Box(
         modifier = Modifier
@@ -236,6 +241,14 @@ private fun Header(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
+            if (imagesCount > 1) {
+                CircleIndicator(
+                    Modifier,
+                    imagesCount,
+                    pagerState
+                )
+            }
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(3.dp),
                 verticalAlignment = Alignment.CenterVertically
