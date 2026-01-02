@@ -102,6 +102,15 @@ private fun ColoredScaffoldState.CalculateColors() {
             )
         }
     }
+
+    lastPaletteColor = remember {
+        derivedStateOf {
+            Color(
+                currentPalette.value?.swatches?.lastOrNull()?.rgb
+                    ?: colorScheme.onBackground.toArgb()
+            ).copy(.2f)
+        }
+    }
 }
 
 @Composable
@@ -139,6 +148,12 @@ private fun ColoredScaffoldState.CalculateColorAnimations() {
     textOnPrimaryOrBackgroundColorAnimated = animateColorAsState(
         targetValue = textOnPrimaryOrBackgroundColor.value,
         label = "animated background value",
+        animationSpec = animationSpec
+    )
+
+    lastPaletteColorAnimated = animateColorAsState(
+        targetValue = lastPaletteColor.value,
+        label = "animated last palette value",
         animationSpec = animationSpec
     )
 }
