@@ -6,7 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -28,13 +31,13 @@ import com.example.ktor_test_client.di.apiServiceDi
 import com.example.ktor_test_client.di.repositoryDi
 import com.example.ktor_test_client.di.tokenHandlerDi
 import com.example.ktor_test_client.di.viewModelDi
+import com.example.ktor_test_client.player.MediaPlayerService
 import com.example.ktor_test_client.player.ui.AudioPlayerScaffold
 import com.example.ktor_test_client.router.AlbumPageRouter
 import com.example.ktor_test_client.router.ArtistPageRouter
 import com.example.ktor_test_client.router.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.ApplicationTheme
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
-import com.example.ktor_test_client.player.MediaPlayerService
 import com.google.common.util.concurrent.MoreExecutors
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
@@ -62,7 +65,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     val hazeState = rememberHazeState()
-
+                    Modifier.windowInsetsPadding(WindowInsets.systemBars)
                     when {
                         mediaController.value != null -> {
                             Scaffold { innerPadding ->

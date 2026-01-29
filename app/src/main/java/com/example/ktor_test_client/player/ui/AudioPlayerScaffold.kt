@@ -240,6 +240,7 @@ fun BottomSheetAudioPlayer(
             FullAudioPlayer(
                 viewModel = viewModel,
                 modifier = modifier,
+                topPadding = innerPadding.calculateTopPadding(),
                 coloredScaffoldState = coloredScaffoldState,
                 onCollapseRequest = onCollapseRequest,
                 onAlbumClicked = onAlbumClicked,

@@ -680,7 +680,6 @@ fun ColoredScaffoldState.PlayerNavigationButtons(
 fun ColoredScaffoldState.BottomControls(
     modifier: Modifier,
     viewModel: AudioPlayerViewModel,
-    snowEnabled: MutableState<Boolean>,
     isLyricsOpen: MutableState<Boolean>
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -697,21 +696,6 @@ fun ColoredScaffoldState.BottomControls(
                 painter = painterResource(R.drawable.timer_icon),
                 contentDescription = "time icon",
                 tint = onBackgroundColorAnimated.value
-            )
-        }
-
-        IconButton(
-            onClick = {
-                snowEnabled.value = !snowEnabled.value
-            }
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.snow_icon),
-                contentDescription = "time icon",
-                tint = if (snowEnabled.value)
-                    onBackgroundColorAnimated.value
-                else
-                    onBackgroundColorAnimated.value.copy(.2f)
             )
         }
 

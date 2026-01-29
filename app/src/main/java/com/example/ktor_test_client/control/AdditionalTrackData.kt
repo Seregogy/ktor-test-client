@@ -62,7 +62,8 @@ data class AdditionalTrackData(
     val credits: Map<String, List<String>>?,
     val language: String?,
     val recordingLocation: String?,
-    val releaseDate: Long?
+    val releaseDate: Long?,
+    val imageUrl: String?
 )
 
 val mockBlindingLightsTrackFullDto = TrackFullDto(
@@ -142,7 +143,8 @@ private val mockAdditionalTrackData = AdditionalTrackData(
     ),
     language = "English",
     recordingLocation = "Los Angeles, California",
-    releaseDate = 1574974800
+    releaseDate = 1574974800,
+    ""
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
