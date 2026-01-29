@@ -1,4 +1,4 @@
-package com.example.ktor_test_client.control
+package com.example.ktor_test_client.control.card.concrete
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image

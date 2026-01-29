@@ -10,8 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.ktor_test_client.api.MusicApiService
 import com.example.ktor_test_client.api.dtos.BaseArtist
-import com.example.ktor_test_client.control.ArtistCardState
-import com.example.ktor_test_client.control.artistSwipeableCard
+import com.example.ktor_test_client.control.card.concrete.ArtistCardState
+import com.example.ktor_test_client.control.card.concrete.artistSwipeableCard
 import com.example.ktor_test_client.control.states.ErrorState
 import com.example.ktor_test_client.control.states.LoadingState
 import com.example.ktor_test_client.page.ArtistsCardPage

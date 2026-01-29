@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ktor_test_client.control.ArtistCardState
+import com.example.ktor_test_client.control.card.concrete.ArtistCardState
 import com.example.ktor_test_client.control.card.SwipeableCardStack
 import com.example.ktor_test_client.control.card.SwipeableCard
 import dev.chrisbanes.haze.HazeState

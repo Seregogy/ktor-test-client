@@ -38,13 +38,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffoldState
+import com.example.ktor_test_client.control.player.MainCover
+import com.example.ktor_test_client.control.player.PlayerAdditionalControls
+import com.example.ktor_test_client.control.player.PlayerControls
+import com.example.ktor_test_client.control.player.PlayerSlider
+import com.example.ktor_test_client.control.player.TimingText
+import com.example.ktor_test_client.control.player.TopBar
+import com.example.ktor_test_client.control.player.TrackInfo
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
 
-const val animationsSpeed = 1200
-
 @Composable
-fun FullAudioPlayer(
+fun AudioPlayer(
     viewModel: AudioPlayerViewModel,
     modifier: Modifier,
     topPadding: Dp,
@@ -153,10 +158,9 @@ fun FullAudioPlayer(
                     ) {
                         Spacer(Modifier.height(topControlsHeight))
 
-                        MainContent(
+                        MainCover(
                             viewModel = viewModel,
                             isLyricsOpen = isLyricsOpen,
-                            currentPosition = currentPosition,
                             screenWidth = screenWidth
                         )
 
@@ -192,7 +196,7 @@ fun FullAudioPlayer(
                                 )
                             }
 
-                            PlayerNavigationButtons(
+                            PlayerControls(
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally),
                                 secondaryColorWithLoadingState = secondaryColorWithLoadingState,
@@ -203,7 +207,7 @@ fun FullAudioPlayer(
                                 onPlayPause = { viewModel.audioPlayer.playPause() }
                             )
 
-                            BottomControls(
+                            PlayerAdditionalControls(
                                 modifier = Modifier
                                     .fillMaxWidth(),
                                 viewModel = viewModel,
@@ -226,7 +230,9 @@ fun FullAudioPlayer(
                                     )
                                 )
                             )
-                    )
+                    ) {
+
+                    }
                 }
             }
 

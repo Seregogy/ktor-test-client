@@ -1,46 +1,25 @@
 package com.example.ktor_test_client.player.ui
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onSizeChanged
@@ -237,7 +215,7 @@ fun BottomSheetAudioPlayer(
             modifier = Modifier
                 .alpha(1f - targetMiniPlayerAlpha.value)
         ) {
-            FullAudioPlayer(
+            AudioPlayer(
                 viewModel = viewModel,
                 modifier = modifier,
                 topPadding = innerPadding.calculateTopPadding(),
@@ -285,45 +263,6 @@ fun BottomSheetAudioPlayer(
                     viewModel = viewModel,
                     onExpandRequest = onExpandRequest
                 )
-
-                /*Box(
-                    modifier = Modifier
-                        .height(55.dp)
-                        .fillMaxWidth()
-                        .padding(horizontal = 25.dp)
-                        .padding(bottom = 10.dp)
-                ) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = bottomBarShown,
-                        enter = slideInVertically() + expandVertically() + fadeIn(),
-                        exit = slideOutVertically() + shrinkVertically() + fadeOut()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(MaterialTheme.shapes.small)
-                                .background(Color.Black.copy(.7f)),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            listOf(
-                                Icons.Rounded.Home,
-                                Icons.Rounded.Search,
-                                Icons.Rounded.AutoAwesome,
-                                Icons.Rounded.Person
-                            ).forEach {
-                                IconButton(
-                                    onClick = { }
-                                ) {
-                                    Icon(
-                                        imageVector = it,
-                                        contentDescription = ""
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }*/
             }
         }
     }
