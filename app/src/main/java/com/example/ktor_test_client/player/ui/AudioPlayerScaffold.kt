@@ -40,6 +40,7 @@ import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffold
 import com.example.ktor_test_client.control.coloredscaffold.rememberColoredScaffoldState
 import com.example.ktor_test_client.data.providers.PlaylistProviderImpl
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodel.VideoPlayerViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -52,6 +53,7 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 fun AudioPlayerScaffold(
     viewModel: AudioPlayerViewModel,
+    videoPlayerViewModel: VideoPlayerViewModel,
     innerPadding: PaddingValues,
     navController: NavHostController,
     hazeState: HazeState,
@@ -143,6 +145,7 @@ fun AudioPlayerScaffold(
                 bottomSectionHeight = bottomSectionHeight,
                 innerPadding = innerPadding,
                 viewModel = viewModel,
+                videoPlayerViewModel = videoPlayerViewModel,
                 modifier = Modifier.padding(top = innerPadding.calculateTopPadding()),
                 hazeState = hazeState,
                 targetMiniPlayerAlpha = targetMiniPlayerAlpha,
@@ -182,6 +185,7 @@ fun BottomSheetAudioPlayer(
     bottomSectionHeight: MutableState<Dp>,
     innerPadding: PaddingValues,
     viewModel: AudioPlayerViewModel,
+    videoPlayerViewModel: VideoPlayerViewModel,
     modifier: Modifier,
     targetMiniPlayerAlpha: State<Float>,
     blurTargetMiniPlayerAlpha: Float,
@@ -195,12 +199,6 @@ fun BottomSheetAudioPlayer(
 
     val coloredScaffoldState = rememberColoredScaffoldState {
         viewModel.palette.collectAsState()
-    }
-
-    val bottomBarShown by remember {
-        derivedStateOf {
-            targetMiniPlayerAlpha.value > 0.94f
-        }
     }
 
     Box {
@@ -217,6 +215,7 @@ fun BottomSheetAudioPlayer(
         ) {
             AudioPlayer(
                 viewModel = viewModel,
+                videoPlayerViewModel = videoPlayerViewModel,
                 modifier = modifier,
                 topPadding = innerPadding.calculateTopPadding(),
                 coloredScaffoldState = coloredScaffoldState,

@@ -3,6 +3,9 @@ package com.example.ktor_test_client.player.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
@@ -40,6 +43,7 @@ fun MiniAudioPlayer(
 
     TrackControl(
         modifier = modifier
+            .padding(vertical = 7.dp)
             .fillMaxWidth(),
         viewModel = viewModel,
         onClick = { onExpandRequest() }
@@ -51,6 +55,8 @@ fun MiniAudioPlayer(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
+                modifier = Modifier
+                    .heightIn(max = 40.dp),
                 onClick = { }
             ) {
                 Icon(
@@ -66,6 +72,8 @@ fun MiniAudioPlayer(
             }
 
             IconButton(
+                modifier = Modifier
+                    .heightIn(max = 40.dp),
                 onClick = {
                     viewModel.audioPlayer.playPause()
                 }

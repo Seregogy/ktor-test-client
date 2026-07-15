@@ -126,13 +126,13 @@ fun ColoredScaffoldState.TrackInfo(
             )
 
             MarqueeText(
-                text = currentTrackFullDto?.album?.artists?.joinToString(", ") { it.name } ?: "unknown",
+                text = currentTrackFullDto?.artists?.joinToString(", ") { it.name } ?: "unknown",
                 fontWeight = FontWeight.W600,
                 modifier = Modifier
                     .clip(MaterialTheme.shapes.small)
                     .clickable {
-                        if ((currentTrackFullDto?.album?.artists?.size ?: 0) == 1) {
-                            onArtistClicked(currentTrackFullDto?.album?.artists?.first()?.id ?: "")
+                        if ((currentTrackFullDto?.artists?.size ?: 0) == 1) {
+                            onArtistClicked(currentTrackFullDto?.artists?.first()?.id ?: "")
                         } else {
                             artistsSheet.value = true
                         }
@@ -144,7 +144,7 @@ fun ColoredScaffoldState.TrackInfo(
     }
 
     ContextMenu(artistsSheet) { padding ->
-        currentTrackFullDto?.album?.artists?.let { artists ->
+        currentTrackFullDto?.artists?.let { artists ->
             LazyColumn(
                 modifier = Modifier
                     .padding(padding)

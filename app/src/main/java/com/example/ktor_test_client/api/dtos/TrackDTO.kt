@@ -22,7 +22,7 @@ open class BaseTrackWithArtists(
 )
 
 @Serializable
-class TrackFullDto(
+data class TrackFullDto(
     val id: String = "",
     val name: String = "",
     val imageUrl: String? = "",
@@ -33,6 +33,7 @@ class TrackFullDto(
     val listening: Long = 0,
     val isExplicit: Boolean? = false,
     val audioUrl: String = "",
+    val videoUrl: String? = null,
     val album: Album = Album(),
     val artists: List<BaseArtist> = listOf()
 )

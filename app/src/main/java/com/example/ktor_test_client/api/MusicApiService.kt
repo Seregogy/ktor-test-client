@@ -1,5 +1,6 @@
 package com.example.ktor_test_client.api
 
+import android.util.Log
 import com.example.ktor_test_client.api.dtos.Album
 import com.example.ktor_test_client.api.dtos.BaseAlbum
 import com.example.ktor_test_client.api.dtos.BaseArtist
@@ -63,7 +64,9 @@ class MusicApiService(
     }
 
     suspend fun getTrack(trackId: String): Result<TrackFullDto> = safeRequest {
-        apiClient.getTrack(trackId)!!
+        apiClient.getTrack(trackId)!!.also {
+            Log.d("DEBUG", it.toString())
+        }
     }
 
     @Serializable
@@ -81,7 +84,11 @@ class MusicApiService(
             .post("/api/v1/tracks") {
                 contentType(ContentType.Application.Json)
                 setBody(GetTracksRequest(tracksId))
-            }.body<GetTracksResponse>().tracks
+            }.body<GetTracksResponse>().tracks.also {
+                it.forEach { dto ->
+                    Log.d("API", dto.toString())
+                }
+            }
     }
 
     suspend fun getArtist(artistId: String): Result<GetArtistResponse> = safeRequest {

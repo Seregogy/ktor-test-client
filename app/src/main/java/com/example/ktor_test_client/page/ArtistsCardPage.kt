@@ -64,7 +64,7 @@ fun ArtistsCardPage(
                 )
 
                 Text(
-                    text = "Хэппиньюэ!!",
+                    text = "Исполнители",
                     modifier = modifier
                         .align(Alignment.TopStart)
                         .padding(10.dp),

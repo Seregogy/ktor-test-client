@@ -19,7 +19,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Ktortestclient">
+        android:theme="@style/Theme.Ktortestclient"
+        android:hardwareAccelerated="true">
 
         <service
             android:name="com.example.ktor_test_client.player.MediaPlayerService"

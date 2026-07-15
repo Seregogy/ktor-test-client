@@ -1,15 +1,19 @@
 package com.example.ktor_test_client.di
 
 import android.annotation.SuppressLint
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
+import com.example.ktor_test_client.control.VideoPlayer
 import com.example.ktor_test_client.player.AudioPlayer
 import com.example.ktor_test_client.player.MediaCache
 import com.example.ktor_test_client.data.repositories.BaseNetworkRepository
 import com.example.ktor_test_client.viewmodel.AlbumViewModel
 import com.example.ktor_test_client.viewmodel.ArtistViewModel
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodel.VideoPlayerViewModel
+import org.koin.core.scope.get
 import org.koin.dsl.module
 
 object DefaultPlayerConfig {
@@ -64,5 +68,9 @@ val viewModelDi = module {
             artistId = artistId,
             apiService = get()
         )
+    }
+
+    factory<VideoPlayerViewModel> {
+        VideoPlayerViewModel(get())
     }
 }

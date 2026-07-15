@@ -1,7 +1,9 @@
 package com.example.ktor_test_client.control.player
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
@@ -11,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ktor_test_client.R
 import com.example.ktor_test_client.control.coloredscaffold.ColoredScaffoldState
@@ -49,6 +52,16 @@ fun ColoredScaffoldState.PlayerAdditionalControls(
                     viewModel.audioPlayer.getLyricsForCurrentTrack()
                 }
             },
+            modifier = Modifier
+                .then(
+                    if (isLyricsOpen.value) {
+                        Modifier.border(
+                                width = 3.dp,
+                                color = onBackgroundColorAnimated.value.copy(.15f),
+                                shape = CircleShape
+                            )
+                    } else { Modifier }
+                )
         ) {
             Icon(
                 painter = painterResource(R.drawable.lyrics_icon),

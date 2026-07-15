@@ -62,7 +62,6 @@ fun TrackControl(
     Box(
         modifier = modifier
             .padding(horizontal = 20.dp)
-            .padding(vertical = 10.dp)
             .clip(RoundedCornerShape(12.dp))
             .clickable {
                 track?.data?.let {
@@ -90,7 +89,6 @@ fun TrackControl(
         ) {
             Row(
                 modifier = Modifier
-
                     .weight(5f),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(7.dp)
@@ -98,7 +96,7 @@ fun TrackControl(
                 AsyncImage(
                     model = track?.data?.imageUrl,
                     modifier = Modifier
-                        .height(45.dp)
+                        .height(42.dp)
                         .aspectRatio(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(5.dp)),

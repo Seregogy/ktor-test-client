@@ -38,6 +38,7 @@ import com.example.ktor_test_client.router.ArtistPageRouter
 import com.example.ktor_test_client.router.ArtistsCardPageRouter
 import com.example.ktor_test_client.ui.theme.ApplicationTheme
 import com.example.ktor_test_client.viewmodel.AudioPlayerViewModel
+import com.example.ktor_test_client.viewmodel.VideoPlayerViewModel
 import com.google.common.util.concurrent.MoreExecutors
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
@@ -55,12 +56,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ApplicationTheme {
-                val context = LocalContext.current
-
                 KoinApplication(
                     application = {
                         modules(listOf(apiServiceDi, apiClientDi, tokenHandlerDi, repositoryDi, viewModelDi))
-                        androidContext(context)
+                        androidContext(application.applicationContext)
                     }
                 ) {
                     val navController = rememberNavController()
@@ -71,6 +70,7 @@ class MainActivity : ComponentActivity() {
                             Scaffold { innerPadding ->
                                 AudioPlayerScaffold(
                                     viewModel = koinInject<AudioPlayerViewModel>(parameters = { parametersOf(mediaController.value) }),
+                                    videoPlayerViewModel = koinInject<VideoPlayerViewModel>(),
                                     innerPadding = innerPadding,
                                     navController = navController,
                                     hazeState = hazeState,

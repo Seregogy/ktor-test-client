@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -37,6 +38,8 @@ const val animationsSpeed = 1200
 fun ColoredScaffoldState.MainCover(
     viewModel: AudioPlayerViewModel,
     isLyricsOpen: MutableState<Boolean>,
+    hasVideo: State<Boolean>,
+    isPlay: State<Boolean>,
     screenWidth: Dp
 ) {
     val currentImage by viewModel.bitmap.collectAsStateWithLifecycle()
@@ -70,7 +73,7 @@ fun ColoredScaffoldState.MainCover(
         }
 
         AnimatedVisibility(
-            visible = !isLyricsOpen.value,
+            visible = (!(isPlay.value && hasVideo.value) && !isLyricsOpen.value),
             enter = fadeIn(tween()),
             exit = fadeOut(tween())
         ) {
